@@ -4,14 +4,13 @@ import { useState } from 'react';
 import { Feature } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetFooter, SheetDescription } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter, SheetDescription } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { generateMasterPrompt } from '@/lib/prompt-generator';
 import { Trash2, Copy, Check, Terminal, ShoppingBasket } from 'lucide-react';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea'; // Assuming textarea exists or use basic html
+// import { Textarea } from '@/components/ui/textarea'; // Missing component, unused.
 
 interface BasketProps {
   selectedFeatures: Feature[];

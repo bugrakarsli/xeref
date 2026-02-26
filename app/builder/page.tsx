@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { features, categories } from '@/lib/features';
-import { Feature, CategoryId } from '@/lib/types';
+import { Feature } from '@/lib/types';
 import { CategoryFilter } from '@/components/category-filter';
 import { FeatureGrid } from '@/components/feature-grid';
 import { Basket } from '@/components/basket';

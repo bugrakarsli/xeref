@@ -22,7 +22,7 @@ export default function AboutPage() {
           <h2 className="text-2xl font-bold mb-4">The Vision</h2>
           <p className="leading-7">
             Xeref-Claw is part of the <strong>XerefAI</strong> ecosystem, designed to democratize access to powerful, autonomous AI agents. 
-            Inspired by the <em>OpenClaw</em> project and Jack Roberts' <em>Gravity Claw</em> concept, this tool bridges the gap between 
+            Inspired by the <em>OpenClaw</em> project and Jack Roberts&apos; <em>Gravity Claw</em> concept, this tool bridges the gap between 
             complex code and simple Lego-like building blocks.
           </p>
           <p className="leading-7 mt-4">
@@ -38,7 +38,7 @@ export default function AboutPage() {
           </h2>
           <ol className="list-decimal pl-5 space-y-2 marker:text-primary marker:font-bold">
             <li className="pl-2">Visit the <Link href="/builder" className="underline font-medium text-primary">Builder</Link> page.</li>
-            <li className="pl-2">Select the "Lego bricks" (features) you want for your agent.</li>
+            <li className="pl-2">Select the &quot;Lego bricks&quot; (features) you want for your agent.</li>
             <li className="pl-2">Click <strong>Generate Prompt</strong>.</li>
             <li className="pl-2">Paste the prompt into Antigravity or your AI code editor.</li>
             <li className="pl-2">Watch your custom agent come to life in minutes!</li>

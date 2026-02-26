@@ -4,7 +4,6 @@ import { Category } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import * as LucideIcons from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface CategoryFilterProps {
   categories: Category[];
@@ -24,6 +23,7 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory 
         All
       </Button>
       {categories.map((category) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Icon = (LucideIcons as any)[category.icon] || LucideIcons.Circle;
         const isSelected = selectedCategory === category.id;
         

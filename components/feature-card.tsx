@@ -3,8 +3,7 @@
 import { Feature, FeatureDifficulty } from '@/lib/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Check, Info } from 'lucide-react';
+import { Check } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
@@ -22,7 +21,12 @@ const difficultyColors: Record<FeatureDifficulty, string> = {
 };
 
 export function FeatureCard({ feature, isSelected, onToggle }: FeatureCardProps) {
-  // Dynamically get icon component
+  // The feature.icon property is a string that corresponds to a Lucide icon name.
+  // We dynamically access the icon component from the LucideIcons module.
+  // The 'as any' cast is used here because TypeScript cannot statically verify
+  // that a string property will always match a key in the LucideIcons object.
+  // This is a common pattern for dynamic component loading based on string names.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const IconComponent = (LucideIcons as any)[feature.icon] || LucideIcons.HelpCircle;
 
   return (
