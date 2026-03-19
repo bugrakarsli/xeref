@@ -1,7 +1,9 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowRight, Terminal, Cpu, Bot, Code } from 'lucide-react';
+import { ArrowRight, Terminal, Cpu, Code } from 'lucide-react';
+import { XerefLogo } from '@/components/xeref-logo';
+
 
 export default function Home() {
   return (
@@ -9,15 +11,15 @@ export default function Home() {
       {/* Navigation */}
       <header className="px-4 lg:px-6 h-14 flex items-center border-b backdrop-blur-sm sticky top-0 z-50">
         <Link className="flex items-center justify-center font-bold text-lg" href="/">
-          <Bot className="h-6 w-6 mr-2 text-primary" />
-          Xeref-Claw
+          <XerefLogo className="h-8 w-8 mr-2" />
+          xeref.ai
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
             Features
           </Link>
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/about">
-            About OpenClaw
+            About XerefClaw
           </Link>
           <Button size="sm" asChild>
             <Link href="/builder">Start Building</Link>
@@ -45,7 +47,7 @@ export default function Home() {
                 </Link>
               </Button>
               <Button variant="outline" size="lg" className="h-12 px-8" asChild>
-                <Link href="https://github.com/BugraKarsli1" target="_blank">
+                <Link href="https://github.com/BugraKarsli" target="_blank">
                   View on GitHub
                 </Link>
               </Button>
@@ -92,10 +94,10 @@ export default function Home() {
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
         <p>© 2026 XerefAI. All rights reserved.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link className="hover:underline underline-offset-4" href="#">
+          <Link className="hover:underline underline-offset-4" href="/terms">
             Terms of Service
           </Link>
-          <Link className="hover:underline underline-offset-4" href="#">
+          <Link className="hover:underline underline-offset-4" href="/privacy">
             Privacy
           </Link>
         </nav>

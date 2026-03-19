@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Xeref-Claw | AI Agent Builder",
-  description: "Build custom OpenClaw agents with Xeref-Claw.",
+  title: "xeref.ai | AI Agent Builder",
+  description: "Build custom autonomous agents for the xeref.ai ecosystem.",
 };
 
 export default function RootLayout({
