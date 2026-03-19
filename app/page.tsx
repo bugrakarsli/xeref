@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowRight, Terminal, Cpu, Code } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 
+// Preview deployment test for Vercel checklist
+
 
 export default function Home() {
   return (
