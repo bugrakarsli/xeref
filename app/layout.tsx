@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   title: "xeref.ai | AI Agent Builder",
   description: "Build custom autonomous agents for the xeref.ai ecosystem.",
   icons: {
-    icon: "/xeref-favicon.png",
-    shortcut: "/xeref-favicon.png",
+    icon: "/xeref-ai-favicon-transparent.jpg",
+    shortcut: "/xeref-ai-favicon-transparent.jpg",
   },
   openGraph: {
     title: "xeref.ai | AI Agent Builder",
