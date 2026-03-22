@@ -1,6 +1,25 @@
 
 export type CategoryId = 'connect' | 'listen' | 'archive' | 'wire' | 'sense' | 'agent-architecture';
 
+// Database entities
+export interface Project {
+  id: string;
+  user_id: string;
+  name: string;
+  description: string | null;
+  selected_feature_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UsageEvent {
+  id: string;
+  user_id: string;
+  event_type: 'prompt_generated' | 'project_saved' | 'project_loaded' | 'project_deleted';
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+}
+
 export interface Category {
   id: CategoryId;
   name: string;

@@ -13,8 +13,34 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://xeref.ai"),
   title: "xeref.ai | AI Agent Builder",
   description: "Build custom autonomous agents for the xeref.ai ecosystem.",
+  icons: {
+    icon: "/xeref-favicon.png",
+    shortcut: "/xeref-favicon.png",
+  },
+  openGraph: {
+    title: "xeref.ai | AI Agent Builder",
+    description: "Build custom autonomous agents for the xeref.ai ecosystem.",
+    url: "https://xeref.ai",
+    siteName: "xeref.ai",
+    images: [
+      {
+        url: "/xeref-ogimage.png",
+        width: 1200,
+        height: 630,
+        alt: "xeref.ai — AI Agent Builder",
+      },
+    ],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "xeref.ai | AI Agent Builder",
+    description: "Build custom autonomous agents for the xeref.ai ecosystem.",
+    images: ["/xeref-ogimage.png"],
+  },
 };
 
 export default function RootLayout({

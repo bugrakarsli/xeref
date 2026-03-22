@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { features, categories } from '@/lib/features';
 import { Feature } from '@/lib/types';
 import { CategoryFilter } from '@/components/category-filter';
@@ -9,15 +9,36 @@ import { Basket } from '@/components/basket';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { XerefLogo } from '@/components/xeref-logo';
-import { Search, ArrowLeft } from 'lucide-react';
+import { Search, ArrowLeft, LogIn, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
+import type { User } from '@supabase/supabase-js';
 
 
 export default function BuilderPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<string>>(new Set());
+  const [user, setUser] = useState<User | null>(null);
+
+  // Resolve auth state once on mount
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    toast.info('Signed out');
+  };
 
   // Derived state for basket
   const selectedFeatures = Array.from(selectedFeatureIds)
@@ -27,11 +48,11 @@ export default function BuilderPage() {
   const filteredFeatures = useMemo(() => {
     return features.filter(feature => {
       const matchesCategory = selectedCategory ? feature.category === selectedCategory : true;
-      const matchesSearch = 
+      const matchesSearch =
         feature.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         feature.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
         feature.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()));
-      
+
       return matchesCategory && matchesSearch;
     });
   }, [selectedCategory, searchQuery]);
@@ -84,8 +105,26 @@ export default function BuilderPage() {
              </div>
            </div>
 
-           {/* Right: Back Button */}
-           <div className="flex items-center gap-4">
+           {/* Right: Auth + Back */}
+           <div className="flex items-center gap-2">
+             {user ? (
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 onClick={handleSignOut}
+                 className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground"
+               >
+                 <LogOut className="h-4 w-4" />
+                 Sign out
+               </Button>
+             ) : (
+               <Button variant="ghost" size="sm" asChild className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground">
+                 <Link href="/login">
+                   <LogIn className="h-4 w-4" />
+                   Sign in
+                 </Link>
+               </Button>
+             )}
              <Button variant="ghost" size="sm" asChild className="hidden md:flex gap-2 text-muted-foreground hover:text-foreground">
                <Link href="/">
                  <ArrowLeft className="h-4 w-4" />
@@ -100,7 +139,7 @@ export default function BuilderPage() {
              </Button>
            </div>
          </div>
-         
+
          <div className="container mx-auto px-4 pb-2">
             <CategoryFilter
               categories={categories}
@@ -122,6 +161,7 @@ export default function BuilderPage() {
          selectedFeatures={selectedFeatures}
          onRemoveFeature={removeFeature}
          onClearAll={clearAll}
+         isAuthenticated={!!user}
        />
     </div>
   );
