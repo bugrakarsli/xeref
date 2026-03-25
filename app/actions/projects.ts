@@ -32,15 +32,20 @@ export async function saveProject(
     metadata: { project_id: data.id, feature_count: featureIds.length },
   })
 
+  revalidatePath('/')
   revalidatePath('/builder')
   return data as Project
 }
 
 export async function getUserProjects(): Promise<Project[]> {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
   const { data, error } = await supabase
     .from('projects')
     .select('*')
+    .eq('user_id', user.id)
     .order('updated_at', { ascending: false })
 
   if (error) throw error
@@ -56,6 +61,7 @@ export async function deleteProject(id: string): Promise<void> {
     .from('projects')
     .delete()
     .eq('id', id)
+    .eq('user_id', user.id)
 
   if (error) throw error
 
@@ -65,6 +71,7 @@ export async function deleteProject(id: string): Promise<void> {
     metadata: { project_id: id },
   })
 
+  revalidatePath('/')
   revalidatePath('/builder')
 }
 

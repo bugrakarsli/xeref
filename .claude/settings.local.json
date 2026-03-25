@@ -11,7 +11,17 @@
       "Bash(git merge:*)",
       "Bash(git stash:*)",
       "Bash(vercel:*)",
-      "Bash(vercel whoami:*)"
+      "Bash(vercel whoami:*)",
+      "Bash(dir:*)",
+      "Bash(test:*)",
+      "Bash(cmd /c \"mklink /J \"\"D:\\\\bugrakarsli\\\\02-projects\\\\xeref\\\\xeref-claw\\\\.agent\\\\skills\"\" \"\"D:\\\\bugrakarsli\\\\04-skills\\\\agent-skills\"\"\")",
+      "Bash(cmd /c \"dir D:\\\\bugrakarsli\\\\02-projects\\\\xeref\\\\xeref-claw\\\\.agent\")",
+      "Bash(cmd /c \"dir /a D:\\\\bugrakarsli\\\\02-projects\\\\xeref\\\\xeref-claw\\\\.agent\")",
+      "Bash(powershell -Command \"Get-ChildItem -Force ''D:\\\\bugrakarsli\\\\02-projects\\\\xeref\\\\xeref-claw\\\\.agent''\")",
+      "Bash(powershell -Command:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run dev:*)",
+      "Bash(git add:*)"
     ]
   }
 }
