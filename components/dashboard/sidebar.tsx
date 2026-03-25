@@ -6,6 +6,13 @@ import { usePathname } from 'next/navigation'
 import type { Project, ViewKey } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import {
   Home,
@@ -22,6 +29,10 @@ import {
   LogOut,
   Dot,
   Menu,
+  MessageSquare,
+  Settings,
+  Zap,
+  Users,
 } from 'lucide-react'
 
 const SIDEBAR_PROJECT_LIMIT = 5
@@ -35,6 +46,7 @@ interface SidebarProps {
   onViewChange: (view: ViewKey) => void
   projects: Project[]
   userEmail: string
+  userName: string
   onSignOut: () => void
   className?: string
 }
@@ -67,6 +79,15 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
   )
 }
 
+function UserAvatar({ name }: { name: string }) {
+  const initial = name.charAt(0).toUpperCase()
+  return (
+    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
+      {initial}
+    </div>
+  )
+}
+
 export function Sidebar({
   collapsed,
   onToggle,
@@ -74,14 +95,17 @@ export function Sidebar({
   onViewChange,
   projects,
   userEmail,
+  userName,
   onSignOut,
   className,
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
+  const [chatsOpen, setChatsOpen] = useState(true)
   const pathname = usePathname()
   const isBuilderActive = pathname === '/builder'
 
-  const username = userEmail.split('@')[0]
+  const emailUsername = userEmail.split('@')[0]
+  const displayName = userName || (emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1))
 
   return (
     <aside
@@ -257,31 +281,93 @@ export function Sidebar({
             {!collapsed && <span>XerefClaw</span>}
           </Link>
         </div>
+
+        {/* Chats section */}
+        <div className="mt-2">
+          {!collapsed && (
+            <button
+              onClick={() => setChatsOpen((o) => !o)}
+              aria-expanded={chatsOpen}
+              aria-controls="chats-nav-section"
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
+                focusRing
+              )}
+            >
+              Chats
+              {chatsOpen ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
+          )}
+          {(chatsOpen || collapsed) && (
+            <div id="chats-nav-section" className="flex flex-col gap-1 mt-1">
+              <NavItem
+                icon={<MessageSquare className="h-4 w-4" />}
+                label="Chats"
+                active={activeView === 'chats'}
+                collapsed={collapsed}
+                onClick={() => onViewChange('chats')}
+              />
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* User + sign out */}
-      <div
-        className={cn(
-          'flex items-center gap-2 border-t p-3 shrink-0',
-          collapsed && 'justify-center'
-        )}
-      >
-        {!collapsed && (
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{username}</p>
-            <p className="text-xs text-muted-foreground truncate">{userEmail}</p>
-          </div>
-        )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
-          onClick={onSignOut}
-          title="Sign out"
-          aria-label="Sign out"
-        >
-          <LogOut className="h-4 w-4" />
-        </Button>
+      {/* User navbar */}
+      <div className="border-t shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={cn(
+                'flex items-center gap-2 w-full p-3 text-left transition-colors hover:bg-accent',
+                focusRing,
+                collapsed && 'justify-center'
+              )}
+              aria-label="User menu"
+            >
+              <UserAvatar name={displayName} />
+              {!collapsed && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{displayName}</p>
+                  <p className="text-xs text-muted-foreground truncate">Xeref Free</p>
+                </div>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side="top"
+            align={collapsed ? 'center' : 'start'}
+            className="w-56 mb-1"
+          >
+            <div className="px-2 py-1.5">
+              <p className="text-sm font-medium truncate">{userEmail}</p>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <Settings className="h-4 w-4" />
+              Settings
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <Zap className="h-4 w-4 text-primary" />
+              Upgrade Plan
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">
+              <Users className="h-4 w-4 text-blue-400" />
+              Referral Program
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+              onClick={onSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Logout
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </aside>
   )

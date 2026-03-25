@@ -16,6 +16,7 @@ const VIEW_LABELS: Record<Exclude<ViewKey, 'home'>, string> = {
   calendar: 'Calendar',
   workflows: 'Workflows',
   inbox: 'Inbox',
+  chats: 'Chats',
 }
 
 interface DashboardShellProps {
@@ -60,6 +61,7 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
         }}
         projects={projects}
         userEmail={user.email ?? ''}
+        userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''}
         onSignOut={handleSignOut}
         className={cn(
           'fixed z-30 md:relative md:z-auto transition-transform duration-200',
