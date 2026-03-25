@@ -10,7 +10,7 @@ const freeTier = {
   price: '$0',
   description: 'Everything you need to build and generate agent prompts.',
   badge: 'Current plan',
-  cta: 'Start Building',
+  cta: 'Get Started',
   features: [
     'Access to all 48+ CLAWS features',
     'Unlimited prompt generation',
@@ -46,7 +46,7 @@ export default function PricingPage() {
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
-            Features
+            XerefClaw
           </Link>
           <Link className="text-sm font-medium hover:underline underline-offset-4 hidden sm:inline" href="/docs">
             Docs

@@ -4,9 +4,17 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { XerefLogo } from '@/components/xeref-logo'
+import { toast } from 'sonner'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -19,11 +27,12 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const router = useRouter()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [open, setOpen] = useState(false)
+
+  // Auth form state
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [sent, setSent] = useState(false)
-  const [error, setError] = useState('')
 
   useEffect(() => {
     const supabase = createClient()
@@ -32,54 +41,60 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session?.user)
+      if (session?.user) {
+        setOpen(false)
+        router.push('/')
+      }
     })
     return () => subscription.unsubscribe()
-  }, [])
+  }, [router])
 
   const handleClick = () => {
     if (isAuthenticated) {
-      router.push('/builder')
+      router.push('/')
     } else {
       setOpen(true)
-    }
-  }
-
-  const handleGoogle = async () => {
-    setError('')
-    setGoogleLoading(true)
-    const supabase = createClient()
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    })
-    if (oauthError) {
-      setGoogleLoading(false)
-      setError(oauthError.message)
     }
   }
 
   const handleMagicLink = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email) return
-    setError('')
     setLoading(true)
     const supabase = createClient()
-    const { error: otpError } = await supabase.auth.signInWithOtp({
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
+      options: {
+        emailRedirectTo: `${location.origin}/auth/callback`,
+      },
     })
     setLoading(false)
-    if (otpError) {
-      setError(otpError.message)
+    if (error) {
+      toast.error(error.message)
     } else {
       setSent(true)
+      toast.success('Magic link sent — check your inbox!')
     }
   }
 
-  const resetDialog = () => {
-    setSent(false)
+  const handleGoogle = async () => {
+    setGoogleLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${location.origin}/auth/callback`,
+      },
+    })
+    if (error) {
+      setGoogleLoading(false)
+      toast.error(error.message)
+    }
+  }
+
+  const resetForm = () => {
     setEmail('')
-    setError('')
+    setSent(false)
   }
 
   return (
@@ -89,14 +104,15 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
         onClick={handleClick}
         className={size === 'lg' ? 'h-12 px-8' : ''}
       >
-        Start Building {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
+        Get Started {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
       </Button>
 
-      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetDialog() }}>
+      <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm() }}>
         <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Sign in to xeref.ai</DialogTitle>
-            <DialogDescription>
+          <DialogHeader className="flex flex-col items-center gap-2 pb-2">
+            <XerefLogo className="h-10 w-10" />
+            <DialogTitle className="text-xl font-bold">Sign in to xeref.ai</DialogTitle>
+            <DialogDescription className="text-center text-sm">
               Save your agent configurations and access them anywhere.
             </DialogDescription>
           </DialogHeader>
@@ -105,24 +121,20 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
             <div className="bg-muted/40 border rounded-xl p-6 text-center space-y-2">
               <p className="font-medium">Check your email</p>
               <p className="text-sm text-muted-foreground">
-                We sent a magic link to{' '}
-                <span className="font-mono text-foreground">{email}</span>.
+                We sent a magic link to <span className="font-mono text-foreground">{email}</span>.
               </p>
               <Button
                 variant="ghost"
                 size="sm"
                 className="text-xs text-muted-foreground"
-                onClick={resetDialog}
+                onClick={resetForm}
               >
                 Use a different email
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-              {error && (
-                <p className="text-sm text-destructive text-center">{error}</p>
-              )}
-
+              {/* Google OAuth */}
               <Button
                 variant="outline"
                 className="w-full gap-2"
@@ -148,11 +160,12 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
                 <div className="flex-1 border-t" />
               </div>
 
+              {/* Magic Link */}
               <form onSubmit={handleMagicLink} className="space-y-3">
                 <div className="space-y-1.5">
-                  <Label htmlFor="dialog-email">Email address</Label>
+                  <Label htmlFor="modal-email">Email address</Label>
                   <Input
-                    id="dialog-email"
+                    id="modal-email"
                     type="email"
                     placeholder="you@example.com"
                     value={email}
@@ -169,21 +182,13 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
             </div>
           )}
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-muted-foreground pt-1">
             By signing in, you agree to our{' '}
-            <Link
-              href="/terms"
-              className="underline underline-offset-2 hover:text-foreground"
-              onClick={() => setOpen(false)}
-            >
+            <Link href="/terms" className="underline underline-offset-2 hover:text-foreground" onClick={() => setOpen(false)}>
               Terms
             </Link>{' '}
             and{' '}
-            <Link
-              href="/privacy"
-              className="underline underline-offset-2 hover:text-foreground"
-              onClick={() => setOpen(false)}
-            >
+            <Link href="/privacy" className="underline underline-offset-2 hover:text-foreground" onClick={() => setOpen(false)}>
               Privacy Policy
             </Link>
             .

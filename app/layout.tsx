@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://xeref.ai"),
-  title: "xeref.ai | AI Agent Builder",
-  description: "Build custom autonomous agents for the xeref.ai ecosystem.",
+  title: "xeref.ai | AI Agent Manager",
+  description: "Build and manage custom autonomous agents for the xeref.ai ecosystem.",
   icons: {
     icon: "/xeref-ai-favicon-transparent.jpg",
     shortcut: "/xeref-ai-favicon-transparent.jpg",

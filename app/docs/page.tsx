@@ -9,8 +9,8 @@ const sections = [
     title: 'Getting Started',
     content: [
       {
-        heading: '1. Open the Builder',
-        body: 'Click "Start Building" on the landing page or navigate to /builder. No account is required to browse and configure features.',
+        heading: '1. Open XerefClaw',
+        body: 'Click "XerefClaw" on the landing page or navigate to /builder. No account is required to browse and configure features.',
       },
       {
         heading: '2. Select Your Features',
@@ -78,7 +78,7 @@ export default function DocsPage() {
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
-            Features
+            XerefClaw
           </Link>
           <Link className="text-sm font-medium text-primary underline underline-offset-4" href="/docs">
             Docs
