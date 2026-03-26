@@ -17,12 +17,12 @@ export const metadata: Metadata = {
   title: "xeref.ai | AI Agent Manager",
   description: "Build and manage custom autonomous agents for the xeref.ai ecosystem.",
   icons: {
-    icon: "/xeref-ai-favicon-transparent.jpg",
-    shortcut: "/xeref-ai-favicon-transparent.jpg",
+    icon: "/xeref-ai-favicon.svg",
+    shortcut: "/xeref-ai-favicon.svg",
   },
   openGraph: {
-    title: "xeref.ai | AI Agent Builder",
-    description: "Build custom autonomous agents for the xeref.ai ecosystem.",
+    title: "xeref.ai | AI Agent Manager",
+    description: "Build and manage custom autonomous agents for the xeref.ai ecosystem.",
     url: "https://xeref.ai",
     siteName: "xeref.ai",
     images: [
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "xeref.ai | AI Agent Builder",
+    title: "xeref.ai | AI Agent Manager",
     description: "Build custom autonomous agents for the xeref.ai ecosystem.",
     images: ["/xeref-ogimage.png"],
   },

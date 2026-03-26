@@ -5,7 +5,7 @@ import { getUserProjects } from '@/app/actions/projects'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const metadata: Metadata = {
-  title: 'Dashboard — xeref.ai',
+  title: 'xeref.ai',
 }
 
 interface HomePageProps {

@@ -27,7 +27,8 @@
       "Bash(gh deployment list:*)",
       "Bash(npx vercel ls:*)",
       "Bash(gh api:*)",
-      "Bash(npx shadcn@latest add:*)"
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npx skills:*)"
     ]
   }
 }

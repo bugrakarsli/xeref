@@ -22,8 +22,7 @@ import {
   GitFork,
   Inbox,
   Bot,
-  ChevronLeft,
-  ChevronRight,
+  LayoutDashboard,
   ChevronDown,
   ChevronUp,
   LogOut,
@@ -119,32 +118,44 @@ export function Sidebar({
       {/* Logo + toggle */}
       <div
         className={cn(
-          'flex items-center h-14 px-3 border-b shrink-0',
-          collapsed ? 'justify-center' : 'justify-between'
+          'flex items-center h-14 border-b shrink-0',
+          collapsed ? 'justify-center px-3' : 'px-3 gap-2'
         )}
       >
-        {!collapsed && (
-          <Link href="/" className="flex items-center gap-2">
-            <XerefLogo className="h-6 w-6 shrink-0" />
-            <span className="font-semibold text-sm tracking-tight">
-              xeref<span className="text-primary">.ai</span>
-            </span>
-          </Link>
+        {collapsed ? (
+          // Collapsed: XerefLogo fades to LayoutDashboard on hover
+          <button
+            onClick={onToggle}
+            aria-label="Expand sidebar"
+            className={cn(
+              'group relative flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent',
+              focusRing
+            )}
+          >
+            <XerefLogo className="h-6 w-6 absolute transition-opacity duration-150 group-hover:opacity-0" />
+            <LayoutDashboard className="h-5 w-5 absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100 text-primary" />
+          </button>
+        ) : (
+          <>
+            {/* Dashboard icon — acts as collapse toggle */}
+            <button
+              onClick={onToggle}
+              aria-label="Collapse sidebar"
+              className={cn(
+                'group flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent shrink-0',
+                focusRing
+              )}
+            >
+              <LayoutDashboard className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
+            </button>
+            <Link href="/" className="flex items-center gap-2 flex-1 min-w-0">
+              <XerefLogo className="h-5 w-5 shrink-0" />
+              <span className="font-semibold text-sm tracking-tight truncate">
+                xeref<span className="text-primary">.ai</span>
+              </span>
+            </Link>
+          </>
         )}
-        {collapsed && <XerefLogo className="h-6 w-6" />}
-        <Button
-          variant="ghost"
-          size="icon"
-          className={cn('h-7 w-7 shrink-0', collapsed && 'mt-0')}
-          onClick={onToggle}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
       </div>
 
       {/* Mobile hamburger - shown when sidebar collapsed on mobile */}
