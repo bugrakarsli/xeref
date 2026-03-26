@@ -28,7 +28,8 @@
       "Bash(npx vercel ls:*)",
       "Bash(gh api:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(npx skills:*)"
+      "Bash(npx skills:*)",
+      "Bash(ls -la \"D:/bugrakarsli/02-projects/xeref/xeref-claw/middleware\"*)"
     ]
   }
 }
