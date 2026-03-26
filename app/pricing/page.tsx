@@ -88,9 +88,9 @@ export default function PricingPage() {
         <div className="container px-4 md:px-6 py-12 md:py-20 max-w-5xl mx-auto">
           <div className="text-center mb-12 space-y-3">
             <Badge variant="secondary">Pricing</Badge>
-            <h1 className="text-4xl font-extrabold tracking-tight">Simple, honest pricing</h1>
+            <h1 className="text-4xl font-extrabold tracking-tight">Start for free. Scale as you grow.</h1>
             <p className="text-muted-foreground text-lg max-w-xl mx-auto">
-              Start for free. No credit card, no limits on core features.
+              No credit card required. Basic plan lets you explore without signing up.
             </p>
           </div>
 

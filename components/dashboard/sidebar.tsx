@@ -15,6 +15,11 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
+import {
   Home,
   CheckSquare,
   BarChart2,
@@ -59,7 +64,7 @@ interface NavItemProps {
 }
 
 function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
-  return (
+  const button = (
     <button
       onClick={onClick}
       aria-label={collapsed ? label : undefined}
@@ -75,6 +80,15 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
       <span className="shrink-0">{icon}</span>
       {!collapsed && <span className="truncate">{label}</span>}
     </button>
+  )
+
+  if (!collapsed) return button
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{button}</TooltipTrigger>
+      <TooltipContent side="right">{label}</TooltipContent>
+    </Tooltip>
   )
 }
 
@@ -276,21 +290,40 @@ export function Sidebar({
               AI Agents
             </p>
           )}
-          <Link
-            href="/builder"
-            aria-current={isBuilderActive ? 'page' : undefined}
-            aria-label={collapsed ? 'AI Agents — XerefClaw' : undefined}
-            className={cn(
-              'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-              'hover:bg-accent hover:text-accent-foreground',
-              focusRing,
-              isBuilderActive && 'bg-accent text-accent-foreground',
-              collapsed && 'justify-center px-2'
-            )}
-          >
-            <Bot className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>XerefClaw</span>}
-          </Link>
+          {collapsed ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/builder"
+                  aria-current={isBuilderActive ? 'page' : undefined}
+                  aria-label="XerefClaw"
+                  className={cn(
+                    'flex items-center justify-center w-full rounded-lg px-2 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing,
+                    isBuilderActive && 'bg-accent text-accent-foreground'
+                  )}
+                >
+                  <Bot className="h-4 w-4 shrink-0" />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent side="right">XerefClaw</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link
+              href="/builder"
+              aria-current={isBuilderActive ? 'page' : undefined}
+              className={cn(
+                'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                'hover:bg-accent hover:text-accent-foreground',
+                focusRing,
+                isBuilderActive && 'bg-accent text-accent-foreground'
+              )}
+            >
+              <Bot className="h-4 w-4 shrink-0" />
+              <span>XerefClaw</span>
+            </Link>
+          )}
         </div>
 
         {/* Chats section */}
@@ -361,9 +394,11 @@ export function Sidebar({
               <Settings className="h-4 w-4" />
               Settings
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">
-              <Zap className="h-4 w-4 text-primary" />
-              Upgrade Plan
+            <DropdownMenuItem className="gap-2 cursor-pointer" asChild>
+              <Link href="/pricing">
+                <Zap className="h-4 w-4 text-primary" />
+                Upgrade Plan
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem className="gap-2 cursor-pointer">
               <Users className="h-4 w-4 text-blue-400" />

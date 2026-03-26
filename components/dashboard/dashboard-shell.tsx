@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
 import type { Project, ViewKey } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
@@ -69,7 +70,7 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
         )}
       />
 
-      <main className="flex flex-col flex-1 overflow-y-auto min-w-0">
+      <main className="relative flex flex-col flex-1 overflow-y-auto min-w-0">
         {activeView === 'home' ? (
           <HomeView
             user={user}
@@ -79,6 +80,15 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
         ) : (
           <ComingSoonView viewName={VIEW_LABELS[activeView]} />
         )}
+
+        {/* Changelog badge */}
+        <Link
+          href="/changelog"
+          className="fixed bottom-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-primary/30 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:border-primary/60 hover:text-foreground"
+        >
+          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+          v1
+        </Link>
       </main>
     </div>
   )

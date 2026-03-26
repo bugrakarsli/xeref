@@ -32,9 +32,6 @@ export default function LoginPage() {
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/docs">
             Docs
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/pricing">
-            Pricing
-          </Link>
         </nav>
         <div className="ml-auto flex gap-2 items-center">
           <div className="hidden sm:block">
