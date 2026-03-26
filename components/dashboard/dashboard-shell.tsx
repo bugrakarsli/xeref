@@ -9,16 +9,14 @@ import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Sidebar } from './sidebar'
 import { HomeView } from './home-view'
-import { ComingSoonView } from './coming-soon-view'
-
-const VIEW_LABELS: Record<Exclude<ViewKey, 'home'>, string> = {
-  tasks: 'All Tasks',
-  stats: 'Stats',
-  calendar: 'Calendar',
-  workflows: 'Workflows',
-  inbox: 'Inbox',
-  chats: 'Chats',
-}
+import { TasksView } from './tasks-view'
+import { StatsView } from './stats-view'
+import { CalendarView } from './calendar-view'
+import { WorkflowsView } from './workflows-view'
+import { InboxView } from './inbox-view'
+import { ChatsView } from './chats-view'
+import { SettingsView } from './settings-view'
+import { ReferralView } from './referral-view'
 
 interface DashboardShellProps {
   user: User
@@ -71,15 +69,33 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
       />
 
       <main className="relative flex flex-col flex-1 overflow-y-auto min-w-0">
-        {activeView === 'home' ? (
-          <HomeView
-            user={user}
-            projects={projects}
-            onProjectDeleted={handleProjectDeleted}
-          />
-        ) : (
-          <ComingSoonView viewName={VIEW_LABELS[activeView]} />
-        )}
+        {(() => {
+          switch (activeView) {
+            case 'home':
+              return <HomeView user={user} projects={projects} onProjectDeleted={handleProjectDeleted} />
+            case 'tasks':
+              return <TasksView />
+            case 'stats':
+              return <StatsView />
+            case 'calendar':
+              return <CalendarView />
+            case 'workflows':
+              return <WorkflowsView />
+            case 'inbox':
+              return <InboxView />
+            case 'chats':
+              return <ChatsView />
+            case 'settings':
+              return (
+                <SettingsView
+                  userEmail={user.email ?? ''}
+                  userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''}
+                />
+              )
+            case 'referral':
+              return <ReferralView />
+          }
+        })()}
 
         {/* Changelog badge */}
         <Link

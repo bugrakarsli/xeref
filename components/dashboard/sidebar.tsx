@@ -138,17 +138,22 @@ export function Sidebar({
       >
         {collapsed ? (
           // Collapsed: XerefLogo fades to LayoutDashboard on hover
-          <button
-            onClick={onToggle}
-            aria-label="Expand sidebar"
-            className={cn(
-              'group relative flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent',
-              focusRing
-            )}
-          >
-            <XerefLogo className="h-6 w-6 absolute transition-opacity duration-150 group-hover:opacity-0" />
-            <LayoutDashboard className="h-5 w-5 absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100 text-primary" />
-          </button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={onToggle}
+                aria-label="Expand sidebar"
+                className={cn(
+                  'group relative flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent',
+                  focusRing
+                )}
+              >
+                <XerefLogo className="h-6 w-6 absolute transition-opacity duration-150 group-hover:opacity-0" />
+                <LayoutDashboard className="h-5 w-5 absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100 text-primary" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Expand Sidebar</TooltipContent>
+          </Tooltip>
         ) : (
           <>
             {/* Dashboard icon — acts as collapse toggle */}
@@ -390,7 +395,7 @@ export function Sidebar({
               <p className="text-sm font-medium truncate">{userEmail}</p>
             </div>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 cursor-pointer">
+            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onViewChange('settings')}>
               <Settings className="h-4 w-4" />
               Settings
             </DropdownMenuItem>
@@ -400,7 +405,7 @@ export function Sidebar({
                 Upgrade Plan
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">
+            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => onViewChange('referral')}>
               <Users className="h-4 w-4 text-blue-400" />
               Referral Program
             </DropdownMenuItem>

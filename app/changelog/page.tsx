@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
@@ -53,6 +54,13 @@ export default function ChangelogPage() {
           xeref.ai
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
+          <Link
+            className="flex items-center gap-1.5 text-sm font-medium hover:underline underline-offset-4"
+            href="/"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to App
+          </Link>
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
             XerefClaw
           </Link>

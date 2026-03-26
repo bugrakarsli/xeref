@@ -39,9 +39,9 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user)
     })
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user)
-      if (session?.user) {
+      if (event === 'SIGNED_IN' && session?.user) {
         setOpen(false)
         router.push('/')
       }

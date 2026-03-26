@@ -29,6 +29,9 @@ export default function LoginPage() {
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
             XerefClaw
           </Link>
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/pricing">
+            Pricing
+          </Link>
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/docs">
             Docs
           </Link>
@@ -468,7 +471,6 @@ export default function LoginPage() {
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
         <p>© 2026 Xeref LLC. All rights reserved.</p>
         <nav className="sm:ml-auto flex flex-wrap gap-4 sm:gap-6 justify-center">
-          <Link className="hover:underline underline-offset-4" href="/docs">Docs</Link>
           <Link className="hover:underline underline-offset-4" href="/pricing">Pricing</Link>
           <Link className="hover:underline underline-offset-4" href="/changelog">Changelog</Link>
           <Link className="hover:underline underline-offset-4" href="/faq">FAQ</Link>
