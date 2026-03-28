@@ -13,7 +13,6 @@ import {
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { MobileNav } from '@/components/mobile-nav';
-import { PricingSection } from '@/components/pricing-section';
 
 export default function LoginPage() {
   return (
@@ -130,7 +129,7 @@ export default function LoginPage() {
               <Badge variant="secondary" className="mb-3">Features</Badge>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Built for how you actually work</h2>
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-6">
               {[
                 {
                   icon: <Target className="h-6 w-6" />,
@@ -138,6 +137,7 @@ export default function LoginPage() {
                   title: 'AI Goal Decomposition',
                   desc: 'Type a goal. Xeref\'s AI generates a complete project plan — phases, tasks, priorities — and writes it to your workspace instantly.',
                   tag: 'create_project_with_plan()',
+                  span: 'lg:col-span-3',
                 },
                 {
                   icon: <Zap className="h-6 w-6" />,
@@ -145,6 +145,7 @@ export default function LoginPage() {
                   title: 'AI Task Prioritization',
                   desc: 'Ask "what should I work on next?" and get a reasoned top-3 list based on your context, daily targets, priorities, and deadlines.',
                   tag: 'suggest_next_task()',
+                  span: 'lg:col-span-3',
                 },
                 {
                   icon: <Sun className="h-6 w-6" />,
@@ -152,9 +153,10 @@ export default function LoginPage() {
                   title: 'Daily Targets',
                   desc: 'Set 3 daily goals each morning. They surface on your Home view, inform AI prioritization, and give your agent real context about today\'s focus.',
                   tag: 'set_daily_targets()',
+                  span: 'lg:col-span-2',
                 },
-              ].map(({ icon, color, title, desc, tag }) => (
-                <div key={title} className="flex flex-col border p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow">
+              ].map(({ icon, color, title, desc, tag, span }) => (
+                <div key={title} className={`flex flex-col border p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow ${span}`}>
                   <div className={`w-10 h-10 ${color} rounded-lg flex items-center justify-center mb-4`}>{icon}</div>
                   <h3 className="text-base font-semibold mb-2">{title}</h3>
                   <p className="text-sm text-muted-foreground mb-3 flex-1">{desc}</p>
@@ -165,7 +167,7 @@ export default function LoginPage() {
               ))}
 
               {/* MCP Backend — wide card */}
-              <div className="flex flex-col border p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow md:col-span-2">
+              <div className="flex flex-col border p-6 rounded-xl bg-card shadow-sm hover:shadow-md transition-shadow lg:col-span-4">
                 <div className="flex flex-col md:flex-row md:items-start gap-6">
                   <div className="flex-1">
                     <div className="w-10 h-10 bg-emerald-500/10 text-emerald-500 rounded-lg flex items-center justify-center mb-4">
@@ -329,26 +331,6 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* ── Pricing ── */}
-        <section className="w-full py-12 md:py-20 lg:py-28">
-          <div className="container mx-auto px-4 md:px-6 lg:px-8">
-            <div className="flex flex-col items-center text-center mb-12">
-              <Badge variant="secondary" className="mb-3">Pricing</Badge>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Start for free. Scale as you grow.</h2>
-              <p className="mt-3 max-w-[600px] text-muted-foreground">
-                No credit card required. Basic plan lets you explore without signing up.
-              </p>
-            </div>
-            <PricingSection />
-            <p className="text-center text-sm text-muted-foreground mt-8">
-              Questions?{' '}
-              <Link href="/faq" className="underline underline-offset-2 hover:text-foreground">Check the FAQ</Link>
-              {' '}or{' '}
-              <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">get in touch</a>.
-            </p>
-          </div>
-        </section>
-
         {/* ── Roadmap ── */}
         <section className="w-full py-12 md:py-20 lg:py-28 bg-muted/50">
           <div className="container mx-auto px-4 md:px-6 lg:px-8">
@@ -437,42 +419,12 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* ── CTA ── */}
-        <section className="w-full py-12 md:py-20 lg:py-28 relative overflow-hidden">
-          <div className="absolute inset-0 z-0 bg-gradient-to-b from-primary/10 to-background pointer-events-none" />
-          <div className="container mx-auto px-4 md:px-6 lg:px-8 relative z-10">
-            <div className="border rounded-2xl bg-card p-10 md:p-16 max-w-2xl mx-auto flex flex-col items-center text-center">
-              <div className="mb-5 flex items-center gap-2 rounded-full border border-border bg-muted/50 px-4 py-1.5 text-sm font-medium">
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-green-400" />
-                </span>
-                Early Access Open
-              </div>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl mb-4">
-                Your agents deserve a memory
-              </h2>
-              <p className="text-muted-foreground mb-8 max-w-md">
-                Start with XerefClaw for free. No credit card. No signup wall for your first agent.
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <StartBuildingButton size="lg" showArrow />
-                <Button variant="outline" size="lg" className="h-12 px-8" asChild>
-                  <Link href="/builder">Try as guest</Link>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </section>
-
       </main>
 
       {/* ── Footer ── */}
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
         <p>© 2026 Xeref LLC. All rights reserved.</p>
         <nav className="sm:ml-auto flex flex-wrap gap-4 sm:gap-6 justify-center">
-          <Link className="hover:underline underline-offset-4" href="/pricing">Pricing</Link>
-          <Link className="hover:underline underline-offset-4" href="/changelog">Changelog</Link>
           <Link className="hover:underline underline-offset-4" href="/faq">FAQ</Link>
           <Link className="hover:underline underline-offset-4" href="/about">About</Link>
           <Link className="hover:underline underline-offset-4" href="/terms">Terms of Service</Link>

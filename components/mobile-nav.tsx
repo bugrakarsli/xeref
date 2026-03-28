@@ -31,34 +31,38 @@ export function MobileNav() {
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </Button>
 
-      {open && (
-        <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background shadow-lg z-50 overflow-hidden">
-          <Link
-            href="/builder"
-            className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            XerefClaw
-          </Link>
-          <Link
-            href="/docs"
-            className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            Docs
-          </Link>
-          <Link
-            href="/pricing"
-            className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
-            onClick={() => setOpen(false)}
-          >
-            Pricing
-          </Link>
-          <div className="border-t border-border p-3" onClick={() => setOpen(false)}>
-            <StartBuildingButton size="sm" />
-          </div>
+      <div 
+        className={`absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-background shadow-lg z-50 overflow-hidden transition-all duration-200 origin-top-right ${
+          open 
+            ? 'scale-100 opacity-100 visible' 
+            : 'scale-95 opacity-0 invisible pointer-events-none'
+        }`}
+      >
+        <Link
+          href="/builder"
+          className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+          onClick={() => setOpen(false)}
+        >
+          XerefClaw
+        </Link>
+        <Link
+          href="/docs"
+          className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+          onClick={() => setOpen(false)}
+        >
+          Docs
+        </Link>
+        <Link
+          href="/pricing"
+          className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+          onClick={() => setOpen(false)}
+        >
+          Pricing
+        </Link>
+        <div className="border-t border-border p-3" onClick={() => setOpen(false)}>
+          <StartBuildingButton size="sm" />
         </div>
-      )}
+      </div>
     </div>
   )
 }

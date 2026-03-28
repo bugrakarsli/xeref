@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
+import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
@@ -48,30 +49,35 @@ const typeStyles: Record<string, string> = {
 export default function ChangelogPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-14 flex items-center border-b backdrop-blur-sm sticky top-0 z-50">
+      <header className="px-4 lg:px-6 h-14 flex items-center border-b backdrop-blur-sm sticky top-0 z-50 relative">
         <Link className="flex items-center justify-center font-bold text-lg" href="/">
           <XerefLogo className="h-8 w-8 mr-2" />
           xeref.ai
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link
-            className="flex items-center gap-1.5 text-sm font-medium hover:underline underline-offset-4"
-            href="/"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            Back to App
-          </Link>
+        <Link
+          className="ml-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          href="/"
+        >
+          <ArrowLeft className="h-3 w-3" />
+          Back
+        </Link>
+        <nav className="absolute left-1/2 -translate-x-1/2 hidden sm:flex gap-4 sm:gap-6 items-center">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
             XerefClaw
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4 hidden sm:inline" href="/docs">
-            Docs
-          </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4 hidden sm:inline" href="/pricing">
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/pricing">
             Pricing
           </Link>
-          <StartBuildingButton size="sm" />
+          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/docs">
+            Docs
+          </Link>
         </nav>
+        <div className="ml-auto flex gap-2 items-center">
+          <div className="hidden sm:block">
+            <StartBuildingButton size="sm" />
+          </div>
+          <MobileNav />
+        </div>
       </header>
 
       <main className="flex-1">
