@@ -25,13 +25,13 @@ export default function LoginPage() {
           xeref.ai
         </Link>
         <nav className="absolute left-1/2 -translate-x-1/2 hidden sm:flex gap-4 sm:gap-6 items-center">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
+          <Link className="text-sm font-medium hover:text-cyan-400 transition-colors" href="/builder">
             XerefClaw
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/pricing">
+          <Link className="text-sm font-medium hover:text-cyan-400 transition-colors" href="/pricing">
             Pricing
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/docs">
+          <Link className="text-sm font-medium hover:text-cyan-400 transition-colors" href="/docs">
             Docs
           </Link>
         </nav>
@@ -56,7 +56,7 @@ export default function LoginPage() {
               </span>
               NOW LIVE IN BETA
             </div>
-            <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl/none bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60 pb-2 max-w-4xl">
+            <h1 className="text-4xl font-extrabold tracking-tighter sm:text-5xl md:text-5xl lg:text-6xl xl:text-7xl/none bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-cyan-400/60 pb-2 max-w-4xl">
               Build agents that <br className="hidden sm:inline" />remember everything
             </h1>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl dark:text-gray-400 mt-4 mb-8">
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 },
                 {
                   icon: <LayoutDashboard className="h-8 w-8" />,
-                  color: 'bg-purple-500/10 text-purple-500',
+                  color: 'bg-cyan-500/10 text-cyan-500',
                   title: 'Manage',
                   desc: 'Projects, Tasks, Notes, Daily Targets — all connected to the same MCP backend your agent uses. What you manage is what your agent knows.',
                 },
@@ -141,7 +141,7 @@ export default function LoginPage() {
                 },
                 {
                   icon: <Zap className="h-6 w-6" />,
-                  color: 'bg-purple-500/10 text-purple-500',
+                  color: 'bg-cyan-500/10 text-cyan-500',
                   title: 'AI Task Prioritization',
                   desc: 'Ask "what should I work on next?" and get a reasoned top-3 list based on your context, daily targets, priorities, and deadlines.',
                   tag: 'suggest_next_task()',
@@ -219,7 +219,7 @@ export default function LoginPage() {
                   },
                   {
                     icon: <Layers className="h-5 w-5" />,
-                    color: 'bg-purple-500/10 text-purple-500',
+                    color: 'bg-cyan-500/10 text-cyan-500',
                     title: 'Gemini Embedding 2',
                     desc: 'Google\'s natively multimodal embedding model. 3072-dimensional vectors, 8192-token context, 100+ languages. Auto-embeds every write via Edge Functions.',
                   },
@@ -314,7 +314,7 @@ export default function LoginPage() {
               {[
                 { icon: <Database className="h-6 w-6" />, color: 'bg-blue-500/10 text-blue-500', title: 'Supabase', desc: 'Auth, RLS, Edge Functions, structured data' },
                 { icon: <Brain className="h-6 w-6" />, color: 'bg-emerald-500/10 text-emerald-500', title: 'Pinecone', desc: 'Vector memory, hybrid semantic search' },
-                { icon: <Layers className="h-6 w-6" />, color: 'bg-purple-500/10 text-purple-500', title: 'Gemini Embedding 2', desc: '3072-dim multimodal embeddings, 100+ languages' },
+                { icon: <Layers className="h-6 w-6" />, color: 'bg-cyan-500/10 text-cyan-500', title: 'Gemini Embedding 2', desc: '3072-dim multimodal embeddings, 100+ languages' },
                 { icon: <Server className="h-6 w-6" />, color: 'bg-amber-500/10 text-amber-500', title: 'Xeref MCP Server', desc: 'Projects, Tasks, Notes, Memory, Daily Targets' },
                 { icon: <Cpu className="h-6 w-6" />, color: 'bg-rose-500/10 text-rose-500', title: 'XerefClaw', desc: 'Agent prompt builder, CLAWS methodology' },
                 { icon: <Smartphone className="h-6 w-6" />, color: 'bg-cyan-500/10 text-cyan-500', title: 'Mobile App', desc: 'React Native companion (roadmap Phase 4)' },
@@ -341,17 +341,6 @@ export default function LoginPage() {
             <div className="grid gap-6 md:grid-cols-2">
               {[
                 {
-                  phase: '0',
-                  color: 'bg-primary/10 text-primary border border-primary/20',
-                  title: 'Immediate',
-                  timeline: 'This week',
-                  items: [
-                    { text: 'Fix Google OAuth display name → "Xeref"', priority: true },
-                    { text: 'Coming Soon views for all sidebar sections', priority: true },
-                    { text: 'Waitlist / Notify me CTAs per section', priority: false },
-                  ],
-                },
-                {
                   phase: '1',
                   color: 'bg-blue-500/10 text-blue-500',
                   title: 'Core Platform',
@@ -368,7 +357,7 @@ export default function LoginPage() {
                 },
                 {
                   phase: '2',
-                  color: 'bg-purple-500/10 text-purple-500',
+                  color: 'bg-cyan-500/10 text-cyan-500',
                   title: 'Memory & Community',
                   timeline: '8–16 weeks',
                   items: [

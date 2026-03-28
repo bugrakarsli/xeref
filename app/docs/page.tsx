@@ -78,13 +78,13 @@ export default function DocsPage() {
           xeref.ai
         </Link>
         <nav className="absolute left-1/2 -translate-x-1/2 hidden sm:flex gap-4 sm:gap-6 items-center">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
+          <Link className="text-sm font-medium hover:text-cyan-400 transition-colors" href="/builder">
             XerefClaw
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" href="/pricing">
+          <Link className="text-sm font-medium hover:text-cyan-400 transition-colors" href="/pricing">
             Pricing
           </Link>
-          <Link className="text-sm font-medium text-primary underline underline-offset-4" href="/docs">
+          <Link className="text-sm font-medium text-cyan-400" href="/docs">
             Docs
           </Link>
         </nav>

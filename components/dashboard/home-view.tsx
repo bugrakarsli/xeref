@@ -96,7 +96,8 @@ function ProjectCard({
 }
 
 export function HomeView({ user, projects, onProjectDeleted }: HomeViewProps) {
-  const username = user.email?.split('@')[0] ?? 'there'
+  const raw = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
+  const username = raw.charAt(0).toUpperCase() + raw.slice(1)
 
   return (
     <div className="flex flex-col gap-8 p-6 md:p-8 max-w-5xl w-full mx-auto">
@@ -122,7 +123,7 @@ export function HomeView({ user, projects, onProjectDeleted }: HomeViewProps) {
             Open XerefClaw to select features and generate your agent prompt.
           </p>
         </div>
-        <Button size="sm" asChild className="shrink-0 w-full sm:w-auto">
+        <Button size="sm" asChild className="shrink-0 w-full sm:w-auto bg-white text-black hover:bg-white/90">
           <Link href="/builder">
             Start Building <ArrowRight className="h-3.5 w-3.5 ml-1" />
           </Link>

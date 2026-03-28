@@ -2,7 +2,7 @@ import { BarChart2, Bot, Zap, CheckSquare, Brain } from 'lucide-react'
 
 const stats = [
   { label: 'Agents Created', value: 0, icon: Bot, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { label: 'Prompts Generated', value: 0, icon: Zap, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { label: 'Prompts Generated', value: 0, icon: Zap, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
   { label: 'Tasks Completed', value: 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   { label: 'Memory Entries', value: 0, icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10' },
 ]

@@ -102,7 +102,7 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
       <Button
         size={size}
         onClick={handleClick}
-        className={size === 'lg' ? 'h-12 px-8' : ''}
+        className={`bg-white text-black hover:bg-white/90${size === 'lg' ? ' h-12 px-8' : ''}`}
       >
         Get Started {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
       </Button>
@@ -174,7 +174,7 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
                     autoComplete="email"
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full bg-white text-black hover:bg-white/90" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   Send magic link
                 </Button>

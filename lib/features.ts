@@ -13,7 +13,7 @@ export const categories: Category[] = [
     name: 'Listen',
     description: 'Voice, vision, and document understanding',
     icon: 'Mic',
-    color: 'text-purple-500',
+    color: 'text-cyan-500',
   },
   {
     id: 'archive',
@@ -41,7 +41,7 @@ export const categories: Category[] = [
     name: 'Agent Architecture',
     description: 'Core agent capabilities and personality',
     icon: 'Cpu',
-    color: 'text-indigo-500',
+    color: 'text-cyan-500',
   },
 ];
 

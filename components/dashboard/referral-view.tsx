@@ -32,7 +32,7 @@ export function ReferralView() {
               <p className="text-sm font-medium mb-1">Give free Pro, get free Pro</p>
               <p className="text-sm text-muted-foreground">
                 Share your referral link with friends. When they sign up and build their first agent,
-                you both get 1 month of Xeref Pro — no credit card needed.
+                you get 1 month of Xeref Pro — no credit card needed.
               </p>
             </div>
           </div>
