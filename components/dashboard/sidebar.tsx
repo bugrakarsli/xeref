@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { usePathname } from 'next/navigation'
-import type { Project, ViewKey } from '@/lib/types'
+import type { Project, Chat, ViewKey } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
 import { Button } from '@/components/ui/button'
 import {
@@ -40,6 +40,7 @@ import {
 } from 'lucide-react'
 
 const SIDEBAR_PROJECT_LIMIT = 5
+const SIDEBAR_CHAT_LIMIT = 5
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
 
@@ -49,6 +50,7 @@ interface SidebarProps {
   activeView: ViewKey
   onViewChange: (view: ViewKey) => void
   projects: Project[]
+  chats: Chat[]
   userEmail: string
   userName: string
   onSignOut: () => void
@@ -107,13 +109,13 @@ export function Sidebar({
   activeView,
   onViewChange,
   projects,
+  chats,
   userEmail,
   userName,
   onSignOut,
   className,
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
-  const [chatsOpen, setChatsOpen] = useState(true)
   const pathname = usePathname()
   const isBuilderActive = pathname === '/builder'
 
@@ -137,7 +139,6 @@ export function Sidebar({
         )}
       >
         {collapsed ? (
-          // Collapsed: XerefLogo fades to LayoutDashboard on hover
           <Tooltip>
             <TooltipTrigger asChild>
               <button
@@ -156,7 +157,6 @@ export function Sidebar({
           </Tooltip>
         ) : (
           <>
-            {/* Dashboard icon — acts as collapse toggle */}
             <button
               onClick={onToggle}
               aria-label="Collapse sidebar"
@@ -177,7 +177,7 @@ export function Sidebar({
         )}
       </div>
 
-      {/* Mobile hamburger - shown when sidebar collapsed on mobile */}
+      {/* Mobile hamburger */}
       <Button
         variant="ghost"
         size="icon"
@@ -331,37 +331,39 @@ export function Sidebar({
           )}
         </div>
 
-        {/* Chats section */}
+        {/* Chat section */}
         <div className="mt-2">
           {!collapsed && (
-            <button
-              onClick={() => setChatsOpen((o) => !o)}
-              aria-expanded={chatsOpen}
-              aria-controls="chats-nav-section"
-              className={cn(
-                'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
-                focusRing
-              )}
-            >
+            <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
               Chats
-              {chatsOpen ? (
-                <ChevronUp className="h-3 w-3" />
-              ) : (
-                <ChevronDown className="h-3 w-3" />
-              )}
-            </button>
+            </p>
           )}
-          {(chatsOpen || collapsed) && (
-            <div id="chats-nav-section" className="flex flex-col gap-1 mt-1">
-              <NavItem
-                icon={<MessageSquare className="h-4 w-4" />}
-                label="Chats"
-                active={activeView === 'chats'}
-                collapsed={collapsed}
-                onClick={() => onViewChange('chats')}
-              />
-            </div>
-          )}
+          <div className="flex flex-col gap-1 mt-1">
+            <NavItem
+              icon={<MessageSquare className="h-4 w-4" />}
+              label="Chat"
+              active={activeView === 'chat'}
+              collapsed={collapsed}
+              onClick={() => onViewChange('chat')}
+            />
+            {/* Recent chats */}
+            {!collapsed &&
+              chats.slice(0, SIDEBAR_CHAT_LIMIT).map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => onViewChange('chat')}
+                  aria-label={`Open chat: ${c.title}`}
+                  className={cn(
+                    'flex items-center gap-2 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors',
+                    focusRing
+                  )}
+                  title={c.title}
+                >
+                  <Dot className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="truncate">{c.title}</span>
+                </button>
+              ))}
+          </div>
         </div>
       </div>
 

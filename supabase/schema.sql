@@ -56,6 +56,70 @@ alter table public.projects enable row level security;
 create policy "Users can CRUD own projects" on public.projects
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+-- ── Prompt column on projects ─────────────────────────────────────────────
+-- Stores the auto-generated system prompt for the agent.
+-- Run: alter table public.projects add column prompt text;
+
+-- ── Chats ─────────────────────────────────────────────────────────────────
+-- Conversation sessions between a user and one of their agents.
+create table public.chats (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  project_id uuid references public.projects(id) on delete set null,
+  title text not null default 'New Chat',
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table public.chats enable row level security;
+
+create policy "Users can CRUD own chats" on public.chats
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create index idx_chats_user_id on public.chats(user_id, updated_at desc);
+
+-- ── Messages ──────────────────────────────────────────────────────────────
+-- Individual messages within a chat session.
+create table public.messages (
+  id uuid default gen_random_uuid() primary key,
+  chat_id uuid references public.chats(id) on delete cascade not null,
+  role text not null check (role in ('user', 'assistant', 'system')),
+  content text not null,
+  citations jsonb default '[]'::jsonb,
+  created_at timestamptz default now() not null
+);
+
+alter table public.messages enable row level security;
+
+create policy "Users can read own chat messages" on public.messages
+  for select using (
+    exists (
+      select 1 from public.chats
+      where chats.id = messages.chat_id
+      and chats.user_id = auth.uid()
+    )
+  );
+
+create policy "Users can insert into own chats" on public.messages
+  for insert with check (
+    exists (
+      select 1 from public.chats
+      where chats.id = messages.chat_id
+      and chats.user_id = auth.uid()
+    )
+  );
+
+create policy "Users can delete own chat messages" on public.messages
+  for delete using (
+    exists (
+      select 1 from public.chats
+      where chats.id = messages.chat_id
+      and chats.user_id = auth.uid()
+    )
+  );
+
+create index idx_messages_chat_id on public.messages(chat_id, created_at);
+
 -- ── Usage Events ──────────────────────────────────────────────────────────
 -- Analytics log for prompt generation and project actions.
 create table public.usage_events (

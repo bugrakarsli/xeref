@@ -1,19 +1,21 @@
 'use client'
 
 import Link from 'next/link'
-import { useTransition } from 'react'
+import { useTransition, useState } from 'react'
 import { toast } from 'sonner'
 import type { User } from '@supabase/supabase-js'
 import type { Project } from '@/lib/types'
 import { deleteProject } from '@/app/actions/projects'
+import { activateProjectPrompt } from '@/app/actions/prompt'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Bot, Trash2, Calendar, Layers } from 'lucide-react'
+import { ArrowRight, Bot, Trash2, Calendar, Layers, CheckCircle2, Zap } from 'lucide-react'
 
 interface HomeViewProps {
   user: User
   projects: Project[]
   onProjectDeleted: (id: string) => void
+  onProjectUpdated: (project: Project) => void
 }
 
 function getGreeting(): string {
@@ -34,11 +36,15 @@ function formatDate(dateStr: string): string {
 function ProjectCard({
   project,
   onDelete,
+  onPromptAdded,
 }: {
   project: Project
   onDelete: (id: string) => void
+  onPromptAdded: (id: string) => void
 }) {
   const [isPending, startTransition] = useTransition()
+  const [isActivating, setIsActivating] = useState(false)
+  const hasPrompt = !!project.prompt
 
   function handleDelete() {
     startTransition(async () => {
@@ -49,6 +55,20 @@ function ProjectCard({
         toast.error('Failed to delete project. Please try again.')
       }
     })
+  }
+
+  async function handleAddPrompt() {
+    if (hasPrompt) return
+    setIsActivating(true)
+    try {
+      await activateProjectPrompt(project.id)
+      onPromptAdded(project.id)
+      toast.success('Agent activated! You can now chat with it.')
+    } catch {
+      toast.error('Failed to activate agent. Please try again.')
+    } finally {
+      setIsActivating(false)
+    }
   }
 
   return (
@@ -86,18 +106,44 @@ function ProjectCard({
         </div>
       </div>
 
-      <Button variant="outline" size="sm" className="w-full h-8 text-xs" asChild>
-        <Link href="/builder">
-          Open in Builder <ArrowRight className="h-3 w-3 ml-1" />
-        </Link>
-      </Button>
+      {hasPrompt ? (
+        <div className="flex items-center justify-center gap-1.5 w-full h-8 text-xs rounded-md border border-primary/30 text-primary bg-primary/5">
+          <CheckCircle2 className="h-3.5 w-3.5" />
+          Prompt Added
+        </div>
+      ) : (
+        <Button
+          variant="outline"
+          size="sm"
+          className="w-full h-8 text-xs"
+          onClick={handleAddPrompt}
+          disabled={isActivating}
+        >
+          {isActivating ? (
+            <>Activating…</>
+          ) : (
+            <>
+              <Zap className="h-3 w-3 mr-1" />
+              Add Prompt
+            </>
+          )}
+        </Button>
+      )}
     </div>
   )
 }
 
-export function HomeView({ user, projects, onProjectDeleted }: HomeViewProps) {
+export function HomeView({ user, projects, onProjectDeleted, onProjectUpdated }: HomeViewProps) {
   const raw = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
   const username = raw.charAt(0).toUpperCase() + raw.slice(1)
+
+  function handlePromptAdded(id: string) {
+    // Optimistically mark the project as having a prompt
+    const project = projects.find((p) => p.id === id)
+    if (project) {
+      onProjectUpdated({ ...project, prompt: '__activated__' })
+    }
+  }
 
   return (
     <div className="flex flex-col gap-8 p-6 md:p-8 max-w-5xl w-full mx-auto">
@@ -159,6 +205,7 @@ export function HomeView({ user, projects, onProjectDeleted }: HomeViewProps) {
                 key={project.id}
                 project={project}
                 onDelete={onProjectDeleted}
+                onPromptAdded={handlePromptAdded}
               />
             ))}
           </div>

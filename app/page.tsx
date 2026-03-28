@@ -2,6 +2,8 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserProjects } from '@/app/actions/projects'
+import { getUserChats } from '@/app/actions/chats'
+import { getUserPlan } from '@/app/actions/profile'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const metadata: Metadata = {
@@ -15,7 +17,6 @@ interface HomePageProps {
 export default async function Home({ searchParams }: HomePageProps) {
   const { code } = await searchParams
 
-  // If OAuth/magic-link lands here with a code, forward to the dedicated callback handler
   if (code) {
     redirect(`/auth/callback?code=${code}`)
   }
@@ -29,7 +30,7 @@ export default async function Home({ searchParams }: HomePageProps) {
     redirect('/login')
   }
 
-  const projects = await getUserProjects()
+  const [projects, chats, userPlan] = await Promise.all([getUserProjects(), getUserChats(), getUserPlan()])
 
-  return <DashboardShell user={user} projects={projects} />
+  return <DashboardShell user={user} projects={projects} chats={chats} userPlan={userPlan} />
 }

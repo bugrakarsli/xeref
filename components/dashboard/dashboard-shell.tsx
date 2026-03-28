@@ -2,9 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import type { User } from '@supabase/supabase-js'
-import type { Project, ViewKey } from '@/lib/types'
+import type { Project, Chat, ViewKey } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Sidebar } from './sidebar'
@@ -17,17 +16,23 @@ import { InboxView } from './inbox-view'
 import { ChatsView } from './chats-view'
 import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
+import { RhsSidebar } from './rhs-sidebar'
 
 interface DashboardShellProps {
   user: User
   projects: Project[]
+  chats: Chat[]
 }
 
-export function DashboardShell({ user, projects: initialProjects }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [activeView, setActiveView] = useState<ViewKey>('home')
   const [projects, setProjects] = useState<Project[]>(initialProjects)
+  const [chats] = useState<Chat[]>(initialChats)
+
+  const userName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''
+  const userEmail = user.email ?? ''
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -38,6 +43,12 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
   function handleProjectDeleted(id: string) {
     setProjects((prev) => prev.filter((p) => p.id !== id))
   }
+
+  function handleProjectUpdated(project: Project) {
+    setProjects((prev) => prev.map((p) => (p.id === project.id ? project : p)))
+  }
+
+  const isChatView = activeView === 'chat'
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -55,12 +66,12 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
         activeView={activeView}
         onViewChange={(view) => {
           setActiveView(view)
-          // Auto-collapse on mobile after navigation
           if (window.innerWidth < 768) setCollapsed(true)
         }}
         projects={projects}
-        userEmail={user.email ?? ''}
-        userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''}
+        chats={chats}
+        userEmail={userEmail}
+        userName={userName}
         onSignOut={handleSignOut}
         className={cn(
           'fixed z-30 md:relative md:z-auto transition-transform duration-200',
@@ -68,44 +79,54 @@ export function DashboardShell({ user, projects: initialProjects }: DashboardShe
         )}
       />
 
-      <main className="relative flex flex-col flex-1 overflow-y-auto min-w-0">
-        {(() => {
-          switch (activeView) {
-            case 'home':
-              return <HomeView user={user} projects={projects} onProjectDeleted={handleProjectDeleted} />
-            case 'tasks':
-              return <TasksView />
-            case 'stats':
-              return <StatsView />
-            case 'calendar':
-              return <CalendarView />
-            case 'workflows':
-              return <WorkflowsView />
-            case 'inbox':
-              return <InboxView />
-            case 'chats':
-              return <ChatsView />
-            case 'settings':
-              return (
-                <SettingsView
-                  userEmail={user.email ?? ''}
-                  userName={user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''}
-                />
-              )
-            case 'referral':
-              return <ReferralView />
-          }
-        })()}
+      {/* Main + RHS */}
+      <div className="flex flex-1 overflow-hidden min-w-0">
+        <main className="relative flex flex-col flex-1 overflow-y-auto min-w-0">
+          {(() => {
+            switch (activeView) {
+              case 'home':
+                return (
+                  <HomeView
+                    user={user}
+                    projects={projects}
+                    onProjectDeleted={handleProjectDeleted}
+                    onProjectUpdated={handleProjectUpdated}
+                  />
+                )
+              case 'tasks':
+                return <TasksView />
+              case 'stats':
+                return <StatsView />
+              case 'calendar':
+                return <CalendarView />
+              case 'workflows':
+                return <WorkflowsView />
+              case 'inbox':
+                return <InboxView />
+              case 'chat':
+                return (
+                  <ChatsView
+                    projects={projects}
+                    initialChats={chats}
+                    userName={userName || userEmail.split('@')[0]}
+                  />
+                )
+              case 'settings':
+                return (
+                  <SettingsView
+                    userEmail={userEmail}
+                    userName={userName}
+                  />
+                )
+              case 'referral':
+                return <ReferralView />
+            }
+          })()}
+        </main>
 
-        {/* Changelog badge */}
-        <Link
-          href="/changelog"
-          className="fixed bottom-4 right-4 z-40 flex items-center gap-1.5 rounded-full border border-primary/30 bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm transition-colors hover:border-primary/60 hover:text-foreground"
-        >
-          <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          v1
-        </Link>
-      </main>
+        {/* Right-hand sidebar — always visible on large screens */}
+        {isChatView && <RhsSidebar />}
+      </div>
     </div>
   )
 }

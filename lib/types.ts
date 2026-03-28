@@ -1,5 +1,5 @@
 
-export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chats' | 'settings' | 'referral'
+export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral'
 
 export type CategoryId = 'connect' | 'listen' | 'archive' | 'wire' | 'sense' | 'agent-architecture';
 
@@ -10,6 +10,7 @@ export interface Project {
   name: string;
   description: string | null;
   selected_feature_ids: string[];
+  prompt: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -43,4 +44,29 @@ export interface Feature {
   requiredKeys: string[];
   prompt: string;
   dependencies?: string[]; // Optional: npm packages needed
+}
+
+// Chat entities
+export interface Chat {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Citation {
+  title: string;
+  url?: string;
+  snippet: string;
+}
+
+export interface Message {
+  id: string;
+  chat_id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  citations: Citation[];
+  created_at: string;
 }
