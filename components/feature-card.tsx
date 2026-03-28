@@ -39,9 +39,9 @@ export function FeatureCard({ feature, isSelected, onToggle }: FeatureCardProps)
       <Card 
         className={cn(
           "relative h-full flex flex-col transition-all duration-200 cursor-pointer overflow-hidden border-2",
-          isSelected 
-            ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" 
-            : "border-border/50 hover:border-primary/50 hover:bg-accent/5"
+          isSelected
+            ? "border-cyan-400 bg-cyan-400/5 shadow-lg shadow-cyan-400/10"
+            : "border-border/50 hover:border-cyan-400/50 hover:bg-accent/5"
         )}
         onClick={() => onToggle(feature)}
       >
@@ -54,7 +54,7 @@ export function FeatureCard({ feature, isSelected, onToggle }: FeatureCardProps)
         <CardHeader className="pb-2">
           <div className={cn(
             "w-10 h-10 rounded-lg flex items-center justify-center mb-3 transition-colors",
-            isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+            isSelected ? "bg-cyan-400 text-black" : "bg-muted text-muted-foreground"
           )}>
             <IconComponent size={20} />
           </div>
@@ -75,8 +75,8 @@ export function FeatureCard({ feature, isSelected, onToggle }: FeatureCardProps)
            
            <div className={cn(
              "w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all",
-             isSelected 
-              ? "bg-primary border-primary text-primary-foreground scale-110" 
+             isSelected
+              ? "bg-cyan-400 border-cyan-400 text-black scale-110"
               : "border-muted-foreground/30 text-transparent"
            )}>
              <Check size={14} strokeWidth={3} />

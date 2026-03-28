@@ -74,7 +74,7 @@ export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthen
       <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[90%] max-w-md">
         <div className="bg-popover/80 backdrop-blur-xl border shadow-2xl rounded-full p-2 flex items-center justify-between pl-6 pr-2 gap-4">
              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setIsOpen(true)}>
-               <Badge variant="secondary" className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-full h-6 min-w-6 flex items-center justify-center p-0">
+               <Badge variant="secondary" className="bg-cyan-400 text-black hover:bg-cyan-400/90 rounded-full h-6 min-w-6 flex items-center justify-center p-0">
                  {selectedFeatures.length}
                </Badge>
                <span className="text-sm font-medium">Selected</span>
@@ -89,7 +89,7 @@ export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthen
                     <Save size={16} />
                   </Button>
                 )}
-                <Button size="sm" className="rounded-full px-4" onClick={handleGenerate}>
+                <Button size="sm" className="rounded-full px-4 bg-cyan-400 text-black hover:bg-cyan-400/90" onClick={handleGenerate}>
                   Generate Prompt
                 </Button>
              </div>
@@ -101,7 +101,7 @@ export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthen
         <SheetContent side="right" className="w-full sm:w-[400px] flex flex-col h-full">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
-              <ShoppingBasket className="text-primary" />
+              <ShoppingBasket className="text-cyan-400" />
               Your Agent Stack
             </SheetTitle>
             <SheetDescription>
@@ -141,7 +141,7 @@ export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthen
                  <Link href="/login">Sign in to save projects</Link>
                </Button>
              )}
-             <Button className="flex-1" onClick={handleGenerate}>Generate Prompt</Button>
+             <Button className="flex-1 bg-cyan-400 text-black hover:bg-cyan-400/90" onClick={handleGenerate}>Generate Prompt</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>

@@ -18,7 +18,7 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory 
         variant={selectedCategory === null ? "default" : "outline"}
         size="sm"
         onClick={() => onSelectCategory(null)}
-        className="rounded-full"
+        className={cn("rounded-full", selectedCategory === null ? "bg-cyan-400 text-black hover:bg-cyan-400/90 border-cyan-400" : "")}
       >
         All
       </Button>
@@ -26,7 +26,7 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Icon = (LucideIcons as any)[category.icon] || LucideIcons.Circle;
         const isSelected = selectedCategory === category.id;
-        
+
         return (
           <Button
             key={category.id}
@@ -35,10 +35,10 @@ export function CategoryFilter({ categories, selectedCategory, onSelectCategory 
             onClick={() => onSelectCategory(category.id)}
             className={cn(
               "rounded-full gap-1.5 transition-all",
-              isSelected ? "" : "text-muted-foreground hover:text-foreground"
+              isSelected ? "bg-cyan-400 text-black hover:bg-cyan-400/90 border-cyan-400" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            <Icon size={14} className={cn(isSelected ? "text-primary-foreground" : category.color)} />
+            <Icon size={14} className={cn(isSelected ? "text-black" : category.color)} />
             {category.name}
           </Button>
         );
