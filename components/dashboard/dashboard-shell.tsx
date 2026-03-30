@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Project, Chat, ViewKey } from '@/lib/types'
+import type { UserPlan } from '@/app/actions/profile'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { Sidebar } from './sidebar'
@@ -22,9 +23,10 @@ interface DashboardShellProps {
   user: User
   projects: Project[]
   chats: Chat[]
+  userPlan: UserPlan
 }
 
-export function DashboardShell({ user, projects: initialProjects, chats: initialChats }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [activeView, setActiveView] = useState<ViewKey>('home')
@@ -72,6 +74,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         chats={chats}
         userEmail={userEmail}
         userName={userName}
+        userPlan={userPlan}
         onSignOut={handleSignOut}
         className={cn(
           'fixed z-30 md:relative md:z-auto transition-transform duration-200',
@@ -109,13 +112,15 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     projects={projects}
                     initialChats={chats}
                     userName={userName || userEmail.split('@')[0]}
+                    userPlan={userPlan}
                   />
                 )
               case 'settings':
                 return (
-                  <SettingsView
+                <SettingsView
                     userEmail={userEmail}
                     userName={userName}
+                    userPlan={userPlan}
                   />
                 )
               case 'referral':

@@ -31,7 +31,15 @@
       "Bash(npx skills:*)",
       "Bash(ls -la \"D:/bugrakarsli/02-projects/xeref/xeref-claw/middleware\"*)",
       "Bash(npx kill-port:*)",
-      "Bash(node -e \"const {useChat} = require\\(''''@ai-sdk/react''''\\); console.log\\(Object.keys\\(useChat.toString ? {x:1} : {}\\)\\)\")"
+      "Bash(node -e \"const {useChat} = require\\(''''@ai-sdk/react''''\\); console.log\\(Object.keys\\(useChat.toString ? {x:1} : {}\\)\\)\")",
+      "Bash(find /d/bugrakarsli/02-projects/xeref/xeref-claw/app -type f -name *.tsx -o -name *.ts)",
+      "Bash(ls -la /d/bugrakarsli/02-projects/xeref/xeref-claw/app/dashboard*)",
+      "Bash(xargs grep:*)",
+      "WebFetch(domain:docs.creem.io)",
+      "WebFetch(domain:www.npmjs.com)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "Bash(find d:/bugrakarsli/02-projects/xeref/xeref-claw -type f \\\\\\(-name *.md -o -name *.txt -o -name README* \\\\\\))"
     ]
   }
 }

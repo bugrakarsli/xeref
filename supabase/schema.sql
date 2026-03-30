@@ -10,6 +10,7 @@ create table public.profiles (
   email text,
   display_name text,
   avatar_url text,
+  plan text not null default 'free',
   created_at timestamptz default now() not null
 );
 

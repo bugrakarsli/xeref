@@ -7,9 +7,34 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.1.0',
+    date: 'March 30, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Creem payment integration — subscribe to Pro or Ultra directly from the pricing page',
+          'Checkout success page with subscription confirmation',
+          'Webhook handler for real-time subscription status updates',
+          'Learn More button linking to Skool community',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Pricing page no longer redirects authenticated users back to the dashboard',
+          'StartBuildingButton auth redirect only triggers when signing in through the dialog',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.0.0 Beta',
     date: 'March 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

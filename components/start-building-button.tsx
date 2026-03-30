@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -34,6 +34,10 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const [googleLoading, setGoogleLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
+  // Track dialog open state in a ref so the onAuthStateChange closure sees updates
+  const openRef = useRef(false)
+  useEffect(() => { openRef.current = open }, [open])
+
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
@@ -41,7 +45,7 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setIsAuthenticated(!!session?.user)
-      if (event === 'SIGNED_IN' && session?.user) {
+      if (event === 'SIGNED_IN' && session?.user && openRef.current) {
         setOpen(false)
         router.push('/')
       }

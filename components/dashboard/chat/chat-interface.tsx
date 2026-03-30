@@ -5,7 +5,7 @@ import { TextStreamChatTransport } from 'ai'
 import { useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatMessage } from './chat-message'
-import { ChatInput, type ModelId, MODELS } from './chat-input'
+import { ChatInput, type ModelId, type UserPlan, MODELS } from './chat-input'
 import { saveMessage } from '@/app/actions/chats'
 import type { Project, Chat, Message } from '@/lib/types'
 import { Bot } from 'lucide-react'
@@ -17,6 +17,7 @@ interface ChatInterfaceProps {
   activeChat: Chat | null
   initialMessages: Message[]
   userName: string
+  userPlan?: 'free' | 'pro' | 'ultra'
 }
 
 function getMessageText(parts: { type: string; text?: string }[]): string {
@@ -33,10 +34,16 @@ export function ChatInterface({
   activeChat,
   initialMessages,
   userName,
+  userPlan = 'free',
 }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<ModelId>('claude-sonnet-4-6')
+  const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
+    const planRank: Record<string, number> = { free: 0, pro: 1, ultra: 2 }
+    const rank = planRank[userPlan] ?? 0
+    const best = [...MODELS].reverse().find((m) => planRank[m.plan] <= rank)
+    return best?.id ?? 'claude-haiku-4-5-20251001'
+  })
   const activeChatIdRef = useRef<string | null>(null)
 
   const { messages, sendMessage, status, setMessages } = useChat({
@@ -166,6 +173,7 @@ export function ChatInterface({
           onProjectSelect={onProjectSelect}
           selectedModel={selectedModel}
           onModelSelect={setSelectedModel}
+          userPlan={userPlan}
         />
       </div>
     )
@@ -197,6 +205,7 @@ export function ChatInterface({
         onProjectSelect={onProjectSelect}
         selectedModel={selectedModel}
         onModelSelect={setSelectedModel}
+        userPlan={userPlan}
       />
     </div>
   )

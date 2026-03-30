@@ -53,6 +53,7 @@ interface SidebarProps {
   chats: Chat[]
   userEmail: string
   userName: string
+  userPlan?: string
   onSignOut: () => void
   className?: string
 }
@@ -112,6 +113,7 @@ export function Sidebar({
   chats,
   userEmail,
   userName,
+  userPlan = 'free',
   onSignOut,
   className,
 }: SidebarProps) {
@@ -383,7 +385,7 @@ export function Sidebar({
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{displayName}</p>
-                  <p className="text-xs text-muted-foreground truncate">Xeref Free</p>
+                  <p className="text-xs text-muted-foreground truncate">Xeref {userPlan === 'free' ? 'Free' : userPlan === 'pro' ? 'Pro' : 'Ultra'}</p>
                 </div>
               )}
             </button>

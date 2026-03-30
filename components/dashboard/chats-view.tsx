@@ -13,9 +13,10 @@ interface ChatsViewProps {
   projects: Project[]
   initialChats: Chat[]
   userName: string
+  userPlan?: 'free' | 'pro' | 'ultra'
 }
 
-export function ChatsView({ projects, initialChats, userName }: ChatsViewProps) {
+export function ChatsView({ projects, initialChats, userName, userPlan = 'free' }: ChatsViewProps) {
   const [activeTab, setActiveTab] = useState<'chat' | 'tasks'>('chat')
   const [showingList, setShowingList] = useState(false)
   const [chats, setChats] = useState<Chat[]>(initialChats)
@@ -113,6 +114,7 @@ export function ChatsView({ projects, initialChats, userName }: ChatsViewProps) 
           activeChat={activeChat}
           initialMessages={chatMessages}
           userName={userName}
+          userPlan={userPlan}
         />
       )}
     </section>

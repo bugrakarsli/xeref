@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { XerefLogo } from '@/components/xeref-logo'
 import { StartBuildingButton } from '@/components/start-building-button'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Check, X } from 'lucide-react'
+import { Check, X, Loader2 } from 'lucide-react'
 import { MobileNav } from '@/components/mobile-nav'
+import { createCheckout } from '@/app/actions/checkout'
 
 const plans = [
   {
@@ -63,6 +64,7 @@ const plans = [
 
 export default function PricingPage() {
   const [isAnnual, setIsAnnual] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -188,13 +190,21 @@ export default function PricingPage() {
                       <Button variant="outline" className="w-full" asChild>
                         <Link href="/builder">Get Started Free</Link>
                       </Button>
-                    ) : plan.id === 'pro' ? (
-                      <Button className="w-full" asChild>
-                        <Link href="/builder">Get Pro</Link>
-                      </Button>
                     ) : (
-                      <Button variant="outline" className="w-full" asChild>
-                        <Link href="/builder">Get Ultra</Link>
+                      <Button
+                        className="w-full"
+                        variant={plan.featured ? 'default' : 'outline'}
+                        disabled={isPending}
+                        onClick={() =>
+                          startTransition(() =>
+                            createCheckout(plan.id as 'pro' | 'ultra', isAnnual ? 'annual' : 'monthly')
+                          )
+                        }
+                      >
+                        {isPending ? (
+                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        ) : null}
+                        Get {plan.name}
                       </Button>
                     )}
                   </div>
@@ -203,17 +213,24 @@ export default function PricingPage() {
             })}
           </div>
 
-          <p className="text-center text-sm text-muted-foreground mt-8">
-            Questions?{' '}
-            <Link href="/faq" className="underline underline-offset-2 hover:text-foreground">
-              Check the FAQ
-            </Link>{' '}
-            or{' '}
-            <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
-              get in touch
-            </a>
-            .
-          </p>
+          <div className="text-center mt-10 space-y-4">
+            <Button variant="outline" asChild>
+              <a href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" rel="noopener noreferrer">
+                Learn More
+              </a>
+            </Button>
+            <p className="text-sm text-muted-foreground">
+              Questions?{' '}
+              <Link href="/faq" className="underline underline-offset-2 hover:text-foreground">
+                Check the FAQ
+              </Link>{' '}
+              or{' '}
+              <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
+                get in touch
+              </a>
+              .
+            </p>
+          </div>
         </div>
       </main>
 
