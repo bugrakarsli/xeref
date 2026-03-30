@@ -1,14 +1,23 @@
 'use client'
 
 import { useChat } from '@ai-sdk/react'
-import { TextStreamChatTransport } from 'ai'
+import { DefaultChatTransport } from 'ai'
 import { useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatMessage } from './chat-message'
-import { ChatInput, type ModelId, type UserPlan, MODELS } from './chat-input'
+import { toast } from 'sonner'
+import { ChatInput, type ModelId, MODELS } from './chat-input'
 import { saveMessage } from '@/app/actions/chats'
 import type { Project, Chat, Message } from '@/lib/types'
 import { Bot } from 'lucide-react'
+
+function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
+  if (!message.parts) return ''
+  return message.parts
+    .filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map(p => p.text)
+    .join('')
+}
 
 interface ChatInterfaceProps {
   projects: Project[]
@@ -20,12 +29,7 @@ interface ChatInterfaceProps {
   userPlan?: 'free' | 'pro' | 'ultra'
 }
 
-function getMessageText(parts: { type: string; text?: string }[]): string {
-  return parts
-    .filter((p) => p.type === 'text' && p.text)
-    .map((p) => p.text as string)
-    .join('')
-}
+
 
 export function ChatInterface({
   projects,
@@ -38,25 +42,16 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
-    const planRank: Record<string, number> = { free: 0, pro: 1, ultra: 2 }
-    const rank = planRank[userPlan] ?? 0
-    const best = [...MODELS].reverse().find((m) => planRank[m.plan] <= rank)
-    return best?.id ?? 'claude-haiku-4-5-20251001'
-  })
+  const [selectedModel, setSelectedModel] = useState<ModelId>('claude-haiku-4-5-20251001')
   const activeChatIdRef = useRef<string | null>(null)
 
   const { messages, sendMessage, status, setMessages } = useChat({
-    transport: new TextStreamChatTransport({
-      api: '/api/chat',
-      body: { projectId: selectedProject?.id ?? null },
-    }),
-    onFinish: async ({ messages: allMessages }) => {
+    transport: new DefaultChatTransport({ api: '/api/chat' }),
+    onFinish: async ({ message }) => {
       const chatId = activeChatIdRef.current
       if (!chatId) return
-      const lastMsg = allMessages[allMessages.length - 1]
-      if (lastMsg?.role === 'assistant') {
-        const text = getMessageText(lastMsg.parts as { type: string; text?: string }[])
+      if (message.role === 'assistant') {
+        const text = getMessageText(message)
         if (text) {
           try {
             await saveMessage(chatId, 'assistant', text)
@@ -80,10 +75,9 @@ export function ChatInterface({
         id: m.id,
         role: m.role as 'user' | 'assistant',
         parts: [{ type: 'text' as const, text: m.content }],
-        metadata: {},
       }))
     )
-  }, [activeChat?.id])
+  }, [activeChat?.id, initialMessages, setMessages])
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
@@ -96,8 +90,35 @@ export function ChatInterface({
     e.preventDefault()
     if (!input.trim() || isLoading) return
 
-    const text = input
+    const text = input.trim()
     setInput('')
+
+    // Handle slash commands for model selection
+    if (text.startsWith('/model ')) {
+      const commandArgs = text.split(' ').slice(1)
+      if (commandArgs[0] === 'opusplan') {
+        if (userPlan === 'ultra') {
+          setSelectedModel('opus-plan')
+          toast.success('Switched to Opus Plan Mode.')
+        } else {
+          toast.error('Opus Plan Mode requires an ULTRA plan.')
+        }
+      } else {
+        const matchingModel = MODELS.find(m => m.id.includes(commandArgs[0]) || m.label.toLowerCase().includes(commandArgs[0].toLowerCase()))
+        if (matchingModel) {
+          const planRank: Record<string, number> = { free: 0, pro: 1, ultra: 2 }
+          if (planRank[userPlan] >= planRank[matchingModel.plan]) {
+            setSelectedModel(matchingModel.id)
+            toast.success(`Switched to ${matchingModel.label}.`)
+          } else {
+            toast.error(`${matchingModel.label} requires ${matchingModel.planLabel} plan.`)
+          }
+        } else {
+          toast.error(`Unknown model: ${commandArgs[0]}`)
+        }
+      }
+      return
+    }
 
     // Persist user message
     if (activeChat) {
@@ -108,7 +129,7 @@ export function ChatInterface({
       }
     }
 
-    await sendMessage({ text }, { body: { model: selectedModel } })
+    await sendMessage({ text }, { body: { model: selectedModel, projectId: selectedProject?.id ?? null } })
   }
 
   const hasActivatedAgents = projects.some((p) => p.prompt)
@@ -116,7 +137,7 @@ export function ChatInterface({
   const renderedMessages = messages.map((m) => ({
     id: m.id,
     role: m.role as 'user' | 'assistant',
-    content: getMessageText(m.parts as { type: string; text?: string }[]),
+    content: getMessageText(m),
   }))
 
   if (messages.length === 0) {

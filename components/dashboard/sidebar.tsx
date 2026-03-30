@@ -374,6 +374,7 @@ export function Sidebar({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
+              suppressHydrationWarning
               className={cn(
                 'flex items-center gap-2 w-full p-3 text-left transition-colors hover:bg-accent',
                 focusRing,

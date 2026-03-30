@@ -7,9 +7,67 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.3.0',
+    date: 'March 31, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Chat responses now render correctly — migrated to AI SDK v6 parts-based message format (UIMessage.parts)',
+          'Dynamic model routing (opus-plan, best) now correctly reads user message content from AI SDK v6 format',
+          'Assistant messages properly persisted to database after streaming completes',
+          'Chat history loaded from database now renders correctly with v6 UIMessage parts format',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Upgraded to AI SDK v6 (ai@6, @ai-sdk/react@3) — replaced legacy useChat api/body options with DefaultChatTransport',
+          'Server route now uses toUIMessageStreamResponse() replacing deprecated toDataStreamResponse()',
+          'Per-request body (model + projectId) passed via sendMessage options for accurate project context per message',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'v1.2.0',
+    date: 'March 31, 2026',
+    badge: null,
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Dynamic Model Routing — auto-switches active LLM natively in the web chat input',
+          'Opus Plan Mode (Ultra exclusive) — dynamically uses Opus 4.6 for planning and Sonnet 4.6 otherwise',
+          '/model opusplan text command to instantly lock into architectural deep-reasoning setups',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Configured default model globally to Haiku 4.5 for optimized low-latency chats',
+          'Intelligent AI Goal Decomposition backend router evaluates semantics to pick the best model tier automatically',
+          'Deployed subagent definitions securely encapsulating Opus 4.6 architecture constraints',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Resolved DropdownMenu radix ID hydration mismatch on sidebar user avatar menu',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.1.0',
     date: 'March 30, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

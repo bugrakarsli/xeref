@@ -348,11 +348,11 @@ export default function LoginPage() {
                   items: [
                     { text: 'Classroom section + semantic search', priority: true },
                     { text: 'UserContext onboarding form', priority: true },
-                    { text: 'Projects CRUD + AI goal decomposition', priority: false },
-                    { text: 'Tasks & Notes CRUD + Daily Targets', priority: false },
-                    { text: 'Xeref MCP Server v1 (all CRUD tools)', priority: false },
-                    { text: 'Guest mode (Supabase anon + rate limit)', priority: false },
-                    { text: 'Streaming responses in Chat', priority: false },
+                    { text: 'Projects CRUD + AI goal decomposition', priority: true },
+                    { text: 'Tasks & Notes CRUD + Daily Targets', priority: true },
+                    { text: 'Xeref MCP Server v1 (all CRUD tools)', priority: true },
+                    { text: 'Guest mode (Supabase anon + rate limit)', priority: true },
+                    { text: 'Streaming responses in Chat', priority: true },
                   ],
                 },
                 {

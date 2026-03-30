@@ -1,6 +1,21 @@
 import { streamText, convertToModelMessages } from 'ai'
-import { anthropic } from '@ai-sdk/anthropic'
+import { createOpenRouter } from '@openrouter/ai-sdk-provider'
+
+const openrouter = createOpenRouter({
+  apiKey: process.env.OPENROUTER_API_KEY,
+})
+
+const MODEL_MAP: Record<string, string> = {
+  'claude-haiku-4-5-20251001': 'anthropic/claude-3-5-haiku',
+  'claude-sonnet-4-6': 'anthropic/claude-3.5-sonnet',
+  'claude-opus-4-6': 'anthropic/claude-3-opus',
+}
 import { createClient } from '@/lib/supabase/server'
+
+function getTextFromParts(parts?: Array<{ type: string; text?: string }>): string {
+  if (!parts) return ''
+  return parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('')
+}
 
 export async function POST(req: Request) {
   const supabase = await createClient()
@@ -12,8 +27,35 @@ export async function POST(req: Request) {
 
   const body = await req.json()
   const { messages, projectId, model } = body
-  const modelId = typeof model === 'string' && model ? model : 'claude-sonnet-4-6'
+  let modelId = typeof model === 'string' && model ? model : 'claude-haiku-4-5-20251001'
 
+  const lastUserMsg = messages?.slice().reverse().find((m: { role: string }) => m.role === 'user')
+  const lastUserMessage = getTextFromParts(lastUserMsg?.parts)?.toLowerCase() || ''
+
+  if (modelId === 'opus-plan') {
+    const isPlanMode = /plan|roadmap|decompose|break down|architecture|goals|agent/i.test(lastUserMessage)
+    modelId = isPlanMode ? 'claude-opus-4-6' : 'claude-sonnet-4-6'
+  } else if (modelId === 'best') {
+    if (/budget|cost|price|finance/i.test(lastUserMessage)) {
+      modelId = 'google/gemini-1.5-pro'
+    } else if (/math|calculate|logic|equation/i.test(lastUserMessage)) {
+      modelId = 'openai/gpt-4o'
+    } else if (/code|script|component|function|build app/i.test(lastUserMessage)) {
+      modelId = 'openai/gpt-4o'
+    } else if (/pdf|pptx|asset|document/i.test(lastUserMessage)) {
+      modelId = 'anthropic/claude-3-opus'
+    } else if (/website|html|react|frontend/i.test(lastUserMessage)) {
+      modelId = 'anthropic/claude-3-opus'
+    } else if (/batch|wide|scale/i.test(lastUserMessage)) {
+      modelId = 'openai/gpt-4o'
+    } else if (/recurring|cron|monitor|schedule/i.test(lastUserMessage)) {
+      modelId = 'x-ai/grok-2'
+    } else {
+      modelId = 'anthropic/claude-3.5-sonnet'
+    }
+  }
+
+  const resolvedModelId = MODEL_MAP[modelId] || modelId
   // Fetch project's system prompt if a project is selected
   let systemPrompt: string | undefined
   if (projectId) {
@@ -32,10 +74,9 @@ export async function POST(req: Request) {
   const modelMessages = await convertToModelMessages(messages)
 
   const result = streamText({
-    model: anthropic(modelId),
+    model: openrouter(resolvedModelId),
     system: systemPrompt,
     messages: modelMessages,
   })
-
-  return result.toTextStreamResponse()
+  return result.toUIMessageStreamResponse()
 }
