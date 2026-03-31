@@ -21,8 +21,9 @@ function determinePlan(product: { name: string }): 'pro' | 'ultra' | null {
   return null
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveUserId(
-  supabase: ReturnType<typeof createClient>,
+  supabase: any,
   event: Record<string, unknown>
 ): Promise<string | null> {
   const obj = event.object as Record<string, unknown> | undefined
@@ -40,14 +41,15 @@ async function resolveUserId(
   const customer = (obj?.customer ?? data?.customer ?? event.customer) as Record<string, string> | undefined
   const email = customer?.email
   if (email) {
-    const { data: profile } = await supabase
+    const { data: profileData } = await supabase
       .from('profiles')
       .select('id')
       .eq('email', email)
       .single()
+    const profile = profileData as { id: string } | null
     if (profile?.id) {
       console.log('[Creem] Resolved userId via email fallback:', email)
-      return profile.id as string
+      return profile.id
     }
   }
 
