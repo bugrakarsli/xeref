@@ -1,7 +1,12 @@
 import { GitFork } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 
-export function WorkflowsView() {
+interface WorkflowsViewProps {
+  projectCount?: number
+}
+
+export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   return (
     <section aria-label="Workflows" className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">
       <div className="mb-6">
@@ -20,8 +25,9 @@ export function WorkflowsView() {
           <div>
             <p className="text-sm font-medium mb-1">Automate your agent pipelines</p>
             <p className="text-sm text-muted-foreground">
-              Define triggers (cron schedules or webhooks), set conditions, and chain multiple agent
-              actions together. Workflows let you automate repetitive tasks without manual intervention.
+              {typeof projectCount === 'number' && projectCount > 0
+                ? `You have ${projectCount} agent${projectCount !== 1 ? 's' : ''} ready to chain. Define triggers, set conditions, and automate repetitive tasks without manual intervention.`
+                : 'Define triggers (cron schedules or webhooks), set conditions, and chain multiple agent actions together. Workflows let you automate repetitive tasks without manual intervention.'}
             </p>
           </div>
         </div>
@@ -36,8 +42,9 @@ export function WorkflowsView() {
         <p className="text-xs text-muted-foreground max-w-xs">
           Create your first workflow to automate agent runs on a schedule or trigger.
         </p>
-        <Button size="sm" variant="outline" className="mt-1" disabled>
+        <Button size="sm" variant="outline" className="mt-1 gap-2" disabled>
           Create Workflow
+          <Badge variant="secondary" className="text-[10px] px-1.5 py-0">Coming Soon</Badge>
         </Button>
       </div>
     </section>

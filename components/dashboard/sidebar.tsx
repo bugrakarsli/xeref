@@ -25,8 +25,9 @@ import {
   BarChart2,
   CalendarDays,
   GitFork,
-  Inbox,
+  Mail,
   Bot,
+  BrainCircuit,
   LayoutDashboard,
   ChevronDown,
   ChevronUp,
@@ -265,7 +266,7 @@ export function Sidebar({
           )}
           <div className="flex flex-col gap-1 mt-1">
             <NavItem
-              icon={<Inbox className="h-4 w-4" />}
+              icon={<Mail className="h-4 w-4" />}
               label="Inbox"
               active={activeView === 'inbox'}
               collapsed={collapsed}
@@ -297,40 +298,49 @@ export function Sidebar({
               AI Agents
             </p>
           )}
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/builder"
-                  aria-current={isBuilderActive ? 'page' : undefined}
-                  aria-label="XerefClaw"
-                  className={cn(
-                    'flex items-center justify-center w-full rounded-lg px-2 py-2 text-sm font-medium transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    focusRing,
-                    isBuilderActive && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <Bot className="h-4 w-4 shrink-0" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent side="right">XerefClaw</TooltipContent>
-            </Tooltip>
-          ) : (
-            <Link
-              href="/builder"
-              aria-current={isBuilderActive ? 'page' : undefined}
-              className={cn(
-                'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                'hover:bg-accent hover:text-accent-foreground',
-                focusRing,
-                isBuilderActive && 'bg-accent text-accent-foreground'
-              )}
-            >
-              <Bot className="h-4 w-4 shrink-0" />
-              <span>XerefClaw</span>
-            </Link>
-          )}
+          <div className="flex flex-col gap-1 mt-1">
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link
+                    href="/builder"
+                    aria-current={isBuilderActive ? 'page' : undefined}
+                    aria-label="XerefClaw"
+                    className={cn(
+                      'flex items-center justify-center w-full rounded-lg px-2 py-2 text-sm font-medium transition-colors',
+                      'hover:bg-accent hover:text-accent-foreground',
+                      focusRing,
+                      isBuilderActive && 'bg-accent text-accent-foreground'
+                    )}
+                  >
+                    <Bot className="h-4 w-4 shrink-0" />
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent side="right">XerefClaw</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Link
+                href="/builder"
+                aria-current={isBuilderActive ? 'page' : undefined}
+                className={cn(
+                  'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'hover:bg-accent hover:text-accent-foreground',
+                  focusRing,
+                  isBuilderActive && 'bg-accent text-accent-foreground'
+                )}
+              >
+                <Bot className="h-4 w-4 shrink-0" />
+                <span>XerefClaw</span>
+              </Link>
+            )}
+            <NavItem
+              icon={<BrainCircuit className="h-4 w-4" />}
+              label="Xeref Agents"
+              active={activeView === 'agents'}
+              collapsed={collapsed}
+              onClick={() => onViewChange('agents')}
+            />
+          </div>
         </div>
 
         {/* Chat section */}

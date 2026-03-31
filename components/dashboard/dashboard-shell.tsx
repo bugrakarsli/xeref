@@ -17,6 +17,7 @@ import { InboxView } from './inbox-view'
 import { ChatsView } from './chats-view'
 import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
+import { AgentTeamView } from './agent-team-view'
 import { RhsSidebar } from './rhs-sidebar'
 
 interface DashboardShellProps {
@@ -92,18 +93,21 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                   <HomeView
                     user={user}
                     projects={projects}
+                    chats={chats}
+                    userName={userName}
+                    userPlan={userPlan}
                     onProjectDeleted={handleProjectDeleted}
                     onProjectUpdated={handleProjectUpdated}
                   />
                 )
               case 'tasks':
-                return <TasksView />
+                return <TasksView projectCount={projects.length} />
               case 'stats':
-                return <StatsView />
+                return <StatsView projects={projects} chats={chats} />
               case 'calendar':
                 return <CalendarView />
               case 'workflows':
-                return <WorkflowsView />
+                return <WorkflowsView projectCount={projects.length} />
               case 'inbox':
                 return <InboxView />
               case 'chat':
@@ -125,6 +129,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 )
               case 'referral':
                 return <ReferralView />
+              case 'agents':
+                return <AgentTeamView />
             }
           })()}
         </main>

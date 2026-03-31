@@ -1,6 +1,10 @@
 import { CheckSquare } from 'lucide-react'
 
-export function TasksView() {
+interface TasksViewProps {
+  projectCount?: number
+}
+
+export function TasksView({ projectCount }: TasksViewProps) {
   return (
     <section aria-label="All Tasks" className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">
       <div className="mb-6">
@@ -25,7 +29,9 @@ export function TasksView() {
         </div>
         <p className="text-sm font-medium">No tasks yet</p>
         <p className="text-xs text-muted-foreground max-w-xs">
-          Tasks created by your agents or generated from project plans will appear here.
+          {typeof projectCount === 'number' && projectCount > 0
+            ? `You have ${projectCount} agent${projectCount !== 1 ? 's' : ''} configured. Tasks will appear here as your agents run.`
+            : 'Tasks created by your agents or generated from project plans will appear here.'}
         </p>
       </div>
     </section>

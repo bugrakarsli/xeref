@@ -1,13 +1,19 @@
-import { BarChart2, Bot, Zap, CheckSquare, Brain } from 'lucide-react'
+import { BarChart2, Bot, Zap, CheckSquare, MessageSquare } from 'lucide-react'
+import type { Project, Chat } from '@/lib/types'
 
-const stats = [
-  { label: 'Agents Created', value: 0, icon: Bot, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { label: 'Prompts Generated', value: 0, icon: Zap, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-  { label: 'Tasks Completed', value: 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  { label: 'Memory Entries', value: 0, icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-]
+interface StatsViewProps {
+  projects?: Project[]
+  chats?: Chat[]
+}
 
-export function StatsView() {
+export function StatsView({ projects = [], chats = [] }: StatsViewProps) {
+  const stats = [
+    { label: 'Agents Created', value: projects.length, icon: Bot, color: 'text-blue-500', bg: 'bg-blue-500/10' },
+    { label: 'Prompts Generated', value: projects.filter(p => p.prompt).length, icon: Zap, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
+    { label: 'Tasks Completed', value: 0, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Chat Sessions', value: chats.length, icon: MessageSquare, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  ]
+
   return (
     <section aria-label="Stats" className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">
       <div className="mb-6">

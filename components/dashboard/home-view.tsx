@@ -1,19 +1,29 @@
 'use client'
 
-import Link from 'next/link'
 import { useTransition, useState } from 'react'
 import { toast } from 'sonner'
 import type { User } from '@supabase/supabase-js'
-import type { Project } from '@/lib/types'
+import type { Project, Chat, Message } from '@/lib/types'
+import type { UserPlan } from '@/app/actions/profile'
 import { deleteProject } from '@/app/actions/projects'
 import { activateProjectPrompt } from '@/app/actions/prompt'
+import { createChat, getChatMessages, updateChatTitle } from '@/app/actions/chats'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowRight, Bot, Trash2, Calendar, Layers, CheckCircle2, Zap } from 'lucide-react'
+import { Trash2, Calendar, Layers, CheckCircle2, Zap, Bot } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { ChatInterface } from './chat/chat-interface'
+import { ChatList } from './chat/chat-list'
+import { TasksView } from './tasks-view'
+
+type HomeTab = 'home' | 'chat' | 'tasks'
 
 interface HomeViewProps {
   user: User
   projects: Project[]
+  chats: Chat[]
+  userName: string
+  userPlan: UserPlan
   onProjectDeleted: (id: string) => void
   onProjectUpdated: (project: Project) => void
 }
@@ -133,84 +143,173 @@ function ProjectCard({
   )
 }
 
-export function HomeView({ user, projects, onProjectDeleted, onProjectUpdated }: HomeViewProps) {
+export function HomeView({ user, projects, chats: initialChats, userName, userPlan, onProjectDeleted, onProjectUpdated }: HomeViewProps) {
   const raw = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
-  const username = raw.charAt(0).toUpperCase() + raw.slice(1)
+  const displayName = raw.charAt(0).toUpperCase() + raw.slice(1)
+
+  const [activeTab, setActiveTab] = useState<HomeTab>('home')
+  const [chats, setChats] = useState<Chat[]>(initialChats)
+  const [activeChat, setActiveChat] = useState<Chat | null>(null)
+  const [chatMessages, setChatMessages] = useState<Message[]>([])
+  const [selectedProject, setSelectedProject] = useState<Project | null>(
+    () => projects.find((p) => p.prompt) ?? null
+  )
+  const [showingList, setShowingList] = useState(false)
+
+  async function handleNewChat() {
+    if (activeChat && chatMessages.length > 0) {
+      const firstUserMsg = chatMessages.find((m) => m.role === 'user')
+      if (firstUserMsg && activeChat.title === 'New Chat') {
+        const title = firstUserMsg.content.slice(0, 50).trim()
+        try {
+          await updateChatTitle(activeChat.id, title)
+          setChats((prev) => prev.map((c) => (c.id === activeChat.id ? { ...c, title } : c)))
+        } catch {
+          // non-critical
+        }
+      }
+    }
+    try {
+      const newChat = await createChat(selectedProject?.id ?? null, 'New Chat')
+      setChats((prev) => [newChat, ...prev])
+      setActiveChat(newChat)
+      setChatMessages([])
+      setShowingList(false)
+    } catch {
+      toast.error('Failed to create new chat.')
+    }
+  }
+
+  async function handleSelectChat(chat: Chat) {
+    setActiveChat(chat)
+    setShowingList(false)
+    try {
+      const messages = await getChatMessages(chat.id)
+      setChatMessages(messages)
+    } catch {
+      toast.error('Failed to load chat messages.')
+      setChatMessages([])
+    }
+  }
+
+  function handleDeleteChat(chatId: string) {
+    setChats((prev) => prev.filter((c) => c.id !== chatId))
+    if (activeChat?.id === chatId) {
+      setActiveChat(null)
+      setChatMessages([])
+    }
+  }
 
   function handlePromptAdded(id: string) {
-    // Optimistically mark the project as having a prompt
     const project = projects.find((p) => p.id === id)
     if (project) {
       onProjectUpdated({ ...project, prompt: '__activated__' })
     }
   }
 
+  const activatedProjects = projects.filter((p) => p.prompt)
+  const selectedProjectObj = selectedProject
+    ? (activatedProjects.find((p) => p.id === selectedProject.id) ?? null)
+    : null
+
   return (
-    <div className="flex flex-col gap-8 p-6 md:p-8 max-w-5xl w-full mx-auto">
+    <div className="flex flex-col flex-1 min-h-0 p-6 md:p-8 max-w-5xl w-full mx-auto">
       {/* Greeting */}
-      <div>
+      <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">
           {getGreeting()},{' '}
-          <span className="text-primary">{username}</span>.
+          <span className="text-primary">{displayName}</span>.
         </h1>
         <p className="text-muted-foreground text-sm mt-1">
           You have {projects.length} saved agent{projects.length !== 1 ? 's' : ''}.
         </p>
       </div>
 
-      {/* Quick action */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 rounded-xl border bg-card p-5">
-        <div className="rounded-full bg-primary/10 p-3 shrink-0">
-          <Bot className="h-5 w-5 text-primary" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-sm">Build a new agent</p>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Open XerefClaw to select features and generate your agent prompt.
-          </p>
-        </div>
-        <Button size="sm" asChild className="shrink-0 w-full sm:w-auto bg-white text-black hover:bg-white/90">
-          <Link href="/builder">
-            Start Building <ArrowRight className="h-3.5 w-3.5 ml-1" />
-          </Link>
-        </Button>
+      {/* Chat / Tasks / Home toggle */}
+      <div className="flex items-center gap-1 bg-muted rounded-full p-1 text-sm w-fit mb-6">
+        {(['home', 'chat', 'tasks'] as HomeTab[]).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              'px-4 py-1 rounded-full text-xs font-medium transition-colors capitalize',
+              activeTab === tab
+                ? 'bg-background text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground'
+            )}
+          >
+            {tab}
+          </button>
+        ))}
       </div>
 
-      {/* Projects */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-semibold text-xs uppercase tracking-widest text-muted-foreground">
-            Saved Agents
-          </h2>
-          <Badge variant="secondary">{projects.length}</Badge>
-        </div>
+      {/* Tab content */}
+      {activeTab === 'home' && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-semibold text-xs uppercase tracking-widest text-muted-foreground">
+              Saved Agents
+            </h2>
+            <Badge variant="secondary">{projects.length}</Badge>
+          </div>
 
-        {projects.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
-            <div className="rounded-full bg-muted p-4">
-              <Bot className="h-6 w-6 text-muted-foreground" />
+          {projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed p-12 text-center">
+              <div className="rounded-full bg-muted p-4">
+                <Bot className="h-6 w-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-medium">No saved agents yet</p>
+              <p className="text-xs text-muted-foreground max-w-xs">
+                Head to the builder, select features, and save your first agent configuration.
+              </p>
+              <Button size="sm" variant="outline" className="mt-1" onClick={() => window.location.href = '/builder'}>
+                Go to Builder
+              </Button>
             </div>
-            <p className="text-sm font-medium">No saved agents yet</p>
-            <p className="text-xs text-muted-foreground max-w-xs">
-              Head to the builder, select features, and save your first agent configuration.
-            </p>
-            <Button size="sm" variant="outline" asChild className="mt-1">
-              <Link href="/builder">Go to Builder</Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {projects.map((project) => (
-              <ProjectCard
-                key={project.id}
-                project={project}
-                onDelete={onProjectDeleted}
-                onPromptAdded={handlePromptAdded}
-              />
-            ))}
-          </div>
-        )}
-      </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {projects.map((project) => (
+                <ProjectCard
+                  key={project.id}
+                  project={project}
+                  onDelete={onProjectDeleted}
+                  onPromptAdded={handlePromptAdded}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === 'chat' && (
+        <div className="flex flex-col flex-1 min-h-0 -mx-6 md:-mx-8 -mb-6 md:-mb-8">
+          {showingList ? (
+            <ChatList
+              chats={chats}
+              activeChatId={activeChat?.id ?? null}
+              onSelectChat={handleSelectChat}
+              onDeleteChat={handleDeleteChat}
+              onNewChat={handleNewChat}
+            />
+          ) : (
+            <ChatInterface
+              projects={projects}
+              selectedProject={selectedProjectObj}
+              onProjectSelect={setSelectedProject}
+              activeChat={activeChat}
+              initialMessages={chatMessages}
+              userName={userName || (user.email?.split('@')[0] ?? '')}
+              userPlan={userPlan}
+            />
+          )}
+        </div>
+      )}
+
+      {activeTab === 'tasks' && (
+        <div className="flex flex-col flex-1 min-h-0 -mx-6 md:-mx-8 -mb-6 md:-mb-8">
+          <TasksView projectCount={projects.length} />
+        </div>
+      )}
     </div>
   )
 }
