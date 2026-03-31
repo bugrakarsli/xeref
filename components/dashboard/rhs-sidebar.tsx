@@ -17,7 +17,7 @@ export function RhsSidebar() {
           title="Changelog"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          v1.3
+          v1.4
         </Link>
       </div>
     </aside>

@@ -19,6 +19,7 @@ import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { RhsSidebar } from './rhs-sidebar'
+import { WhatsNewToast } from './whats-new-toast'
 
 interface DashboardShellProps {
   user: User
@@ -138,6 +139,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         {/* Right-hand sidebar — always visible on large screens */}
         {isChatView && <RhsSidebar />}
       </div>
+
+      <WhatsNewToast />
     </div>
   )
 }

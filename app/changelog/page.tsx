@@ -7,9 +7,33 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.4.0',
+    date: 'April 1, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Home page chat/tasks toggle — Chat and Tasks are now accessible directly from Home via a pill toggle, replacing the "Build a new agent" card',
+          'Xeref Agents — new AI Agents team view listing all available agents grouped by team, with tool stack details and create/edit support',
+          'Stats page now shows live data — Agents Created, Prompts Generated, and Chat Sessions reflect real account activity',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Tasks empty state is contextual — shows your configured agent count and explains when tasks will appear',
+          'Workflows description references your actual agent count and button now shows a "Coming Soon" badge',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.3.0',
     date: 'March 31, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'Fixed',
@@ -124,6 +148,7 @@ const entries = [
 
 const typeStyles: Record<string, string> = {
   New: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+  Improved: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
   Architecture: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
   Fixed: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
   Removed: 'bg-red-500/10 text-red-400 border-red-500/20',
