@@ -7,8 +7,8 @@ const openrouter = createOpenRouter({
 
 const MODEL_MAP: Record<string, string> = {
   'claude-haiku-4-5-20251001': 'anthropic/claude-haiku-4-5',
-  'claude-sonnet-4-6': 'anthropic/claude-sonnet-4-5',
-  'claude-opus-4-6': 'anthropic/claude-opus-4-5',
+  'claude-sonnet-4-6': 'anthropic/claude-sonnet-4-6',
+  'claude-opus-4-6': 'anthropic/claude-opus-4-6',
 }
 import { createClient } from '@/lib/supabase/server'
 
