@@ -21,6 +21,40 @@ function determinePlan(product: { name: string }): 'pro' | 'ultra' | null {
   return null
 }
 
+async function resolveUserId(
+  supabase: ReturnType<typeof createClient>,
+  event: Record<string, unknown>
+): Promise<string | null> {
+  const obj = event.object as Record<string, unknown> | undefined
+  const data = event.data as Record<string, unknown> | undefined
+
+  // Try standard location first
+  const metadata =
+    (obj?.metadata as Record<string, string> | undefined) ??
+    (data?.object as Record<string, unknown> | undefined)?.metadata as Record<string, string> | undefined ??
+    (event.metadata as Record<string, string> | undefined)
+
+  if (metadata?.userId) return metadata.userId as string
+
+  // Fallback: look up by customer email
+  const customer = (obj?.customer ?? data?.customer ?? event.customer) as Record<string, string> | undefined
+  const email = customer?.email
+  if (email) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email)
+      .single()
+    if (profile?.id) {
+      console.log('[Creem] Resolved userId via email fallback:', email)
+      return profile.id as string
+    }
+  }
+
+  console.error('[Creem] Could not resolve userId. Event object:', JSON.stringify(event, null, 2))
+  return null
+}
+
 export async function POST(req: NextRequest) {
   const signature = req.headers.get('creem-signature')
   if (!signature) {
@@ -30,10 +64,12 @@ export async function POST(req: NextRequest) {
   const rawBody = await req.text()
 
   if (!verifySignature(rawBody, signature)) {
+    console.error('[Creem] Signature verification failed')
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  const event = JSON.parse(rawBody)
+  const event = JSON.parse(rawBody) as Record<string, unknown>
+  console.log('[Creem] Event received:', event.eventType)
 
   // Service role client to bypass RLS
   const supabase = createClient(
@@ -45,22 +81,43 @@ export async function POST(req: NextRequest) {
     case 'checkout.completed':
     case 'subscription.active':
     case 'subscription.paid': {
-      const userId = event.object.metadata?.userId
-      const plan = determinePlan(event.object.product)
-      if (userId && plan) {
-        await supabase.from('profiles').update({ plan }).eq('id', userId)
+      const obj = (event.object ?? (event.data as Record<string, unknown>)?.object) as Record<string, unknown> | undefined
+      const product = obj?.product as { name: string } | undefined
+      const plan = product ? determinePlan(product) : null
+
+      if (!plan) {
+        console.error('[Creem] Could not determine plan from product:', product)
+        break
+      }
+
+      const userId = await resolveUserId(supabase, event)
+      if (userId) {
+        const { error } = await supabase.from('profiles').update({ plan }).eq('id', userId)
+        if (error) {
+          console.error('[Creem] Failed to update profile plan:', error)
+        } else {
+          console.log(`[Creem] Updated user ${userId} to plan: ${plan}`)
+        }
       }
       break
     }
 
     case 'subscription.canceled':
     case 'subscription.expired': {
-      const userId = event.object.metadata?.userId
+      const userId = await resolveUserId(supabase, event)
       if (userId) {
-        await supabase.from('profiles').update({ plan: 'free' }).eq('id', userId)
+        const { error } = await supabase.from('profiles').update({ plan: 'free' }).eq('id', userId)
+        if (error) {
+          console.error('[Creem] Failed to reset profile plan:', error)
+        } else {
+          console.log(`[Creem] Reset user ${userId} to plan: free`)
+        }
       }
       break
     }
+
+    default:
+      console.log('[Creem] Unhandled event type:', event.eventType)
   }
 
   return NextResponse.json({ received: true })
