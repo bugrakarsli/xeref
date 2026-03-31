@@ -57,18 +57,16 @@ export async function POST(req: Request) {
 
   const modelMessages = await convertToModelMessages(messages)
 
-  try {
-    const result = streamText({
-      model: openrouter(resolvedModelId),
-      system: systemPrompt,
-      messages: modelMessages,
-    })
-    return result.toUIMessageStreamResponse()
-  } catch (err) {
-    console.error('[Chat] streamText error:', err)
-    return new Response(
-      JSON.stringify({ error: err instanceof Error ? err.message : 'Model request failed' }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    )
-  }
+  const result = streamText({
+    model: openrouter(resolvedModelId),
+    system: systemPrompt,
+    messages: modelMessages,
+  })
+
+  return result.toUIMessageStreamResponse({
+    onError: (err) => {
+      console.error('[Chat] stream error, model:', resolvedModelId, err)
+      return err instanceof Error ? err.message : 'Model request failed'
+    },
+  })
 }
