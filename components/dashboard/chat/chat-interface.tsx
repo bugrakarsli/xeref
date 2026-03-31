@@ -47,6 +47,9 @@ export function ChatInterface({
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),
+    onError: (err) => {
+      toast.error(err.message || 'Failed to get a response. Check your API key or try again.')
+    },
     onFinish: async ({ message }) => {
       const chatId = activeChatIdRef.current
       if (!chatId) return

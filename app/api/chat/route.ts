@@ -6,9 +6,9 @@ const openrouter = createOpenRouter({
 })
 
 const MODEL_MAP: Record<string, string> = {
-  'claude-haiku-4-5-20251001': 'anthropic/claude-3-5-haiku',
-  'claude-sonnet-4-6': 'anthropic/claude-3.5-sonnet',
-  'claude-opus-4-6': 'anthropic/claude-3-opus',
+  'claude-haiku-4-5-20251001': 'anthropic/claude-haiku-4-5',
+  'claude-sonnet-4-6': 'anthropic/claude-sonnet-4-5',
+  'claude-opus-4-6': 'anthropic/claude-opus-4-5',
 }
 import { createClient } from '@/lib/supabase/server'
 
@@ -36,23 +36,7 @@ export async function POST(req: Request) {
     const isPlanMode = /plan|roadmap|decompose|break down|architecture|goals|agent/i.test(lastUserMessage)
     modelId = isPlanMode ? 'claude-opus-4-6' : 'claude-sonnet-4-6'
   } else if (modelId === 'best') {
-    if (/budget|cost|price|finance/i.test(lastUserMessage)) {
-      modelId = 'google/gemini-1.5-pro'
-    } else if (/math|calculate|logic|equation/i.test(lastUserMessage)) {
-      modelId = 'openai/gpt-4o'
-    } else if (/code|script|component|function|build app/i.test(lastUserMessage)) {
-      modelId = 'openai/gpt-4o'
-    } else if (/pdf|pptx|asset|document/i.test(lastUserMessage)) {
-      modelId = 'anthropic/claude-3-opus'
-    } else if (/website|html|react|frontend/i.test(lastUserMessage)) {
-      modelId = 'anthropic/claude-3-opus'
-    } else if (/batch|wide|scale/i.test(lastUserMessage)) {
-      modelId = 'openai/gpt-4o'
-    } else if (/recurring|cron|monitor|schedule/i.test(lastUserMessage)) {
-      modelId = 'x-ai/grok-2'
-    } else {
-      modelId = 'anthropic/claude-3.5-sonnet'
-    }
+    modelId = 'openrouter/auto'
   }
 
   const resolvedModelId = MODEL_MAP[modelId] || modelId
@@ -73,10 +57,18 @@ export async function POST(req: Request) {
 
   const modelMessages = await convertToModelMessages(messages)
 
-  const result = streamText({
-    model: openrouter(resolvedModelId),
-    system: systemPrompt,
-    messages: modelMessages,
-  })
-  return result.toUIMessageStreamResponse()
+  try {
+    const result = streamText({
+      model: openrouter(resolvedModelId),
+      system: systemPrompt,
+      messages: modelMessages,
+    })
+    return result.toUIMessageStreamResponse()
+  } catch (err) {
+    console.error('[Chat] streamText error:', err)
+    return new Response(
+      JSON.stringify({ error: err instanceof Error ? err.message : 'Model request failed' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 }
