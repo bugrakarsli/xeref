@@ -1,0 +1,1394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XerefAI – Interactive Agent Dashboard</title>
+<style>
+/* ─── Reset & Base ─── */
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#04091a;color:#dde6ff;font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;transition:margin-left .3s}
+body.sidebar-open{margin-left:260px}
+
+/* ─── Sidebar ─── */
+#sidebar{
+  position:fixed;left:0;top:0;height:100vh;width:260px;
+  background:rgba(6,12,30,.97);border-right:1px solid rgba(255,255,255,.07);
+  z-index:200;transform:translateX(-260px);transition:transform .3s;
+  display:flex;flex-direction:column;overflow-y:auto;
+}
+#sidebar.open{transform:translateX(0)}
+#sidebar-toggle{
+  position:fixed;left:0;top:50%;transform:translateY(-50%);
+  z-index:201;background:rgba(0,212,255,.15);border:1px solid rgba(0,212,255,.3);
+  color:#00d4ff;cursor:pointer;padding:10px 6px;border-radius:0 8px 8px 0;
+  font-size:.75rem;transition:all .2s;writing-mode:vertical-rl;letter-spacing:1px;
+}
+#sidebar-toggle:hover{background:rgba(0,212,255,.25)}
+#sidebar-toggle.open{left:260px}
+
+.sidebar-logo{padding:20px 16px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+.sidebar-logo span{font-size:1rem;font-weight:800;background:linear-gradient(90deg,#00d4ff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sidebar-logo small{display:block;font-size:.62rem;color:#475569;letter-spacing:2px;margin-top:2px}
+
+.sidebar-section{padding:14px 12px 8px}
+.sidebar-sec-title{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;color:#475569;font-weight:700;padding:0 4px;margin-bottom:8px}
+
+.sidebar-item{
+  display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;
+  cursor:pointer;font-size:.82rem;color:#94a3b8;transition:all .15s;
+  margin-bottom:2px;position:relative;
+}
+.sidebar-item:hover{background:rgba(255,255,255,.05);color:#dde6ff}
+.sidebar-item.active{background:rgba(0,212,255,.1);color:#00d4ff}
+.sidebar-item .item-icon{font-size:1rem;width:20px;text-align:center}
+.sidebar-item .item-name{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sidebar-item .item-actions{opacity:0;display:flex;gap:4px;transition:opacity .15s}
+.sidebar-item:hover .item-actions{opacity:1}
+.sidebar-item .item-actions button{
+  background:none;border:none;color:#64748b;cursor:pointer;font-size:.8rem;
+  padding:2px 4px;border-radius:4px;transition:color .15s;
+}
+.sidebar-item .item-actions button:hover{color:#dde6ff}
+.sidebar-item .starred{color:#fbbf24;font-size:.75rem}
+
+.sidebar-add-btn{
+  width:100%;background:none;border:1px dashed rgba(255,255,255,.1);
+  color:#475569;cursor:pointer;padding:7px 10px;border-radius:8px;
+  font-size:.78rem;text-align:left;transition:all .15s;margin-top:4px;
+}
+.sidebar-add-btn:hover{border-color:rgba(0,212,255,.3);color:#00d4ff}
+
+.sidebar-agent-card{
+  display:flex;align-items:center;gap:10px;padding:10px 10px;
+  border-radius:8px;background:rgba(34,197,94,.06);border:1px solid rgba(34,197,94,.15);
+  margin-bottom:6px;cursor:pointer;transition:all .15s;
+}
+.sidebar-agent-card:hover{background:rgba(34,197,94,.1)}
+.sidebar-agent-card .agent-dot{width:8px;height:8px;border-radius:50%;background:#22c55e;flex-shrink:0;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sidebar-agent-card .agent-info{flex:1;min-width:0}
+.sidebar-agent-card .agent-name{font-size:.8rem;font-weight:700;color:#22c55e}
+.sidebar-agent-card .agent-model{font-size:.65rem;color:#475569;margin-top:1px}
+.sidebar-agent-card .configure-btn{
+  font-size:.62rem;color:#475569;background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.08);border-radius:4px;padding:2px 6px;
+  cursor:pointer;transition:all .15s;
+}
+.sidebar-agent-card .configure-btn:hover{color:#dde6ff;border-color:rgba(255,255,255,.2)}
+
+.sidebar-divider{border:none;border-top:1px solid rgba(255,255,255,.05);margin:8px 0}
+
+/* ─── Main Content Wrapper ─── */
+#main{padding:28px 16px 48px;min-height:100vh}
+
+/* ─── Header ─── */
+h1{text-align:center;font-size:1.9rem;font-weight:800;background:linear-gradient(90deg,#00d4ff,#a855f7,#ff6b9d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:4px}
+.subtitle{text-align:center;color:#64748b;font-size:.82rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:36px}
+
+/* ─── Section headers ─── */
+.sec-title{max-width:1060px;margin:0 auto 18px;font-size:.78rem;color:#00d4ff;letter-spacing:3px;text-transform:uppercase;font-weight:700}
+.sec-title.purple{color:#a855f7}
+.sec-title.pink{color:#ff6b9d}
+.sec-title.yellow{color:#fbbf24}
+hr.div{max-width:1060px;margin:36px auto;border:none;border-top:1px solid rgba(255,255,255,.06)}
+
+/* ─── Org Chart ─── */
+.org-wrap{max-width:1060px;margin:0 auto 0}
+.org-tree{display:flex;flex-direction:column;align-items:center}
+.row-top{display:flex;justify-content:center;gap:36px;align-items:flex-start}
+.conn-v{width:2px;height:24px;background:linear-gradient(to bottom,#a855f7,#00d4ff);margin:0 auto}
+.beam{width:min(900px,96vw);height:2px;background:linear-gradient(90deg,rgba(255,165,0,.6),rgba(255,215,120,.5),rgba(255,100,180,.6),rgba(128,128,255,.5));border-radius:2px}
+.teams-row{display:flex;justify-content:center;gap:16px;flex-wrap:wrap;width:100%;margin-top:12px}
+.team-block{display:flex;flex-direction:column;align-items:center;gap:7px}
+.team-lbl{font-size:.6rem;letter-spacing:3px;text-transform:uppercase;font-weight:700;padding:2px 10px;border-radius:20px}
+.lbl-a{background:rgba(255,165,0,.2);color:#ffa500}
+.lbl-c{background:rgba(255,215,120,.2);color:#ffd580}
+.lbl-cn{background:rgba(255,100,180,.2);color:#ff64b4}
+.lbl-i{background:rgba(100,100,255,.2);color:#8080ff}
+
+/* ─── Agent Cards ─── */
+.acard{border-radius:13px;padding:12px 18px;min-width:130px;text-align:center;transition:transform .2s,box-shadow .2s;cursor:default;position:relative}
+.acard:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.aname-row{display:flex;align-items:center;justify-content:center;gap:7px}
+.aname{font-size:.88rem;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+.aemoji{font-size:1.1rem;line-height:1}
+.arole{font-size:.6rem;letter-spacing:1.5px;text-transform:uppercase;opacity:.75;margin-top:3px}
+.astatus{display:inline-block;padding:1px 7px;border-radius:20px;font-size:.58rem;margin-top:5px;letter-spacing:1px}
+.s-green{background:rgba(0,255,120,.18);color:#00ff7b;border:1px solid rgba(0,255,120,.4)}
+.s-blue{background:rgba(0,212,255,.18);color:#00d4ff;border:1px solid rgba(0,212,255,.4)}
+.s-purple{background:rgba(168,85,247,.18);color:#c084fc;border:1px solid rgba(168,85,247,.4)}
+.s-gray{background:rgba(148,163,184,.12);color:#94a3b8;border:1px solid rgba(148,163,184,.3)}
+
+.ac-cmd{background:linear-gradient(135deg,rgba(0,212,255,.18),rgba(0,212,255,.04));border:2px solid #00d4ff} .ac-cmd .aname{color:#00d4ff}
+.ac-inbox{background:linear-gradient(135deg,rgba(100,180,255,.16),rgba(100,180,255,.04));border:1.5px solid #64b4ff} .ac-inbox .aname{color:#64b4ff}
+.ac-cso{background:linear-gradient(135deg,rgba(255,165,0,.18),rgba(255,165,0,.04));border:2px solid #ffa500} .ac-cso .aname{color:#ffa500}
+.ac-ang{background:linear-gradient(135deg,rgba(255,165,0,.12),rgba(255,165,0,.03));border:1.5px solid rgba(255,165,0,.5)} .ac-ang .aname{color:#ffa500}
+.ac-crew{background:linear-gradient(135deg,rgba(255,215,120,.12),rgba(255,215,120,.03));border:1.5px solid rgba(255,215,120,.5)} .ac-crew .aname{color:#ffd580}
+.ac-cont{background:linear-gradient(135deg,rgba(255,100,180,.14),rgba(255,100,180,.03));border:1.5px solid rgba(255,100,180,.5)} .ac-cont .aname{color:#ff64b4}
+.ac-infra{background:linear-gradient(135deg,rgba(100,100,255,.14),rgba(100,100,255,.03));border:1.5px solid rgba(100,100,255,.5)} .ac-infra .aname{color:#8080ff}
+.ac-fin{background:linear-gradient(135deg,rgba(0,255,120,.12),rgba(0,255,120,.03));border:1.5px solid rgba(0,255,120,.4)} .ac-fin .aname{color:#00ff7b}
+.ac-custom{background:linear-gradient(135deg,rgba(168,85,247,.14),rgba(168,85,247,.03));border:1.5px solid rgba(168,85,247,.5)} .ac-custom .aname{color:#c084fc}
+
+/* ─── Card Actions (edit/delete overlay) ─── */
+.card-actions{
+  position:absolute;top:6px;right:6px;display:flex;gap:4px;
+  opacity:0;transition:opacity .2s;
+}
+.acard:hover .card-actions{opacity:1}
+.card-actions button{
+  background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.15);
+  color:#94a3b8;cursor:pointer;padding:3px 6px;border-radius:6px;
+  font-size:.75rem;transition:all .15s;line-height:1;
+}
+.card-actions button:hover{background:rgba(255,255,255,.1);color:#dde6ff}
+.card-actions .del-btn:hover{color:#ff6060;border-color:rgba(255,96,96,.4)}
+
+/* ─── Tool Stack Table ─── */
+.tbl-wrap{max-width:1060px;margin:0 auto}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+thead tr{background:rgba(0,212,255,.07)}
+th{color:#00d4ff;font-size:.67rem;letter-spacing:2px;text-transform:uppercase;padding:9px 14px;text-align:left;border-bottom:1px solid rgba(0,212,255,.18)}
+td{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.05);vertical-align:middle}
+tr:hover td{background:rgba(255,255,255,.025)}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:600;margin:1px 2px}
+.b-blue{background:rgba(0,212,255,.14);color:#00d4ff;border:1px solid rgba(0,212,255,.3)}
+.b-purple{background:rgba(168,85,247,.14);color:#c084fc;border:1px solid rgba(168,85,247,.3)}
+.b-orange{background:rgba(255,165,0,.14);color:#ffa500;border:1px solid rgba(255,165,0,.3)}
+.b-pink{background:rgba(255,107,157,.14);color:#ff6b9d;border:1px solid rgba(255,107,157,.3)}
+.b-green{background:rgba(0,255,120,.12);color:#00ff7b;border:1px solid rgba(0,255,120,.28)}
+.b-red{background:rgba(255,80,80,.12);color:#ff6060;border:1px solid rgba(255,80,80,.28)}
+.b-gold{background:rgba(255,215,0,.12);color:#ffd700;border:1px solid rgba(255,215,0,.28)}
+.changed{color:#fbbf24;font-size:.65rem;font-weight:700;margin-left:4px}
+
+/* ─── Workflow Cards ─── */
+.flows-grid{max-width:1060px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px}
+.flow-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:18px}
+.flow-h{font-size:.8rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:7px}
+.step{display:flex;gap:9px;align-items:flex-start;margin-bottom:8px}
+.snum{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.stxt{font-size:.79rem;color:#94a3b8;line-height:1.5}
+.stxt .new{color:#fbbf24;font-weight:600}
+.sarrow{color:#2a3550;font-size:.68rem;margin-left:28px;margin-bottom:3px}
+.idle-badge{display:inline-block;background:rgba(251,191,36,.12);color:#fbbf24;border:1px solid rgba(251,191,36,.3);border-radius:20px;padding:1px 7px;font-size:.6rem;font-weight:700;margin-left:5px;letter-spacing:1px;vertical-align:middle}
+
+/* ─── Bridge note ─── */
+.bridge{max-width:560px;margin:16px auto 0;font-size:.72rem;color:#00ff7b;text-align:center;background:rgba(0,255,120,.05);border-radius:9px;padding:7px 14px;border:1px solid rgba(0,255,120,.22)}
+
+/* ─── Alert box ─── */
+.alert{max-width:1060px;margin:0 auto 28px;background:rgba(255,191,36,.07);border:1px solid rgba(255,191,36,.25);border-radius:11px;padding:12px 18px;font-size:.8rem;color:#fbbf24;line-height:1.6}
+.alert strong{font-weight:700}
+
+/* ─── FAB (Floating Action Bar) ─── */
+#fab{
+  position:fixed;bottom:28px;right:28px;
+  display:flex;flex-direction:column;gap:10px;z-index:150;align-items:flex-end;
+}
+.fab-btn{
+  padding:10px 20px;border-radius:24px;border:none;cursor:pointer;
+  font-size:.82rem;font-weight:700;letter-spacing:1px;
+  backdrop-filter:blur(12px);transition:all .2s;box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+#createAgentBtn{background:rgba(34,197,94,.25);color:#22c55e;border:1px solid rgba(34,197,94,.4)}
+#createAgentBtn:hover{background:rgba(34,197,94,.35);transform:scale(1.04)}
+#newProjectFabBtn{background:rgba(0,212,255,.2);color:#00d4ff;border:1px solid rgba(0,212,255,.35)}
+#newProjectFabBtn:hover{background:rgba(0,212,255,.3);transform:scale(1.04)}
+
+/* ─── Modal ─── */
+.modal-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);
+  z-index:300;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.active{display:flex}
+.modal-box{
+  background:rgba(8,16,40,.97);border:1px solid rgba(255,255,255,.1);
+  border-radius:18px;padding:28px 32px;width:min(480px,92vw);
+  box-shadow:0 24px 64px rgba(0,0,0,.6);position:relative;
+  backdrop-filter:blur(20px);
+}
+.modal-title{font-size:1rem;font-weight:800;letter-spacing:2px;text-transform:uppercase;margin-bottom:22px;color:#dde6ff}
+.modal-close{
+  position:absolute;top:16px;right:18px;background:none;border:none;
+  color:#475569;cursor:pointer;font-size:1.2rem;transition:color .15s;
+}
+.modal-close:hover{color:#dde6ff}
+.form-group{margin-bottom:16px}
+.form-label{display:block;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:#64748b;margin-bottom:6px;font-weight:600}
+.form-input{
+  width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:9px;padding:9px 13px;color:#dde6ff;font-size:.85rem;
+  outline:none;transition:border-color .15s;font-family:inherit;
+}
+.form-input:focus{border-color:rgba(0,212,255,.4);background:rgba(255,255,255,.07)}
+.form-input option{background:#08102a}
+.form-row{display:flex;gap:12px}
+.form-row .form-group{flex:1}
+.form-actions{display:flex;gap:10px;margin-top:22px;justify-content:flex-end}
+.btn-cancel{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  color:#64748b;padding:9px 20px;border-radius:9px;cursor:pointer;
+  font-size:.82rem;transition:all .15s;
+}
+.btn-cancel:hover{color:#dde6ff;border-color:rgba(255,255,255,.2)}
+.btn-save{
+  background:rgba(0,212,255,.2);border:1px solid rgba(0,212,255,.4);
+  color:#00d4ff;padding:9px 24px;border-radius:9px;cursor:pointer;
+  font-size:.82rem;font-weight:700;transition:all .15s;
+}
+.btn-save:hover{background:rgba(0,212,255,.3)}
+.btn-save.green{background:rgba(34,197,94,.2);border-color:rgba(34,197,94,.4);color:#22c55e}
+.btn-save.green:hover{background:rgba(34,197,94,.3)}
+
+/* ─── Chat Viewer ─── */
+#chatSection{max-width:1060px;margin:0 auto}
+.chat-selector{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:center}
+.chat-file-btn{
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  color:#64748b;padding:6px 14px;border-radius:20px;cursor:pointer;
+  font-size:.75rem;transition:all .15s;
+}
+.chat-file-btn:hover,.chat-file-btn.active{
+  background:rgba(168,85,247,.15);border-color:rgba(168,85,247,.4);color:#c084fc;
+}
+.chat-window{
+  background:rgba(255,255,255,.02);border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;padding:20px;max-height:480px;overflow-y:auto;
+  display:none;
+}
+.chat-window.active{display:block}
+.chat-msg{display:flex;margin-bottom:14px;gap:10px}
+.chat-msg.user{flex-direction:row-reverse}
+.chat-bubble{
+  max-width:72%;padding:10px 14px;border-radius:14px;font-size:.82rem;line-height:1.6;
+  white-space:pre-wrap;word-break:break-word;
+}
+.chat-msg.assistant .chat-bubble{background:rgba(168,85,247,.14);border:1px solid rgba(168,85,247,.25);color:#dde6ff;border-radius:4px 14px 14px 14px}
+.chat-msg.user .chat-bubble{background:rgba(0,212,255,.14);border:1px solid rgba(0,212,255,.25);color:#dde6ff;border-radius:14px 4px 14px 14px}
+.chat-role{font-size:.65rem;color:#475569;margin-top:4px;letter-spacing:1px;text-transform:uppercase}
+.chat-msg.user .chat-role{text-align:right}
+.chat-empty{color:#475569;text-align:center;padding:32px;font-size:.82rem}
+.chat-tool-use{
+  background:rgba(251,191,36,.07);border:1px solid rgba(251,191,36,.2);
+  border-radius:9px;padding:8px 12px;font-size:.72rem;color:#94a3b8;
+  font-family:'Consolas','Courier New',monospace;
+}
+.chat-tool-use .tool-name{color:#fbbf24;font-weight:700}
+
+/* ─── Toast ─── */
+#toast{
+  position:fixed;bottom:90px;right:28px;z-index:400;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;
+  pointer-events:none;
+}
+.toast-item{
+  background:rgba(8,16,40,.95);border:1px solid rgba(255,255,255,.1);
+  border-radius:10px;padding:10px 16px;font-size:.8rem;color:#dde6ff;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);animation:toastIn .3s ease;
+  pointer-events:auto;
+}
+.toast-item.success{border-color:rgba(34,197,94,.35);color:#22c55e}
+.toast-item.error{border-color:rgba(255,96,96,.35);color:#ff6060}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+/* ─── Additional Agents Section ─── */
+#additional-agents-wrap{max-width:1060px;margin:0 auto}
+.additional-agents-grid{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+
+footer{text-align:center;margin-top:36px;font-size:.7rem;color:#1e293b;letter-spacing:2px}
+</style>
+</head>
+<body>
+
+<!-- ─── Sidebar Toggle ─── -->
+<button id="sidebar-toggle" onclick="toggleSidebar()">MENU</button>
+
+<!-- ─── Left Sidebar ─── -->
+<div id="sidebar">
+  <div class="sidebar-logo">
+    <span>XerefAI</span>
+    <small>AGENT DASHBOARD</small>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-sec-title">PROJECTS</div>
+    <div id="projectsList"></div>
+    <button class="sidebar-add-btn" onclick="openProjectModal()">+ New project</button>
+  </div>
+
+  <hr class="sidebar-divider">
+
+  <div class="sidebar-section">
+    <div class="sidebar-sec-title">AI AGENTS</div>
+    <div id="aiAgentsList">
+      <div class="sidebar-agent-card">
+        <div class="agent-dot"></div>
+        <div class="agent-info">
+          <div class="agent-name">Xeref 🧠</div>
+          <div class="agent-model">GPT-4.1 mini · LangGraph</div>
+        </div>
+        <button class="configure-btn" onclick="openConfigureAgent()">Configure</button>
+      </div>
+    </div>
+  </div>
+
+  <hr class="sidebar-divider">
+
+  <div class="sidebar-section">
+    <div class="sidebar-sec-title">CHATS</div>
+    <div id="sidebarChatsList"></div>
+  </div>
+</div>
+
+<!-- ─── Main Content ─── -->
+<div id="main">
+
+<h1>XerefAI · 12 Agent Workflow</h1>
+<p class="subtitle">Bugra Karsli — Commander · Xeref 🧠 Second Brain · 12 Agents · March 2026</p>
+
+<!-- ─ Alert ─ -->
+<div class="alert">
+  <strong>⚠️ Critical Tool Updates Applied:</strong>
+  &nbsp;(1) <strong>GPT-4o retired</strong> from ChatGPT Feb 13 2026 &amp; API Feb 16 2026 — replaced with <strong>GPT-4.1 mini</strong> ($0.40/1M tokens, 1M context window, still active API).
+  &nbsp;(2) <strong>Stripe API → Creem API</strong> — Merchant of Record, 3.9%+$0.40/tx, native Next.js+Supabase webhook support.
+  &nbsp;(3) <strong>Instantly (paid-only) → Smartlead</strong> — $39/mo, unlimited mailboxes, 14-day free trial.
+  &nbsp;(4) All 6 workflows extended with <strong>idle-prevention steps</strong>.
+  &nbsp;(5) <strong>Xeref 🧠</strong> added as Second Brain / AI Orchestrator — routes tasks, guards cost/latency, writes to shared Supabase memory.
+</div>
+
+<!-- ═══════════ ORG CHART ═══════════ -->
+<div class="sec-title purple">🏗 Agent Hierarchy</div>
+<div class="org-wrap">
+<div class="org-tree">
+
+  <!-- Commander -->
+  <div class="row-top">
+    <div class="acard ac-cmd" style="min-width:160px" data-agent-id="bugra">
+      <div class="aname-row"><span class="aname">Bugra</span><span class="aemoji">🧭</span></div>
+      <div class="arole">Commander · Founder</div>
+      <span class="astatus s-blue">● CONTROL PANEL</span>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+
+  <!-- Xeref Second Brain -->
+  <div class="acard" data-agent-id="xeref" style="min-width:190px;background:linear-gradient(135deg,rgba(34,197,94,.2),rgba(4,9,26,1));border:2px solid #22c55e;border-radius:13px;padding:14px 22px;text-align:center;position:relative;cursor:default;transition:transform .2s,box-shadow .2s">
+    <div class="aname-row">
+      <span class="aname" style="color:#22c55e">Xeref</span>
+      <span class="aemoji">🧠</span>
+    </div>
+    <div class="arole">Second Brain · AI Orchestrator</div>
+    <span class="astatus" style="background:rgba(34,197,94,.18);color:#22c55e;border:1px solid rgba(34,197,94,.4)">● ALWAYS THINKING</span>
+  </div>
+
+  <div class="conn-v"></div>
+
+  <!-- Dan + Chase -->
+  <div class="row-top">
+    <div class="acard ac-cso" style="min-width:170px" data-agent-id="dan">
+      <div class="aname-row"><span class="aname">Dan</span><span class="aemoji">♟️</span></div>
+      <div class="arole">Chief Strategy</div>
+      <span class="astatus s-green">● AT WORK</span>
+    </div>
+    <div style="display:flex;align-items:center;opacity:.35"><div style="width:44px;height:2px;background:rgba(100,180,255,.6)"></div></div>
+    <div class="acard ac-inbox" style="min-width:140px;margin-top:16px" data-agent-id="chase">
+      <div class="aname-row"><span class="aname">Chase</span><span class="aemoji">📥</span></div>
+      <div class="arole">Inbox Ops</div>
+    </div>
+  </div>
+
+  <div class="conn-v"></div>
+  <div class="beam"></div>
+
+  <div class="teams-row">
+    <div class="team-block" data-team="Angler">
+      <div class="team-lbl lbl-a">Angler</div>
+      <div class="acard ac-ang" data-agent-id="jack">
+        <div class="aname-row"><span class="aname">Jack</span><span class="aemoji">🎣</span></div>
+        <div class="arole">Angler Ops</div>
+      </div>
+      <div class="acard ac-ang" style="margin-top:7px" data-agent-id="vinny">
+        <div class="aname-row"><span class="aname">Vinny</span><span class="aemoji">📊</span></div>
+        <div class="arole">Google Ads</div>
+        <span class="astatus s-green">● AT WORK</span>
+      </div>
+    </div>
+
+    <div class="team-block" data-team="Crewless">
+      <div class="team-lbl lbl-c">Crewless</div>
+      <div class="acard ac-crew" data-agent-id="alex">
+        <div class="aname-row"><span class="aname">Alex</span><span class="aemoji">🤝</span></div>
+        <div class="arole">Sales</div>
+      </div>
+      <div class="acard ac-crew" style="margin-top:7px" data-agent-id="sabrina">
+        <div class="aname-row"><span class="aname">Sabrina</span><span class="aemoji">📦</span></div>
+        <div class="arole">Delivery</div>
+      </div>
+    </div>
+
+    <div class="team-block" data-team="Content">
+      <div class="team-lbl lbl-cn">Content</div>
+      <div class="acard ac-cont" data-agent-id="kate">
+        <div class="aname-row"><span class="aname">Kate</span><span class="aemoji">📡</span></div>
+        <div class="arole">Outreach</div>
+      </div>
+      <div class="acard ac-cont" style="margin-top:7px" data-agent-id="leila">
+        <div class="aname-row"><span class="aname">Leila</span><span class="aemoji">✍️</span></div>
+        <div class="arole">Content</div>
+      </div>
+      <div class="acard ac-cont" style="margin-top:7px" data-agent-id="james">
+        <div class="aname-row"><span class="aname">James</span><span class="aemoji">🔍</span></div>
+        <div class="arole">Research</div>
+      </div>
+    </div>
+
+    <div class="team-block" data-team="Infra">
+      <div class="team-lbl lbl-i">Infra</div>
+      <div class="acard ac-infra" data-agent-id="admin">
+        <div class="aname-row"><span class="aname">Admin</span><span class="aemoji">🛠️</span></div>
+        <div class="arole">Sys Admin</div>
+      </div>
+    </div>
+
+    <!-- Dynamic agent columns injected here by JS -->
+    <div id="dynamic-teams-row" style="display:contents"></div>
+  </div>
+
+  <div style="height:16px"></div>
+  <div class="acard ac-fin" style="min-width:170px" data-agent-id="fred">
+    <div class="aname-row"><span class="aname">Fred</span><span class="aemoji">💰</span></div>
+    <div class="arole">Financial</div>
+  </div>
+  <div class="bridge">Fred bridges Angler ↔ Crewless — financial oversight across both revenue pipelines</div>
+</div>
+</div>
+
+<!-- Dynamic "Additional Agents" section (only shown when agents are added via modal) -->
+<div id="additional-agents-section" style="display:none;max-width:1060px;margin:24px auto 0">
+  <div class="sec-title" style="color:#c084fc;margin-bottom:12px">✦ Additional Agents</div>
+  <div class="additional-agents-grid" id="additional-agents-grid"></div>
+</div>
+
+<hr class="div">
+
+<!-- ═══════════ TOOL STACK ═══════════ -->
+<div class="sec-title">🔧 Updated Tool Stack — All 12 Agents</div>
+<div class="tbl-wrap">
+<table>
+  <thead><tr>
+    <th>Agent</th><th>Emoji</th><th>Role</th>
+    <th>Recommended Tools (Updated)</th><th>Team</th>
+  </tr></thead>
+  <tbody id="toolStackBody">
+  <tr style="background:rgba(34,197,94,.06)">
+    <td><strong style="color:#22c55e">Xeref</strong></td>
+    <td>🧠</td><td>Second Brain · Orchestrator</td>
+    <td>
+      <span class="badge b-green">LangGraph</span>
+      <span class="badge b-blue">n8n</span>
+      <span class="badge b-purple">Supabase Memory</span>
+      <span class="badge b-gold">GPT-4.1 mini</span>
+    </td>
+    <td>Orchestrator</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#00d4ff">Bugra</strong></td>
+    <td>🧭</td><td>Commander</td>
+    <td>
+      <span class="badge b-blue">n8n</span>
+      <span class="badge b-purple">LangChain</span>
+      <span class="badge b-orange">Make</span>
+    </td>
+    <td>Top-Level</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ffa500">Dan</strong></td>
+    <td>♟️</td><td>Chief Strategy</td>
+    <td>
+      <span class="badge b-blue">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+      <span class="badge b-purple">Notion API</span>
+      <span class="badge b-orange">Airtable</span>
+    </td>
+    <td>Top-Level</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#64b4ff">Chase</strong></td>
+    <td>📥</td><td>Inbox Ops</td>
+    <td>
+      <span class="badge b-pink">Gmail API</span>
+      <span class="badge b-blue">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+      <span class="badge b-orange">Superhuman</span>
+    </td>
+    <td>Top-Level</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ffa500">Jack</strong></td>
+    <td>🎣</td><td>Angler Ops</td>
+    <td>
+      <span class="badge b-blue">Clay</span>
+      <span class="badge b-purple">Apollo</span>
+      <span class="badge b-green">Smartlead</span><span class="changed">↑ was Instantly</span>
+    </td>
+    <td>Angler</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ffa500">Vinny</strong></td>
+    <td>📊</td><td>Google Ads</td>
+    <td>
+      <span class="badge b-blue">Google Ads API</span>
+      <span class="badge b-purple">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+      <span class="badge b-green">Opteo</span>
+    </td>
+    <td>Angler</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ffd580">Alex</strong></td>
+    <td>🤝</td><td>Sales</td>
+    <td>
+      <span class="badge b-blue">HubSpot</span>
+      <span class="badge b-purple">Close CRM</span>
+      <span class="badge b-pink">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+    </td>
+    <td>Crewless</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ffd580">Sabrina</strong></td>
+    <td>📦</td><td>Delivery</td>
+    <td>
+      <span class="badge b-blue">Notion</span>
+      <span class="badge b-orange">Slack</span>
+      <span class="badge b-purple">ClickUp</span>
+    </td>
+    <td>Crewless</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ff64b4">Kate</strong></td>
+    <td>📡</td><td>Outreach</td>
+    <td>
+      <span class="badge b-blue">Podchaser</span>
+      <span class="badge b-purple">Hunter.io</span>
+      <span class="badge b-pink">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+    </td>
+    <td>Content</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ff64b4">Leila</strong></td>
+    <td>✍️</td><td>Content</td>
+    <td>
+      <span class="badge b-blue">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+      <span class="badge b-purple">Jasper</span>
+      <span class="badge b-pink">Buffer</span>
+    </td>
+    <td>Content</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#ff64b4">James</strong></td>
+    <td>🔍</td><td>Research</td>
+    <td>
+      <span class="badge b-blue">Perplexity API</span>
+      <span class="badge b-purple">Tavily</span>
+      <span class="badge b-orange">Exa</span>
+    </td>
+    <td>Content</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#8080ff">Admin</strong></td>
+    <td>🛠️</td><td>Sys Admin</td>
+    <td>
+      <span class="badge b-blue">Doppler</span>
+      <span class="badge b-purple">Datadog</span>
+      <span class="badge b-green">Uptime Robot</span>
+    </td>
+    <td>Infra</td>
+  </tr>
+  <tr>
+    <td><strong style="color:#00ff7b">Fred</strong></td>
+    <td>💰</td><td>Financial</td>
+    <td>
+      <span class="badge b-green">Creem API</span><span class="changed">↑ was Stripe</span>
+      <span class="badge b-blue">QuickBooks</span>
+      <span class="badge b-purple">GPT-4.1 mini</span><span class="changed">↑ was GPT-4o</span>
+    </td>
+    <td>Bridge</td>
+  </tr>
+  </tbody>
+</table>
+</div>
+
+<div style="max-width:1060px;margin:10px auto 0;font-size:.75rem;color:#475569;padding:0 2px">
+  <strong style="color:#fbbf24">⚡ GPT-4.1 mini</strong> — Active API as of March 2026 · $0.40/$1.60 per 1M input/output tokens · 1M token context window.
+  &nbsp;|&nbsp;
+  <strong style="color:#fbbf24">🟢 Creem</strong> — Next.js+Supabase native · <code style="color:#94a3b8">@creem_io/nextjs</code> webhook adapter · 3.9%+$0.40/tx.
+  &nbsp;|&nbsp;
+  <strong style="color:#fbbf24">📧 Smartlead</strong> — $39/mo base · unlimited mailboxes · 14-day free trial.
+</div>
+
+<hr class="div">
+
+<!-- ═══════════ WORKFLOWS ═══════════ -->
+<div class="sec-title pink">⚡ Workflows — Extended with Anti-Idle Steps</div>
+<div class="flows-grid">
+
+  <div class="flow-card" style="border-color:rgba(255,165,0,.25)">
+    <div class="flow-h" style="color:#ffa500">♟️ Morning Briefing — Dan</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> triggers the briefing workflow at 7:15 AM — confirms all data agents are online via Admin (🛠️) before handing off to Dan (♟️)</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,165,0,.2);color:#ffa500">1</div><div class="stxt">Fred (💰) aggregates overnight P&amp;L, ad spend, pipeline value from Creem API + QuickBooks</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,165,0,.2);color:#ffa500">2</div><div class="stxt">Dan pulls metrics from all team agents via Airtable, compiles 7:30 AM brief for Bugra (🧭)</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,165,0,.2);color:#ffa500">3</div><div class="stxt">Bugra reviews on dashboard, flags priority actions — auto-routed to relevant agents via n8n</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,165,0,.2);color:#ffa500">4</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When no priority flags: Dan auto-generates a weekly trend analysis and competitor intel report using GPT-4.1 mini + James (🔍) research feed</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,165,0,.2);color:#ffa500">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Dan reviews and stress-tests current 90-day strategy doc — flags any misalignments and drafts updated OKRs in Notion API</div></div>
+  </div>
+
+  <div class="flow-card" style="border-color:rgba(100,180,255,.25)">
+    <div class="flow-h" style="color:#64b4ff">📥 Inbox Ops — Chase</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> pre-screens the inbox summary from Chase (📥) — escalates anything flagged as urgent directly to Bugra (🧭) before drafts are queued</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(100,180,255,.2);color:#64b4ff">1</div><div class="stxt">Chase monitors inbox continuously via Gmail API — classifies: Lead / Partner / Support / Noise</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(100,180,255,.2);color:#64b4ff">2</div><div class="stxt">Leads → Alex (🤝 Sales); Support → Sabrina (📦 Delivery); Partners → Chase drafts reply in Bugra's voice</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(100,180,255,.2);color:#64b4ff">3</div><div class="stxt">Replies queued by 8:00 AM for 1-click approval on Bugra's dashboard</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(100,180,255,.2);color:#64b4ff">4</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When inbox is clear: Chase audits past 30 days of sent emails, scores reply rates, and updates tone/template guidelines in Notion</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(100,180,255,.2);color:#64b4ff">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Chase pre-drafts 5 outreach email templates for new campaign segments based on Alex's (🤝) latest ICP updates via HubSpot</div></div>
+  </div>
+
+  <div class="flow-card" style="border-color:rgba(255,100,180,.25)">
+    <div class="flow-h" style="color:#ff64b4">✍️ Content Production — Leila + James + Kate</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> pulls Bugra's current brand voice, active campaigns, and audience performance from Supabase memory — injects context into James (🔍) brief before research starts</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">1</div><div class="stxt">James (🔍) pulls trending topics via Perplexity API + Tavily — validates claims, creates brief</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">2</div><div class="stxt">Leila (✍️) writes 3 scripts via GPT-4.1 mini — long-form, short-form, social carousel</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">3</div><div class="stxt">Kate (📡) designs core result visual and distributes across 6 platforms via Buffer</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">4</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When content quota met: James builds a 30-day content idea bank using Exa deep search — stored in Airtable as pre-approved topic queue</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Leila repurposes top 3 performing posts into new format variants for next week's queue in Buffer</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,100,180,.2);color:#ff64b4">6</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Kate audits platform engagement stats — generates performance report and pings Dan (♟️) with platform-specific optimization recommendations</div></div>
+  </div>
+
+  <div class="flow-card" style="border-color:rgba(255,215,120,.25)">
+    <div class="flow-h" style="color:#ffd580">🤝 Sales &amp; Delivery — Alex + Sabrina</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> checks Supabase memory for existing lead context — if lead has prior interaction history, injects full context into Alex (🤝) before proposal is drafted</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">1</div><div class="stxt">Jack (🎣) qualifies inbound leads from Smartlead campaigns and Google Ads — scores via Clay</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">2</div><div class="stxt">Alex (🤝) sends personalized proposals via Close CRM + GPT-4.1 mini — follows up until conversion</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">3</div><div class="stxt">Sabrina (📦) onboards new clients in Notion/ClickUp — manages fulfillment and delivery SLAs</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">4</div><div class="stxt">Fred (💰) tracks payment via Creem API webhooks — auto-flags late payments to Sabrina</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When pipeline is quiet: Alex re-engages dormant leads (90+ days) with personalized GPT-4.1 mini win-back sequences via HubSpot</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,120,.2);color:#ffd580">6</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Sabrina audits all active client projects, updates delivery timelines in ClickUp, and drafts proactive progress updates to send to clients via Slack</div></div>
+  </div>
+
+  <div class="flow-card" style="border-color:rgba(255,215,0,.25)">
+    <div class="flow-h" style="color:#ffd700">📊 Google Ads Optimization — Vinny</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> correlates ad performance with content schedule from Leila (✍️) and outreach timing from Kate (📡) — passes cross-channel context to Vinny (📊) before bid adjustments</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">1</div><div class="stxt">Vinny monitors CPC, CTR, conversion rate hourly via Google Ads API — auto-pauses underperformers</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">2</div><div class="stxt">James (🔍) provides fresh copy angles; Vinny uses GPT-4.1 mini to generate A/B ad variants</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">3</div><div class="stxt">Fred (💰) confirms budget available via Creem dashboard — Vinny adjusts bids accordingly via Opteo</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">4</div><div class="stxt">Dan (♟️) receives weekly ROAS report — adjusts channel strategy for following week</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When campaigns are stable: Vinny researches 3 new audience segments using Google Ads API audience insights — drafts cold-start campaign structures for Dan's approval</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(255,215,0,.2);color:#ffd700">6</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Vinny runs negative keyword audit monthly — generates report identifying wasted spend and submits optimizations to Jack (🎣) for Angler funnel alignment</div></div>
+  </div>
+
+  <div class="flow-card" style="border-color:rgba(128,128,255,.25)">
+    <div class="flow-h" style="color:#8080ff">🛠️ Infra &amp; Memory — Admin + Fred</div>
+    <div class="step"><div class="snum" style="background:rgba(34,197,94,.2);color:#22c55e">0</div><div class="stxt"><span class="new">XEREF 🧠</span> is the primary read/write agent for Supabase <code style="color:#94a3b8">agent_memory</code> — consolidates outputs from all agents every cycle and compresses long-term context for future use</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">1</div><div class="stxt">Admin (🛠️) monitors all 11 agent uptime, API keys via Doppler, rate limits, and error logs 24/7</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">2</div><div class="stxt">Shared Supabase memory layer (Postgres + RLS) — agents read/write context, client profiles, decisions</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">3</div><div class="stxt">Critical failures escalated to Bugra (🧭) dashboard instantly via Datadog alert + Uptime Robot</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">4</div><div class="stxt">Creem webhook events trigger Supabase DB updates via <code style="color:#94a3b8">@creem_io/nextjs</code> — Fred monitors all 13 event types</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">5</div><div class="stxt"><span class="new">IDLE STEP ✦</span> When systems are stable: Admin runs weekly security sweep — rotates API keys in Doppler, audits RLS policies in Supabase, updates .env vars on Vercel Edge</div></div>
+    <div class="sarrow">↓</div>
+    <div class="step"><div class="snum" style="background:rgba(128,128,255,.2);color:#8080ff">6</div><div class="stxt"><span class="new">IDLE STEP ✦</span> Admin benchmarks GPT-4.1 mini vs GPT-5 mini cost monthly — generates token usage report and recommends model upgrades/downgrades to Dan (♟️)</div></div>
+  </div>
+
+</div>
+
+<div style="max-width:1060px;margin:20px auto 0;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:11px;padding:14px 18px;font-size:.78rem;color:#7dd3fc;line-height:1.7">
+  <strong style="color:#00d4ff;letter-spacing:1px">🔌 XerefAI (xeref.ai) Integration Notes</strong><br>
+  <strong>Xeref (Second Brain):</strong> Built with LangGraph state machine on Next.js 16 App Router — reads/writes Supabase <code>agent_memory</code> table, routes tasks to sub-agents via n8n, reports back to Bugra's dashboard. Model: GPT-4.1 mini.<br>
+  <strong>Creem webhooks:</strong> <code>POST /api/webhooks/creem</code> using <code>@creem_io/nextjs</code> — handles all 13 events with idempotency via Supabase <code>webhook_events</code> table.<br>
+  <strong>GPT-4.1 mini:</strong> Drop-in replacement for GPT-4o — same OpenAI SDK, change model string to <code>"gpt-4.1-mini"</code>. 5× cheaper, 8× larger context window (1M tokens).<br>
+  <strong>Smartlead:</strong> Connects via REST API to n8n — trigger sequences directly from Supabase edge functions when new lead rows are inserted.<br>
+  <strong>Agent memory:</strong> Store all cross-agent context in Supabase Postgres <code>agent_memory</code> table with RLS — Next.js 16 App Router server components fetch agent state server-side for the dashboard.
+</div>
+
+<hr class="div">
+
+<!-- ═══════════ CHAT HISTORY VIEWER ═══════════ -->
+<div class="sec-title" style="color:#a855f7">💬 Chat History Viewer</div>
+<div id="chatSection">
+  <div class="chat-selector">
+    <span style="font-size:.75rem;color:#475569;letter-spacing:1px;text-transform:uppercase">Load:</span>
+    <button class="chat-file-btn" onclick="loadChatFile('chat_history_1774949164650.json', this)">Chat #1774949164650</button>
+    <button class="chat-file-btn" onclick="loadChatFile('chat_history_1774951781362.json', this)">Chat #1774951781362</button>
+    <button class="chat-file-btn" onclick="openChatPaste()" style="border-style:dashed">+ Paste JSON</button>
+  </div>
+  <div id="chatWindow" class="chat-window">
+    <div class="chat-empty">Select a chat file above to view the conversation.</div>
+  </div>
+</div>
+
+<footer>BUGRA KARSLI · XEREFAI · XEREF 🧠 SECOND BRAIN · 12 AGENTS · MARCH 2026</footer>
+</div><!-- /main -->
+
+<!-- ─── Floating Action Bar ─── -->
+<div id="fab">
+  <button class="fab-btn" id="createAgentBtn" onclick="openAgentModal()">+ Create Agent</button>
+  <button class="fab-btn" id="newProjectFabBtn" onclick="openProjectModal()">+ New Project</button>
+</div>
+
+<!-- ─── Create / Edit Agent Modal ─── -->
+<div id="agentModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeAgentModal()">✕</button>
+    <div class="modal-title" id="agentModalTitle">Create Agent</div>
+    <form id="agentForm" onsubmit="submitAgentForm(event)">
+      <input type="hidden" id="agentEditId">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Agent Name</label>
+          <input class="form-input" id="agentName" placeholder="e.g. Nova" required>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Emoji</label>
+          <input class="form-input" id="agentEmoji" placeholder="🤖" maxlength="4">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Role / Description</label>
+        <input class="form-input" id="agentRole" placeholder="e.g. SEO Specialist">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Team</label>
+          <select class="form-input" id="agentTeam">
+            <option value="Orchestrator">Orchestrator</option>
+            <option value="Top-Level">Top-Level</option>
+            <option value="Angler">Angler</option>
+            <option value="Crewless">Crewless</option>
+            <option value="Content" selected>Content</option>
+            <option value="Infra">Infra</option>
+            <option value="Bridge">Bridge</option>
+            <option value="Custom">Custom</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          <select class="form-input" id="agentStatus">
+            <option value="AT WORK">AT WORK</option>
+            <option value="CONTROL PANEL">CONTROL PANEL</option>
+            <option value="ALWAYS THINKING">ALWAYS THINKING</option>
+            <option value="IDLE">IDLE</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Tools (comma-separated)</label>
+        <input class="form-input" id="agentTools" placeholder="GPT-4.1 mini, n8n, Notion API">
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" onclick="closeAgentModal()">Cancel</button>
+        <button type="submit" class="btn-save green" id="agentSubmitBtn">Create Agent</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ─── Create / Edit Project Modal ─── -->
+<div id="projectModal" class="modal-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeProjectModal()">✕</button>
+    <div class="modal-title" id="projectModalTitle">New Project</div>
+    <form id="projectForm" onsubmit="submitProjectForm(event)">
+      <input type="hidden" id="projectEditId">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Icon (emoji)</label>
+          <input class="form-input" id="projectIcon" placeholder="📁" maxlength="4">
+        </div>
+        <div class="form-group" style="flex:3">
+          <label class="form-label">Project Name</label>
+          <input class="form-input" id="projectName" placeholder="e.g. xeref-new" required>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn-cancel" onclick="closeProjectModal()">Cancel</button>
+        <button type="submit" class="btn-save" id="projectSubmitBtn">Create Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ─── Chat Paste Modal ─── -->
+<div id="chatPasteModal" class="modal-overlay">
+  <div class="modal-box" style="width:min(640px,94vw)">
+    <button class="modal-close" onclick="closeChatPaste()">✕</button>
+    <div class="modal-title">Paste Chat JSON</div>
+    <div class="form-group">
+      <label class="form-label">Paste JSON content</label>
+      <textarea class="form-input" id="chatPasteArea" rows="10" style="resize:vertical;font-family:'Consolas',monospace;font-size:.75rem" placeholder='[{"role":"user","content":"..."},{"role":"assistant","content":"..."}]'></textarea>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn-cancel" onclick="closeChatPaste()">Cancel</button>
+      <button type="button" class="btn-save" onclick="renderPastedChat()">Render Chat</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Toast Container ─── -->
+<div id="toast"></div>
+
+<script>
+// ═══════════ STATE & PERSISTENCE ═══════════
+
+const STORAGE_KEYS = { agents: 'xeref_agents', projects: 'xeref_projects' };
+
+const DEFAULT_PROJECTS = [
+  { id: 'inbox', name: 'Inbox', icon: '📥', isDefault: true },
+  { id: 'xeref-claw', name: 'xeref-claw', icon: '🔮', starred: true }
+];
+
+function loadStorage(key, fallback) {
+  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch { return fallback; }
+}
+
+function saveStorage(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch {}
+}
+
+let state = {
+  agents: loadStorage(STORAGE_KEYS.agents, []),
+  projects: loadStorage(STORAGE_KEYS.projects, DEFAULT_PROJECTS),
+  activeProject: null,
+};
+
+function saveAgents() { saveStorage(STORAGE_KEYS.agents, state.agents); }
+function saveProjects() { saveStorage(STORAGE_KEYS.projects, state.projects); }
+
+// ═══════════ SIDEBAR ═══════════
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  const toggle = document.getElementById('sidebar-toggle');
+  const isOpen = sb.classList.toggle('open');
+  toggle.classList.toggle('open', isOpen);
+  document.body.classList.toggle('sidebar-open', isOpen);
+}
+
+function openConfigureAgent() {
+  // Open edit modal for Xeref (static agent)
+  document.getElementById('agentEditId').value = '__xeref_static__';
+  document.getElementById('agentName').value = 'Xeref';
+  document.getElementById('agentEmoji').value = '🧠';
+  document.getElementById('agentRole').value = 'Second Brain · AI Orchestrator';
+  document.getElementById('agentTeam').value = 'Orchestrator';
+  document.getElementById('agentStatus').value = 'ALWAYS THINKING';
+  document.getElementById('agentTools').value = 'LangGraph, n8n, Supabase Memory, GPT-4.1 mini';
+  document.getElementById('agentModalTitle').textContent = 'Configure Agent';
+  document.getElementById('agentSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('agentModal').classList.add('active');
+}
+
+// ═══════════ RENDER PROJECTS SIDEBAR ═══════════
+
+function renderProjects() {
+  const list = document.getElementById('projectsList');
+  list.innerHTML = '';
+  state.projects.forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'sidebar-item' + (state.activeProject === p.id ? ' active' : '');
+    div.innerHTML = `
+      <span class="item-icon">${p.icon || '📁'}</span>
+      <span class="item-name">${p.name}</span>
+      ${p.starred ? '<span class="starred">★</span>' : ''}
+      ${p.isDefault ? '' : `
+        <span class="item-actions">
+          <button onclick="editProject('${p.id}')" title="Rename">✏️</button>
+          <button onclick="deleteProject('${p.id}')" title="Delete">🗑️</button>
+        </span>
+      `}
+    `;
+    div.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      state.activeProject = p.id;
+      renderProjects();
+    });
+    list.appendChild(div);
+  });
+
+  // Sidebar chats list
+  const chatsList = document.getElementById('sidebarChatsList');
+  chatsList.innerHTML = `
+    <div class="sidebar-item" onclick="loadChatFile('chat_history_1774949164650.json', null)">
+      <span class="item-icon">💬</span>
+      <span class="item-name">Chat #1774949164650</span>
+    </div>
+    <div class="sidebar-item" onclick="loadChatFile('chat_history_1774951781362.json', null)">
+      <span class="item-icon">💬</span>
+      <span class="item-name">Chat #1774951781362</span>
+    </div>
+  `;
+}
+
+// ═══════════ INJECT CARD ACTIONS ON STATIC CARDS ═══════════
+
+function injectCardActions() {
+  document.querySelectorAll('.acard[data-agent-id]').forEach(card => {
+    if (card.querySelector('.card-actions')) return;
+    const id = card.dataset.agentId;
+    const actions = document.createElement('div');
+    actions.className = 'card-actions';
+    actions.innerHTML = `
+      <button onclick="editStaticAgent('${id}')" title="Edit">✏️</button>
+      <button class="del-btn" onclick="deleteStaticAgent('${id}', this)" title="Delete">🗑️</button>
+    `;
+    card.appendChild(actions);
+  });
+}
+
+// ═══════════ STATIC AGENT EDIT/DELETE ═══════════
+
+const STATIC_AGENT_DATA = {
+  bugra:   { name:'Bugra',  emoji:'🧭', role:'Commander · Founder',        team:'Top-Level',  tools:'n8n, LangChain, Make',                  status:'CONTROL PANEL'   },
+  xeref:   { name:'Xeref',  emoji:'🧠', role:'Second Brain · AI Orchestrator', team:'Orchestrator', tools:'LangGraph, n8n, Supabase Memory, GPT-4.1 mini', status:'ALWAYS THINKING' },
+  dan:     { name:'Dan',    emoji:'♟️', role:'Chief Strategy',              team:'Top-Level',  tools:'GPT-4.1 mini, Notion API, Airtable',    status:'AT WORK'         },
+  chase:   { name:'Chase',  emoji:'📥', role:'Inbox Ops',                  team:'Top-Level',  tools:'Gmail API, GPT-4.1 mini, Superhuman',   status:'IDLE'            },
+  jack:    { name:'Jack',   emoji:'🎣', role:'Angler Ops',                 team:'Angler',     tools:'Clay, Apollo, Smartlead',               status:'IDLE'            },
+  vinny:   { name:'Vinny',  emoji:'📊', role:'Google Ads',                 team:'Angler',     tools:'Google Ads API, GPT-4.1 mini, Opteo',   status:'AT WORK'         },
+  alex:    { name:'Alex',   emoji:'🤝', role:'Sales',                      team:'Crewless',   tools:'HubSpot, Close CRM, GPT-4.1 mini',      status:'IDLE'            },
+  sabrina: { name:'Sabrina',emoji:'📦', role:'Delivery',                   team:'Crewless',   tools:'Notion, Slack, ClickUp',                status:'IDLE'            },
+  kate:    { name:'Kate',   emoji:'📡', role:'Outreach',                   team:'Content',    tools:'Podchaser, Hunter.io, GPT-4.1 mini',    status:'IDLE'            },
+  leila:   { name:'Leila',  emoji:'✍️', role:'Content',                    team:'Content',    tools:'GPT-4.1 mini, Jasper, Buffer',          status:'IDLE'            },
+  james:   { name:'James',  emoji:'🔍', role:'Research',                   team:'Content',    tools:'Perplexity API, Tavily, Exa',           status:'IDLE'            },
+  admin:   { name:'Admin',  emoji:'🛠️', role:'Sys Admin',                 team:'Infra',      tools:'Doppler, Datadog, Uptime Robot',        status:'IDLE'            },
+  fred:    { name:'Fred',   emoji:'💰', role:'Financial',                  team:'Bridge',     tools:'Creem API, QuickBooks, GPT-4.1 mini',   status:'IDLE'            },
+};
+
+function editStaticAgent(id) {
+  const data = STATIC_AGENT_DATA[id];
+  if (!data) return;
+  document.getElementById('agentEditId').value = id;
+  document.getElementById('agentName').value = data.name;
+  document.getElementById('agentEmoji').value = data.emoji;
+  document.getElementById('agentRole').value = data.role;
+  document.getElementById('agentTeam').value = data.team;
+  document.getElementById('agentStatus').value = data.status;
+  document.getElementById('agentTools').value = data.tools;
+  document.getElementById('agentModalTitle').textContent = 'Edit Agent';
+  document.getElementById('agentSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('agentModal').classList.add('active');
+}
+
+function deleteStaticAgent(id, btn) {
+  const card = btn.closest('.acard');
+  if (!confirm('Remove this agent card from the view?')) return;
+  card.style.transition = 'all .3s';
+  card.style.opacity = '0';
+  card.style.transform = 'scale(.85)';
+  setTimeout(() => card.remove(), 300);
+  showToast(`Agent removed from view`, 'success');
+}
+
+function applyStaticAgentEdit(id, data) {
+  const card = document.querySelector(`.acard[data-agent-id="${id}"]`);
+  if (!card) return;
+  const nameEl = card.querySelector('.aname');
+  const emojiEl = card.querySelector('.aemoji');
+  const roleEl = card.querySelector('.arole');
+  const statusEl = card.querySelector('.astatus');
+  if (nameEl) nameEl.textContent = data.name;
+  if (emojiEl) emojiEl.textContent = data.emoji;
+  if (roleEl) roleEl.textContent = data.role;
+  if (statusEl) {
+    statusEl.textContent = '● ' + data.status;
+    statusEl.className = 'astatus ' + statusClass(data.status);
+  }
+  // Update static data reference
+  if (STATIC_AGENT_DATA[id]) Object.assign(STATIC_AGENT_DATA[id], data);
+  // Update tool stack row
+  updateToolStackRow(id, data);
+}
+
+function updateToolStackRow(id, data) {
+  const rows = document.querySelectorAll('#toolStackBody tr');
+  rows.forEach(row => {
+    const nameCell = row.querySelector('td strong');
+    if (nameCell && nameCell.textContent.toLowerCase() === data.name.toLowerCase()) {
+      // Update tools cell
+      const toolsCell = row.cells[3];
+      if (toolsCell) {
+        const tools = data.tools.split(',').map(t => t.trim()).filter(Boolean);
+        toolsCell.innerHTML = tools.map(t => `<span class="badge b-blue">${t}</span>`).join(' ');
+      }
+    }
+  });
+}
+
+function statusClass(status) {
+  if (status === 'AT WORK') return 's-green';
+  if (status === 'CONTROL PANEL') return 's-blue';
+  if (status === 'ALWAYS THINKING') return 's-purple';
+  return 's-gray';
+}
+
+// ═══════════ DYNAMIC AGENTS (created via modal) ═══════════
+
+function renderDynamicAgents() {
+  const grid = document.getElementById('additional-agents-grid');
+  const section = document.getElementById('additional-agents-section');
+  grid.innerHTML = '';
+  if (state.agents.length === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  state.agents.forEach(agent => {
+    const card = createAgentCardEl(agent);
+    grid.appendChild(card);
+  });
+
+  // Also append new dynamic tool stack rows
+  renderDynamicToolRows();
+}
+
+function createAgentCardEl(agent) {
+  const div = document.createElement('div');
+  div.className = 'acard ac-custom';
+  div.dataset.agentId = agent.id;
+  div.style.minWidth = '130px';
+  div.innerHTML = `
+    <div class="aname-row">
+      <span class="aname">${agent.name}</span>
+      <span class="aemoji">${agent.emoji || '🤖'}</span>
+    </div>
+    <div class="arole">${agent.role || ''}</div>
+    ${agent.status ? `<span class="astatus ${statusClass(agent.status)}">● ${agent.status}</span>` : ''}
+    <div class="card-actions">
+      <button onclick="editDynamicAgent('${agent.id}')" title="Edit">✏️</button>
+      <button class="del-btn" onclick="deleteDynamicAgent('${agent.id}')" title="Delete">🗑️</button>
+    </div>
+  `;
+  return div;
+}
+
+function renderDynamicToolRows() {
+  // Remove previous dynamic rows
+  document.querySelectorAll('#toolStackBody tr[data-dynamic]').forEach(r => r.remove());
+  state.agents.forEach(agent => {
+    const tools = (agent.tools || '').split(',').map(t => t.trim()).filter(Boolean);
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-dynamic', agent.id);
+    tr.style.background = 'rgba(168,85,247,.04)';
+    tr.innerHTML = `
+      <td><strong style="color:#c084fc">${agent.name}</strong></td>
+      <td>${agent.emoji || '🤖'}</td>
+      <td>${agent.role || '—'}</td>
+      <td>${tools.map(t => `<span class="badge b-purple">${t}</span>`).join(' ') || '—'}</td>
+      <td>${agent.team || '—'}</td>
+    `;
+    document.getElementById('toolStackBody').appendChild(tr);
+  });
+}
+
+function editDynamicAgent(id) {
+  const agent = state.agents.find(a => a.id === id);
+  if (!agent) return;
+  document.getElementById('agentEditId').value = id;
+  document.getElementById('agentName').value = agent.name;
+  document.getElementById('agentEmoji').value = agent.emoji || '';
+  document.getElementById('agentRole').value = agent.role || '';
+  document.getElementById('agentTeam').value = agent.team || 'Content';
+  document.getElementById('agentStatus').value = agent.status || 'IDLE';
+  document.getElementById('agentTools').value = agent.tools || '';
+  document.getElementById('agentModalTitle').textContent = 'Edit Agent';
+  document.getElementById('agentSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('agentModal').classList.add('active');
+}
+
+function deleteDynamicAgent(id) {
+  if (!confirm('Delete this agent?')) return;
+  state.agents = state.agents.filter(a => a.id !== id);
+  saveAgents();
+  renderDynamicAgents();
+  showToast('Agent deleted', 'success');
+}
+
+// ═══════════ AGENT MODAL ═══════════
+
+function openAgentModal() {
+  document.getElementById('agentForm').reset();
+  document.getElementById('agentEditId').value = '';
+  document.getElementById('agentModalTitle').textContent = 'Create Agent';
+  document.getElementById('agentSubmitBtn').textContent = 'Create Agent';
+  document.getElementById('agentModal').classList.add('active');
+}
+
+function closeAgentModal() {
+  document.getElementById('agentModal').classList.remove('active');
+}
+
+function submitAgentForm(e) {
+  e.preventDefault();
+  const editId = document.getElementById('agentEditId').value;
+  const data = {
+    name: document.getElementById('agentName').value.trim(),
+    emoji: document.getElementById('agentEmoji').value.trim() || '🤖',
+    role: document.getElementById('agentRole').value.trim(),
+    team: document.getElementById('agentTeam').value,
+    status: document.getElementById('agentStatus').value,
+    tools: document.getElementById('agentTools').value.trim(),
+  };
+
+  if (!data.name) return;
+
+  // Editing a static agent
+  if (editId && STATIC_AGENT_DATA[editId]) {
+    applyStaticAgentEdit(editId, data);
+    closeAgentModal();
+    showToast(`${data.name} updated`, 'success');
+    return;
+  }
+
+  // Editing a dynamic agent
+  if (editId) {
+    const idx = state.agents.findIndex(a => a.id === editId);
+    if (idx !== -1) {
+      state.agents[idx] = { ...state.agents[idx], ...data };
+      saveAgents();
+      renderDynamicAgents();
+      closeAgentModal();
+      showToast(`${data.name} updated`, 'success');
+      return;
+    }
+  }
+
+  // Creating new
+  const newAgent = { ...data, id: 'agent_' + Date.now() };
+  state.agents.push(newAgent);
+  saveAgents();
+  renderDynamicAgents();
+  closeAgentModal();
+  showToast(`${data.name} added to team!`, 'success');
+}
+
+// ═══════════ PROJECT MODAL ═══════════
+
+function openProjectModal() {
+  document.getElementById('projectForm').reset();
+  document.getElementById('projectEditId').value = '';
+  document.getElementById('projectModalTitle').textContent = 'New Project';
+  document.getElementById('projectSubmitBtn').textContent = 'Create Project';
+  document.getElementById('projectModal').classList.add('active');
+}
+
+function closeProjectModal() {
+  document.getElementById('projectModal').classList.remove('active');
+}
+
+function editProject(id) {
+  const p = state.projects.find(x => x.id === id);
+  if (!p) return;
+  document.getElementById('projectEditId').value = id;
+  document.getElementById('projectName').value = p.name;
+  document.getElementById('projectIcon').value = p.icon || '';
+  document.getElementById('projectModalTitle').textContent = 'Edit Project';
+  document.getElementById('projectSubmitBtn').textContent = 'Save Changes';
+  document.getElementById('projectModal').classList.add('active');
+}
+
+function deleteProject(id) {
+  if (!confirm('Delete this project?')) return;
+  state.projects = state.projects.filter(p => p.id !== id);
+  saveProjects();
+  renderProjects();
+  showToast('Project deleted', 'success');
+}
+
+function submitProjectForm(e) {
+  e.preventDefault();
+  const editId = document.getElementById('projectEditId').value;
+  const name = document.getElementById('projectName').value.trim();
+  const icon = document.getElementById('projectIcon').value.trim() || '📁';
+  if (!name) return;
+
+  if (editId) {
+    const idx = state.projects.findIndex(p => p.id === editId);
+    if (idx !== -1) {
+      state.projects[idx] = { ...state.projects[idx], name, icon };
+      saveProjects();
+      renderProjects();
+      closeProjectModal();
+      showToast(`Project updated`, 'success');
+    }
+    return;
+  }
+
+  const newProject = { id: 'proj_' + Date.now(), name, icon };
+  state.projects.push(newProject);
+  saveProjects();
+  renderProjects();
+  closeProjectModal();
+  showToast(`Project "${name}" created!`, 'success');
+}
+
+// ═══════════ CHAT VIEWER ═══════════
+
+function loadChatFile(filename, btn) {
+  // Update active button
+  document.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+
+  const win = document.getElementById('chatWindow');
+  win.classList.add('active');
+  win.innerHTML = '<div class="chat-empty">Loading…</div>';
+
+  fetch(filename)
+    .then(r => {
+      if (!r.ok) throw new Error('File not found');
+      return r.json();
+    })
+    .then(data => renderChatData(data, win))
+    .catch(() => {
+      win.innerHTML = `<div class="chat-empty">Could not load "${filename}".<br><small style="color:#475569">Open this file from the same folder as the HTML.</small></div>`;
+    });
+}
+
+function renderChatData(data, win) {
+  if (!Array.isArray(data) || data.length === 0) {
+    win.innerHTML = '<div class="chat-empty">No messages found in this chat file.</div>';
+    return;
+  }
+  win.innerHTML = '';
+  data.forEach(msg => {
+    if (!msg || (!msg.role && !msg.type)) return;
+    const role = msg.role || msg.type || 'unknown';
+    const isUser = role === 'user' || role === 'human';
+    const isAssistant = role === 'assistant' || role === 'model';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'chat-msg ' + (isUser ? 'user' : isAssistant ? 'assistant' : 'system');
+
+    let contentHtml = '';
+    const content = msg.content;
+
+    if (typeof content === 'string') {
+      contentHtml = `<div class="chat-bubble">${escHtml(content)}</div>`;
+    } else if (Array.isArray(content)) {
+      content.forEach(block => {
+        if (!block) return;
+        if (block.type === 'text') {
+          contentHtml += `<div class="chat-bubble">${escHtml(block.text || '')}</div>`;
+        } else if (block.type === 'tool_use') {
+          const inputStr = block.input ? JSON.stringify(block.input, null, 2) : '';
+          contentHtml += `<div class="chat-tool-use"><span class="tool-name">⚙️ ${escHtml(block.name || 'tool')}</span><pre style="margin-top:6px;white-space:pre-wrap;font-size:.68rem;color:#64748b">${escHtml(inputStr.slice(0,400))}${inputStr.length>400?'\n…':''}</pre></div>`;
+        } else if (block.type === 'tool_result') {
+          const content2 = Array.isArray(block.content) ? block.content.map(c=>c.text||'').join('\n') : String(block.content||'');
+          contentHtml += `<div class="chat-tool-use" style="border-color:rgba(0,212,255,.2)"><span class="tool-name" style="color:#00d4ff">↩ Tool Result</span><pre style="margin-top:4px;white-space:pre-wrap;font-size:.68rem;color:#64748b">${escHtml(content2.slice(0,300))}${content2.length>300?'\n…':''}</pre></div>`;
+        }
+      });
+    }
+
+    if (!contentHtml) return;
+    wrapper.innerHTML = `${contentHtml}<div class="chat-role">${isUser ? 'You' : isAssistant ? 'Xeref / Claude' : role}</div>`;
+    win.appendChild(wrapper);
+  });
+
+  // Auto-scroll to bottom
+  setTimeout(() => { win.scrollTop = win.scrollHeight; }, 50);
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function openChatPaste() {
+  document.getElementById('chatPasteModal').classList.add('active');
+}
+function closeChatPaste() {
+  document.getElementById('chatPasteModal').classList.remove('active');
+}
+function renderPastedChat() {
+  const text = document.getElementById('chatPasteArea').value.trim();
+  if (!text) return;
+  try {
+    const data = JSON.parse(text);
+    const win = document.getElementById('chatWindow');
+    win.classList.add('active');
+    renderChatData(Array.isArray(data) ? data : [data], win);
+    closeChatPaste();
+    document.querySelectorAll('.chat-file-btn').forEach(b => b.classList.remove('active'));
+    showToast('Chat rendered', 'success');
+  } catch {
+    showToast('Invalid JSON — check your paste', 'error');
+  }
+}
+
+// ═══════════ TOAST ═══════════
+
+function showToast(msg, type = '') {
+  const container = document.getElementById('toast');
+  const el = document.createElement('div');
+  el.className = 'toast-item ' + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'all .3s';
+    el.style.opacity = '0';
+    el.style.transform = 'translateX(20px)';
+    setTimeout(() => el.remove(), 300);
+  }, 3000);
+}
+
+// ═══════════ KEYBOARD SHORTCUTS ═══════════
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.active').forEach(m => m.classList.remove('active'));
+  }
+});
+
+// Close modal on backdrop click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('active');
+  });
+});
+
+// ═══════════ INIT ═══════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  injectCardActions();
+  renderProjects();
+  renderDynamicAgents();
+});
+</script>
+</body>
+</html>

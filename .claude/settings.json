@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cmd /c \"taskkill /PID 26096 /F\")",
+      "Bash(cmd /c \"taskkill /IM node.exe /F\")"
+    ]
+  }
+}

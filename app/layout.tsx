@@ -29,8 +29,8 @@ export const metadata: Metadata = {
     "max-image-preview": "large",
   },
   icons: {
-    icon: "/xeref-ai-favicon.svg",
-    shortcut: "/xeref-ai-favicon.svg",
+    icon: "/xeref.svg",
+    shortcut: "/xeref.svg",
   },
   openGraph: {
     title: "xeref.ai | AI Agent Builder with Long-Term Memory",
