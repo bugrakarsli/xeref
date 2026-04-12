@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
+import AgentGlobalShortcuts from "@/components/dashboard/AgentGlobalShortcuts";
 
 const interSans = Inter({
   variable: "--font-inter-sans",
@@ -65,7 +66,10 @@ export default function RootLayout({
       <body
         className={`${interSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
-        <TooltipProvider delayDuration={200}>{children}</TooltipProvider>
+        <TooltipProvider delayDuration={200}>
+          {children}
+          <AgentGlobalShortcuts />
+        </TooltipProvider>
       </body>
     </html>
   );
