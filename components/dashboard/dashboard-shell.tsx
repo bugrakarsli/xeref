@@ -37,7 +37,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
 
   useEffect(() => {
     const saved = localStorage.getItem('xeref_active_view') as ViewKey | null
-    if (saved) setActiveView(saved)
+    if (saved) {
+      setActiveView(saved)
+      window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: saved }))
+    } else {
+      window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'home' }))
+    }
   }, [])
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
@@ -100,12 +105,14 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         onViewChange={(view) => {
           setActiveView(view)
           localStorage.setItem('xeref_active_view', view)
+          window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))
           if (window.innerWidth < 768) setCollapsed(true)
         }}
         onChatSelect={(id) => {
           setSelectedChatId(id)
           setActiveView('chat')
           localStorage.setItem('xeref_active_view', 'chat')
+          window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'chat' }))
           if (window.innerWidth < 768) setCollapsed(true)
         }}
         projects={projects}

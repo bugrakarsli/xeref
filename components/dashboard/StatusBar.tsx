@@ -40,45 +40,10 @@ const StatusBar: React.FC<StatusBarProps> = ({ onOpenCustomizations, onOpenSetti
   }, []);
 
   return (
-    <div className="h-6 bg-gray-100 dark:bg-[#1e1e1e] border-t border-gray-200 dark:border-gray-800 flex items-center justify-between px-3 text-xs text-gray-600 dark:text-gray-400 select-none relative z-40">
-      <div className="flex items-center gap-4">
-        <div className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer transition-colors" title="Git Branch">
-            <div className="flex items-center justify-center w-4 h-4 rounded-full bg-blue-500/10 text-blue-500">
-                <GitBranch size={10} />
-            </div>
-            <span className="font-medium">{gitStatus.branch}*</span>
-            <span className="text-[10px] text-gray-400 ml-1 opacity-60">{gitStatus.status}</span>
-        </div>
-        
-        <div className="h-3 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
-
-        <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer transition-colors">
-                <XCircle size={12} className="text-red-500" />
-                <span>0 errors</span>
-            </div>
-            <div className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer transition-colors">
-                <AlertTriangle size={12} className="text-yellow-500" />
-                <span>0 warnings</span>
-            </div>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {/* AI Status */}
-        <div className="flex items-center gap-1.5 text-xs">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_4px_rgba(34,197,94,0.5)] animate-pulse"></div>
-            <span className="text-gray-500 dark:text-gray-400">AI Ready</span>
-        </div>
-        
-        <div className="flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer">
-           <Radio size={12} />
-           <span>Go Live</span>
-        </div>
-        
+    <div className="text-xs text-gray-600 dark:text-gray-400 select-none">
         <div ref={settingsRef} className="relative">
             <div 
-                className={`flex items-center gap-1 hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer ${isSettingsOpen ? 'text-blue-500 dark:text-blue-400' : ''}`}
+                className={`flex items-center gap-1 px-3 py-1.5 bg-[#18181b] border border-[#2d2d2d] rounded-md shadow-lg cursor-pointer hover:text-gray-900 dark:hover:text-gray-300 ${isSettingsOpen ? 'text-blue-500 dark:text-blue-400' : ''}`}
                 onClick={() => setIsSettingsOpen(!isSettingsOpen)}
             >
                 <span>Xeref.ai - Settings</span>
@@ -195,11 +160,6 @@ const StatusBar: React.FC<StatusBarProps> = ({ onOpenCustomizations, onOpenSetti
                 </div>
             )}
         </div>
-
-        <div className="hover:text-gray-900 dark:hover:text-gray-300 cursor-pointer" title="Notifications">
-           <Bell size={12} />
-        </div>
-      </div>
     </div>
   );
 };
