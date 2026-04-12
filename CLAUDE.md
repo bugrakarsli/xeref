@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This App Is
 
-**xeref-claw** is an AI agent builder UI backed by Supabase. Users browse a catalog of 48+ features organized by the CLAWS methodology, select what they want, save named project configurations, and get a generated prompt to paste into Antigravity IDE to build their custom agent.
+**xeref-claw** is the web app for xeref.ai — an AI agent builder and productivity dashboard. Users browse 48+ features organized by the CLAWS methodology, select what they want, save named project configurations, chat with agents directly in-app, manage tasks/workflows, and upgrade via Creem payments.
 
 ## Commands
 
@@ -27,6 +27,8 @@ NEXT_PUBLIC_SUPABASE_URL=        # From Supabase dashboard → Settings → API
 NEXT_PUBLIC_SUPABASE_ANON_KEY=   # From Supabase dashboard → Settings → API
 SUPABASE_SERVICE_ROLE_KEY=       # Keep server-only — never expose to client
 NEXT_PUBLIC_SITE_URL=            # http://localhost:3000 in dev, https://xeref.ai in prod
+OPENROUTER_API_KEY=              # openrouter.ai → Keys
+CREEM_WEBHOOK_SECRET=            # Creem dashboard → Webhooks
 ```
 
 ## Architecture
@@ -35,20 +37,51 @@ NEXT_PUBLIC_SITE_URL=            # http://localhost:3000 in dev, https://xeref.a
 
 - `app/` — App Router pages:
   - `layout.tsx` — Root layout (dark mode, OG metadata, favicon)
-  - `page.tsx` — Landing page
-  - `builder/page.tsx` — Main feature selector (Client Component)
+  - `page.tsx` — Auth check → loads `DashboardShell` with projects, chats, userPlan
+  - `builder/page.tsx` — CLAWS feature selector (Client Component, works unauthenticated)
   - `login/page.tsx` — Auth page (magic link + Google OAuth)
   - `auth/callback/route.ts` — OAuth/magic link callback handler
-  - `actions/projects.ts` — Server Actions for project CRUD
+  - `pricing/page.tsx` — Plans page with Creem checkout
+  - `checkout/success/page.tsx` — Post-payment confirmation
+  - `changelog/page.tsx`, `docs/page.tsx`, `faq/page.tsx`, `about/page.tsx` — Content pages
+  - `terms/page.tsx`, `privacy/page.tsx` — Legal pages
+  - `api/chat/route.ts` — Streaming chat endpoint (OpenRouter, multi-model)
+  - `api/webhooks/creem/route.ts` — Creem payment webhook (updates `profiles.plan`)
+  - `actions/projects.ts` — Project CRUD (save, load, delete, update)
+  - `actions/chats.ts` — Chat + message CRUD
+  - `actions/profile.ts` — `getUserPlan()` → `'free' | 'pro' | 'ultra'`
+  - `actions/checkout.ts` — `createCheckout(plan, interval)` → Creem redirect URL
+  - `actions/prompt.ts` — Prompt regeneration for saved projects
+
 - `components/ui/` — shadcn/ui primitives
-- `components/` — App-specific: `FeatureGrid`, `FeatureCard`, `CategoryFilter`, `Basket`, `XerefLogo`
+- `components/` — App-specific components:
+  - `FeatureGrid`, `FeatureCard`, `CategoryFilter`, `Basket`, `XerefLogo`
+  - `StartBuildingButton`, `MobileNav`, `PricingSection`
+- `components/dashboard/` — Full dashboard shell and all views:
+  - `dashboard-shell.tsx` — Top-level client shell; owns view routing, project state, auth sign-out
+  - `sidebar.tsx` — Collapsible left nav with user info, plan badge, projects list, chats list
+  - `home-view.tsx` — Welcome + chat/tasks toggle + quick-action cards
+  - `stats-view.tsx` — Usage analytics (project count, chat count, etc.)
+  - `tasks-view.tsx` — Task management
+  - `calendar-view.tsx` — Calendar view
+  - `workflows-view.tsx` — Cron/webhook workflows
+  - `inbox-view.tsx` — Notification inbox
+  - `settings-view.tsx` — Account info, plan display, preferences
+  - `agent-team-view.tsx` — Agent team configuration
+  - `referral-view.tsx` — Referral program
+  - `rhs-sidebar.tsx` — Right-hand context panel (shown in Chat view only)
+  - `whats-new-toast.tsx` — Bottom-right "What's New" notification
+  - `chat/` — Chat UI: `chat-interface.tsx`, `chat-message.tsx`, `chat-header.tsx`, `chat-list.tsx`, `chat-input.tsx`
+  - `chats-view.tsx` — Outer chat page; wraps `ChatInterface`
+
 - `lib/` — Core logic:
-  - `types.ts` — All TypeScript interfaces (`Feature`, `Category`, `Project`, `UsageEvent`)
-  - `features.ts` — Catalog of all 48+ features with full metadata
+  - `types.ts` — All TypeScript interfaces (`Feature`, `Category`, `Project`, `Chat`, `UsageEvent`, `ViewKey`)
+  - `features.ts` — Catalog of 48+ features with full metadata
   - `prompt-generator.ts` — Converts selected feature IDs → copy-paste Antigravity prompt
   - `utils.ts` — `cn()` Tailwind merge utility
   - `supabase/client.ts` — Browser Supabase client (for `'use client'` components)
   - `supabase/server.ts` — Server Supabase client (for Server Components and Server Actions)
+
 - `proxy.ts` — Refreshes Supabase session tokens on every request (Next.js 16 uses `proxy.ts` + `export function proxy()` instead of the deprecated `middleware.ts`)
 
 ### Supabase Client Rules
@@ -60,18 +93,51 @@ NEXT_PUBLIC_SITE_URL=            # http://localhost:3000 in dev, https://xeref.a
 
 ### Database Schema (Supabase)
 
-Run the SQL from `supabase/schema.sql` in the Supabase SQL Editor to set up:
-- `profiles` — auto-created from `auth.users` via trigger
-- `projects` — user's saved agent configurations (`selected_feature_ids text[]`)
+Run `supabase/schema.sql` in the Supabase SQL Editor:
+- `profiles` — `plan ('free'|'pro'|'ultra')`, user metadata; auto-created via trigger on `auth.users`
+- `projects` — `selected_feature_ids text[]`, `prompt text`, per-user agent configurations
+- `chats` — chat sessions linked to a project (optional)
+- `messages` — individual messages per chat, stored as `role`/`content`
 - `usage_events` — analytics log (`event_type`, `metadata jsonb`)
 
-All tables have RLS enabled; users can only access their own rows.
+All tables have RLS; users can only access their own rows.
 
 ### Auth Flow
 
-Magic link + Google OAuth → `/auth/callback` → `/builder`
+Magic link + Google OAuth → `/auth/callback` → `/` (dashboard)
 
-The builder page (`app/builder/page.tsx`) is a Client Component that resolves auth state via `useEffect` + browser Supabase client. Auth state is passed as `isAuthenticated` prop to `Basket`. Unauthenticated users can still use the full builder and generate prompts — they just can't save projects.
+`app/page.tsx` is a Server Component that calls `getUser()` and redirects to `/login` if unauthenticated. It fetches projects, chats, and userPlan in parallel before rendering `DashboardShell`.
+
+The builder (`/builder`) is fully usable without auth — unauthenticated users can browse and generate prompts but cannot save projects.
+
+### Chat & Model Routing
+
+`POST /api/chat` streams text via OpenRouter using Vercel AI SDK (`streamText`). Model resolution:
+
+| `model` field | Resolves to |
+|---|---|
+| `claude-haiku-4-5-20251001` (default) | `anthropic/claude-haiku-4-5` |
+| `claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6` |
+| `claude-opus-4-6` | `anthropic/claude-opus-4-6` |
+| `opus-plan` | Opus if message matches planning keywords, else Sonnet |
+| `best` | `openrouter/auto` |
+
+If `projectId` is passed in the request body, the project's stored `prompt` field is injected as the system prompt.
+
+Errors are surfaced to the client via `onError` in `toUIMessageStreamResponse` — do not swallow them silently.
+
+### Payments (Creem)
+
+- `app/actions/checkout.ts` — `createCheckout(plan, interval)` creates a Creem session and returns a redirect URL
+- `app/api/webhooks/creem/route.ts` — verifies Creem webhook signature, updates `profiles.plan` in Supabase on successful payment events
+- Plans: `basic` (free) · `pro` ($17/mo, $170/yr) · `ultra` ($77/mo, $770/yr)
+
+### Dashboard View Routing
+
+`DashboardShell` owns `activeView: ViewKey` state. `ViewKey` is defined in `lib/types.ts`:
+`'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents'`
+
+The right-hand sidebar (`RhsSidebar`) only renders when `activeView === 'chat'`.
 
 ### CLAWS Feature Categories
 
@@ -94,6 +160,9 @@ When adding features to `features.ts`, use valid Lucide icon names.
 - **shadcn/ui** with `new-york` style and `neutral` base color
 - **Supabase** — auth (magic link + Google OAuth) and Postgres database
 - **`@supabase/ssr`** — correct package for Next.js App Router (not the deprecated `auth-helpers-nextjs`)
+- **Vercel AI SDK** — `streamText`, `convertToModelMessages` for streaming chat
+- **OpenRouter** — multi-model AI provider (`@openrouter/ai-sdk-provider`)
+- **Creem** — payments and subscription management
 - **Framer Motion** — animations on feature cards and grid
 - **Sonner** — toast notifications
 

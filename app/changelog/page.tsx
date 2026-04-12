@@ -7,9 +7,49 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.5.0',
+    date: 'April 12, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'System agents in chat — XerefClaw and Xeref Agents are now selectable pre-built agents in the chat input dropdown, above your custom project agents',
+          'Natural language CRUD via chat — tell the AI to "create a task", "mark X as done", "rename project", "remember X", or "what do you remember" and it executes the action directly',
+          'Memory system — new memories table; chat messages saying "remember" or "save this" are saved to long-term memory (with enable/disable toggle)',
+          'Workflows view upgraded — "Save Memories from Chat" workflow shows with a live toggle switch to enable or disable memory saving',
+          'Tasks view fully implemented — real CRUD with status cycling, priority badges, status filter tabs, and inline delete',
+          'User onboarding modal — new users see a 4-step setup flow on first login (name, role, goal, preferred model)',
+          'Sidebar CRUD — hover over any project or chat to reveal inline rename (pencil) and delete (trash) actions',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Chat now defaults to XerefClaw system agent — no more empty agent selector on first open',
+          'Agent selector shows "System Agents" and "My Agents" sections with descriptions',
+          'Chat auto-creates a session on first message without requiring "New Chat" button first',
+          'Tool results rendered as styled cards in chat (task created, memory saved, task list, etc.)',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'AI SDK v6 tool calling with inputSchema — 6 tools wired to server actions (create_task, list_tasks, update_task, rename_project, save_memory, recall_memories)',
+          'New Supabase tables: tasks, memories, workflows + onboarding columns on profiles',
+          'System agents defined in lib/system-agents.ts with hardcoded system prompts',
+          'AgentSelection union type replaces Project | null throughout chat components',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.4.0',
     date: 'April 1, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

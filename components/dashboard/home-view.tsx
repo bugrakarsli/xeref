@@ -15,6 +15,8 @@ import { cn } from '@/lib/utils'
 import { ChatInterface } from './chat/chat-interface'
 import { ChatList } from './chat/chat-list'
 import { TasksView } from './tasks-view'
+import type { AgentSelection } from './chat/chat-input'
+import { SYSTEM_AGENTS } from '@/lib/system-agents'
 
 type HomeTab = 'home' | 'chat' | 'tasks'
 
@@ -151,16 +153,17 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [activeChat, setActiveChat] = useState<Chat | null>(null)
   const [chatMessages, setChatMessages] = useState<Message[]>([])
-  const [selectedProject, setSelectedProject] = useState<Project | null>(
-    () => projects.find((p) => p.prompt) ?? null
-  )
+  const [selectedAgent, setSelectedAgent] = useState<AgentSelection>({
+    type: 'system',
+    agent: SYSTEM_AGENTS[0],
+  })
   const [showingList, setShowingList] = useState(false)
 
   async function handleNewChat() {
     if (activeChat && chatMessages.length > 0) {
       const firstUserMsg = chatMessages.find((m) => m.role === 'user')
       if (firstUserMsg && activeChat.title === 'New Chat') {
-        const title = firstUserMsg.content.slice(0, 50).trim()
+        const title = (firstUserMsg.content.match(/^.+?[.?!\n]/)?.[0] ?? firstUserMsg.content).slice(0, 80).trim()
         try {
           await updateChatTitle(activeChat.id, title)
           setChats((prev) => prev.map((c) => (c.id === activeChat.id ? { ...c, title } : c)))
@@ -170,7 +173,8 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
       }
     }
     try {
-      const newChat = await createChat(selectedProject?.id ?? null, 'New Chat')
+      const projectId = selectedAgent?.type === 'project' ? selectedAgent.project.id : null
+      const newChat = await createChat(projectId, 'New Chat')
       setChats((prev) => [newChat, ...prev])
       setActiveChat(newChat)
       setChatMessages([])
@@ -207,10 +211,10 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
     }
   }
 
-  const activatedProjects = projects.filter((p) => p.prompt)
-  const selectedProjectObj = selectedProject
-    ? (activatedProjects.find((p) => p.id === selectedProject.id) ?? null)
-    : null
+  function handleChatCreated(chat: Chat) {
+    setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
+    setActiveChat(chat)
+  }
 
   return (
     <div className="flex flex-col flex-1 min-h-0 p-6 md:p-8 max-w-5xl w-full mx-auto">
@@ -294,9 +298,10 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
           ) : (
             <ChatInterface
               projects={projects}
-              selectedProject={selectedProjectObj}
-              onProjectSelect={setSelectedProject}
+              selectedAgent={selectedAgent}
+              onAgentSelect={setSelectedAgent}
               activeChat={activeChat}
+              onChatCreated={handleChatCreated}
               initialMessages={chatMessages}
               userName={userName || (user.email?.split('@')[0] ?? '')}
               userPlan={userPlan}

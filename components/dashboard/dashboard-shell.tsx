@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Project, Chat, ViewKey } from '@/lib/types'
@@ -20,20 +20,29 @@ import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { RhsSidebar } from './rhs-sidebar'
 import { WhatsNewToast } from './whats-new-toast'
+import { OnboardingModal } from './onboarding-modal'
 
 interface DashboardShellProps {
   user: User
   projects: Project[]
   chats: Chat[]
   userPlan: UserPlan
+  onboardingCompleted: boolean
 }
 
-export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [activeView, setActiveView] = useState<ViewKey>('home')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('xeref_active_view') as ViewKey | null
+    if (saved) setActiveView(saved)
+  }, [])
   const [projects, setProjects] = useState<Project[]>(initialProjects)
-  const [chats] = useState<Chat[]>(initialChats)
+  const [chats, setChats] = useState<Chat[]>(initialChats)
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted)
 
   const userName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''
   const userEmail = user.email ?? ''
@@ -52,10 +61,30 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     setProjects((prev) => prev.map((p) => (p.id === project.id ? project : p)))
   }
 
+  function handleProjectRenamed(id: string, name: string) {
+    setProjects((prev) => prev.map((p) => (p.id === id ? { ...p, name } : p)))
+  }
+
+  function handleChatRenamed(id: string, title: string) {
+    setChats((prev) => prev.map((c) => (c.id === id ? { ...c, title } : c)))
+  }
+
+  function handleChatDeleted(id: string) {
+    setChats((prev) => prev.filter((c) => c.id !== id))
+  }
+
   const isChatView = activeView === 'chat'
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
+      {/* Onboarding modal */}
+      {showOnboarding && (
+        <OnboardingModal
+          userName={userName}
+          onComplete={() => setShowOnboarding(false)}
+        />
+      )}
+
       {/* Mobile overlay backdrop */}
       {!collapsed && (
         <div
@@ -70,6 +99,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         activeView={activeView}
         onViewChange={(view) => {
           setActiveView(view)
+          localStorage.setItem('xeref_active_view', view)
+          if (window.innerWidth < 768) setCollapsed(true)
+        }}
+        onChatSelect={(id) => {
+          setSelectedChatId(id)
+          setActiveView('chat')
+          localStorage.setItem('xeref_active_view', 'chat')
           if (window.innerWidth < 768) setCollapsed(true)
         }}
         projects={projects}
@@ -78,6 +114,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         userName={userName}
         userPlan={userPlan}
         onSignOut={handleSignOut}
+        onProjectRenamed={handleProjectRenamed}
+        onProjectDeleted={handleProjectDeleted}
+        onChatRenamed={handleChatRenamed}
+        onChatDeleted={handleChatDeleted}
         className={cn(
           'fixed z-30 md:relative md:z-auto transition-transform duration-200',
           collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'
@@ -118,6 +158,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     initialChats={chats}
                     userName={userName || userEmail.split('@')[0]}
                     userPlan={userPlan}
+                    selectedChatId={selectedChatId}
                   />
                 )
               case 'settings':

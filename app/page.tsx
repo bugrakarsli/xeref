@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getUserProjects } from '@/app/actions/projects'
 import { getUserChats } from '@/app/actions/chats'
-import { getUserPlan } from '@/app/actions/profile'
+import { getUserPlan, getProfile } from '@/app/actions/profile'
 import { DashboardShell } from '@/components/dashboard/dashboard-shell'
 
 export const metadata: Metadata = {
@@ -30,7 +30,20 @@ export default async function Home({ searchParams }: HomePageProps) {
     redirect('/login')
   }
 
-  const [projects, chats, userPlan] = await Promise.all([getUserProjects(), getUserChats(), getUserPlan()])
+  const [projects, chats, userPlan, profile] = await Promise.all([
+    getUserProjects(),
+    getUserChats(),
+    getUserPlan(),
+    getProfile(),
+  ])
 
-  return <DashboardShell user={user} projects={projects} chats={chats} userPlan={userPlan} />
+  return (
+    <DashboardShell
+      user={user}
+      projects={projects}
+      chats={chats}
+      userPlan={userPlan}
+      onboardingCompleted={profile?.onboarding_completed ?? false}
+    />
+  )
 }

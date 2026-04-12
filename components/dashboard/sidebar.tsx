@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import type { Project, Chat, ViewKey } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
@@ -19,6 +19,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Home,
   CheckSquare,
@@ -38,10 +39,16 @@ import {
   Settings,
   Zap,
   Users,
+  Pencil,
+  Trash2,
+  Check,
+  X,
 } from 'lucide-react'
+import { renameProject, deleteProject } from '@/app/actions/projects'
+import { updateChatTitle, deleteChat } from '@/app/actions/chats'
+import { toast } from 'sonner'
 
 const SIDEBAR_PROJECT_LIMIT = 5
-const SIDEBAR_CHAT_LIMIT = 5
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1'
 
@@ -56,6 +63,11 @@ interface SidebarProps {
   userName: string
   userPlan?: string
   onSignOut: () => void
+  onProjectRenamed?: (id: string, name: string) => void
+  onProjectDeleted?: (id: string) => void
+  onChatRenamed?: (id: string, title: string) => void
+  onChatDeleted?: (id: string) => void
+  onChatSelect?: (id: string) => void
   className?: string
 }
 
@@ -105,6 +117,111 @@ function UserAvatar({ name }: { name: string }) {
   )
 }
 
+interface InlineEditRowProps {
+  label: string
+  onSave: (value: string) => Promise<void>
+  onNavigate: () => void
+  onDelete: () => Promise<void>
+  active?: boolean
+}
+
+function InlineEditRow({ label, onSave, onNavigate, onDelete, active }: InlineEditRowProps) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(label)
+  const [hovered, setHovered] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  function startEdit(e: React.MouseEvent) {
+    e.stopPropagation()
+    setValue(label)
+    setEditing(true)
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  async function commitEdit() {
+    const trimmed = value.trim()
+    if (!trimmed || trimmed === label) {
+      setEditing(false)
+      return
+    }
+    try {
+      await onSave(trimmed)
+    } catch {
+      toast.error('Failed to rename')
+    }
+    setEditing(false)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter') commitEdit()
+    if (e.key === 'Escape') setEditing(false)
+  }
+
+  async function handleDelete(e: React.MouseEvent) {
+    e.stopPropagation()
+    try {
+      await onDelete()
+    } catch {
+      toast.error('Failed to delete')
+    }
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1">
+        <Dot className="h-4 w-4 shrink-0 text-primary" />
+        <input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={commitEdit}
+          className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-primary/60 pb-0.5"
+        />
+        <button onClick={commitEdit} className="shrink-0 text-emerald-400 hover:text-emerald-300">
+          <Check className="h-3 w-3" />
+        </button>
+        <button onClick={() => setEditing(false)} className="shrink-0 text-muted-foreground hover:text-foreground">
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      className={cn(
+        'group flex items-center gap-1 w-full rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer',
+        active && 'bg-accent/50 text-accent-foreground'
+      )}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={onNavigate}
+    >
+      <Dot className="h-4 w-4 shrink-0 text-primary" />
+      <span className="truncate flex-1 text-sm">{label}</span>
+      {hovered && (
+        <div className="flex items-center gap-0.5 shrink-0 ml-auto">
+          <button
+            onClick={startEdit}
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-background/50 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label="Rename"
+          >
+            <Pencil className="h-2.5 w-2.5" />
+          </button>
+          <button
+            onClick={handleDelete}
+            className="h-5 w-5 flex items-center justify-center rounded hover:bg-background/50 text-muted-foreground hover:text-destructive transition-colors"
+            aria-label="Delete"
+          >
+            <Trash2 className="h-2.5 w-2.5" />
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function Sidebar({
   collapsed,
   onToggle,
@@ -116,9 +233,15 @@ export function Sidebar({
   userName,
   userPlan = 'free',
   onSignOut,
+  onProjectRenamed,
+  onProjectDeleted,
+  onChatRenamed,
+  onChatDeleted,
+  onChatSelect,
   className,
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
+  const [chatsOpen, setChatsOpen] = useState(true)
   const pathname = usePathname()
   const isBuilderActive = pathname === '/builder'
 
@@ -192,8 +315,8 @@ export function Sidebar({
         <Menu className="h-5 w-5" />
       </Button>
 
-      {/* Scrollable nav */}
-      <div className="flex flex-col gap-1 flex-1 overflow-y-auto overflow-x-hidden p-2 min-h-0">
+      {/* Nav — no outer scroll; only the Chats section scrolls */}
+      <div className="flex flex-col flex-1 overflow-hidden p-2 min-h-0">
         {/* Main nav */}
         <NavItem
           icon={<Home className="h-4 w-4" />}
@@ -264,7 +387,7 @@ export function Sidebar({
               Projects
             </p>
           )}
-          <div className="flex flex-col gap-1 mt-1">
+          <div className="flex flex-col gap-0.5 mt-1">
             <NavItem
               icon={<Mail className="h-4 w-4" />}
               label="Inbox"
@@ -274,19 +397,20 @@ export function Sidebar({
             />
             {!collapsed &&
               projects.slice(0, SIDEBAR_PROJECT_LIMIT).map((p) => (
-                <button
+                <InlineEditRow
                   key={p.id}
-                  onClick={() => onViewChange('home')}
-                  aria-label={`Open project: ${p.name}`}
-                  className={cn(
-                    'flex items-center gap-2 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors',
-                    focusRing
-                  )}
-                  title={p.name}
-                >
-                  <Dot className="h-4 w-4 shrink-0 text-primary" />
-                  <span className="truncate">{p.name}</span>
-                </button>
+                  label={p.name}
+                  onNavigate={() => onViewChange('home')}
+                  onSave={async (name) => {
+                    await renameProject(p.id, name)
+                    onProjectRenamed?.(p.id, name)
+                  }}
+                  onDelete={async () => {
+                    await deleteProject(p.id)
+                    onProjectDeleted?.(p.id)
+                    toast.success(`"${p.name}" deleted`)
+                  }}
+                />
               ))}
           </div>
         </div>
@@ -343,14 +467,26 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* Chat section */}
-        <div className="mt-2">
+        {/* Chat section — grows to fill remaining sidebar space; only this scrolls */}
+        <div className="mt-2 flex flex-col flex-1 min-h-0">
           {!collapsed && (
-            <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+            <button
+              onClick={() => setChatsOpen((o) => !o)}
+              aria-expanded={chatsOpen}
+              className={cn(
+                'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors shrink-0',
+                focusRing
+              )}
+            >
               Chats
-            </p>
+              {chatsOpen ? (
+                <ChevronUp className="h-3 w-3" />
+              ) : (
+                <ChevronDown className="h-3 w-3" />
+              )}
+            </button>
           )}
-          <div className="flex flex-col gap-1 mt-1">
+          <div className="flex flex-col gap-0.5 mt-1 flex-1 min-h-0">
             <NavItem
               icon={<MessageSquare className="h-4 w-4" />}
               label="Chat"
@@ -358,23 +494,32 @@ export function Sidebar({
               collapsed={collapsed}
               onClick={() => onViewChange('chat')}
             />
-            {/* Recent chats */}
-            {!collapsed &&
-              chats.slice(0, SIDEBAR_CHAT_LIMIT).map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => onViewChange('chat')}
-                  aria-label={`Open chat: ${c.title}`}
-                  className={cn(
-                    'flex items-center gap-2 w-full rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors',
-                    focusRing
-                  )}
-                  title={c.title}
-                >
-                  <Dot className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="truncate">{c.title}</span>
-                </button>
-              ))}
+            {!collapsed && chatsOpen && chats.length > 0 && (
+              <ScrollArea className="flex-1 min-h-0">
+                <div className="flex flex-col gap-0.5 pr-1">
+                  {chats.map((c) => (
+                    <InlineEditRow
+                      key={c.id}
+                      label={c.title}
+                      active={false}
+                      onNavigate={() => {
+                        onChatSelect?.(c.id)
+                        onViewChange('chat')
+                      }}
+                      onSave={async (title) => {
+                        await updateChatTitle(c.id, title)
+                        onChatRenamed?.(c.id, title)
+                      }}
+                      onDelete={async () => {
+                        await deleteChat(c.id)
+                        onChatDeleted?.(c.id)
+                        toast.success('Chat deleted')
+                      }}
+                    />
+                  ))}
+                </div>
+              </ScrollArea>
+            )}
           </div>
         </div>
       </div>

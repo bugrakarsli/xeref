@@ -6,9 +6,11 @@ import { useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ChatMessage } from './chat-message'
 import { toast } from 'sonner'
-import { ChatInput, type ModelId, MODELS } from './chat-input'
-import { saveMessage } from '@/app/actions/chats'
-import type { Project, Chat, Message } from '@/lib/types'
+import { ChatInput, type ModelId, type AgentSelection, MODELS } from './chat-input'
+import { saveMessage, createChat } from '@/app/actions/chats'
+import { uploadChatAttachment } from '@/app/actions/upload'
+import type { Project, Chat, Message, ChatAttachment } from '@/lib/types'
+import { SYSTEM_AGENTS } from '@/lib/system-agents'
 import { Bot } from 'lucide-react'
 
 function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
@@ -21,21 +23,21 @@ function getMessageText(message: { parts?: Array<{ type: string; text?: string }
 
 interface ChatInterfaceProps {
   projects: Project[]
-  selectedProject: Project | null
-  onProjectSelect: (project: Project | null) => void
+  selectedAgent: AgentSelection
+  onAgentSelect: (agent: AgentSelection) => void
   activeChat: Chat | null
+  onChatCreated: (chat: Chat) => void
   initialMessages: Message[]
   userName: string
   userPlan?: 'free' | 'pro' | 'ultra'
 }
 
-
-
 export function ChatInterface({
   projects,
-  selectedProject,
-  onProjectSelect,
+  selectedAgent,
+  onAgentSelect,
   activeChat,
+  onChatCreated,
   initialMessages,
   userName,
   userPlan = 'free',
@@ -43,7 +45,19 @@ export function ChatInterface({
   const bottomRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
   const [selectedModel, setSelectedModel] = useState<ModelId>('claude-haiku-4-5-20251001')
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const activeChatIdRef = useRef<string | null>(null)
+
+  // Restore persisted model on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('xeref_selected_model')
+      if (saved && MODELS.find((m) => m.id === saved)) {
+        setSelectedModel(saved as ModelId)
+      }
+    } catch {}
+  }, [])
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),
@@ -89,12 +103,36 @@ export function ChatInterface({
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
+  async function handleFileSelect(files: FileList) {
+    const toUpload = Array.from(files)
+    const uploading = toast.loading(`Uploading ${toUpload.length > 1 ? `${toUpload.length} files` : toUpload[0].name}…`)
+
+    const results: ChatAttachment[] = []
+    for (const file of toUpload) {
+      try {
+        const formData = new FormData()
+        formData.append('file', file)
+        const att = await uploadChatAttachment(formData)
+        results.push(att)
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : `Failed to upload ${file.name}`)
+      }
+    }
+
+    toast.dismiss(uploading)
+    if (results.length > 0) {
+      setAttachments((prev) => [...prev, ...results])
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!input.trim() || isLoading) return
+    if ((!input.trim() && attachments.length === 0) || isLoading) return
 
     const text = input.trim()
     setInput('')
+    const currentAttachments = attachments
+    setAttachments([])
 
     // Handle slash commands for model selection
     if (text.startsWith('/model ')) {
@@ -102,6 +140,7 @@ export function ChatInterface({
       if (commandArgs[0] === 'opusplan') {
         if (userPlan === 'ultra') {
           setSelectedModel('opus-plan')
+          try { localStorage.setItem('xeref_selected_model', 'opus-plan') } catch {}
           toast.success('Switched to Opus Plan Mode.')
         } else {
           toast.error('Opus Plan Mode requires an ULTRA plan.')
@@ -112,6 +151,7 @@ export function ChatInterface({
           const planRank: Record<string, number> = { free: 0, pro: 1, ultra: 2 }
           if (planRank[userPlan] >= planRank[matchingModel.plan]) {
             setSelectedModel(matchingModel.id)
+            try { localStorage.setItem('xeref_selected_model', matchingModel.id) } catch {}
             toast.success(`Switched to ${matchingModel.label}.`)
           } else {
             toast.error(`${matchingModel.label} requires ${matchingModel.planLabel} plan.`)
@@ -123,16 +163,59 @@ export function ChatInterface({
       return
     }
 
-    // Persist user message
-    if (activeChat) {
+    // Ensure a chat record exists before persisting messages
+    let chatId = activeChat?.id ?? null
+    if (!chatId) {
       try {
-        await saveMessage(activeChat.id, 'user', text)
+        const projectId = selectedAgent?.type === 'project' ? selectedAgent.project.id : null
+        const firstSentence = text ? (text.match(/^.+?[.?!\n]/)?.[0] ?? text).slice(0, 80).trim() : null
+        const chatTitle = firstSentence || currentAttachments[0]?.name || 'New Chat'
+        const newChat = await createChat(projectId, chatTitle)
+        chatId = newChat.id
+        activeChatIdRef.current = newChat.id
+        onChatCreated(newChat)
+      } catch {
+        // non-critical — messages won't persist but the send still works
+      }
+    }
+
+    // Persist user message (text only for DB; attachments are ephemeral links)
+    if (chatId && text) {
+      try {
+        await saveMessage(chatId, 'user', text)
       } catch {
         // non-critical
       }
     }
 
-    await sendMessage({ text }, { body: { model: selectedModel, projectId: selectedProject?.id ?? null } })
+    // Build body — pass either systemAgentId or projectId, and webSearchEnabled
+    const body: Record<string, unknown> = { model: selectedModel, webSearchEnabled }
+    if (selectedAgent?.type === 'system') {
+      body.systemAgentId = selectedAgent.agent.id
+    } else if (selectedAgent?.type === 'project') {
+      body.projectId = selectedAgent.project.id
+    }
+
+    // Build multimodal message content if there are attachments
+    if (currentAttachments.length > 0) {
+      type ContentPart =
+        | { type: 'text'; text: string }
+        | { type: 'image'; image: URL }
+        | { type: 'file'; data: URL; mimeType: string }
+
+      const content: ContentPart[] = []
+      if (text) content.push({ type: 'text', text })
+      for (const att of currentAttachments) {
+        if (att.contentType.startsWith('image/')) {
+          content.push({ type: 'image', image: new URL(att.url) })
+        } else {
+          content.push({ type: 'file', data: new URL(att.url), mimeType: att.contentType })
+        }
+      }
+      await sendMessage({ role: 'user', content }, { body })
+    } else {
+      await sendMessage({ text }, { body })
+    }
   }
 
   const hasActivatedAgents = projects.some((p) => p.prompt)
@@ -141,23 +224,54 @@ export function ChatInterface({
     id: m.id,
     role: m.role as 'user' | 'assistant',
     content: getMessageText(m),
+    parts: m.parts,
   }))
+
+  const selectedLabel =
+    selectedAgent?.type === 'system'
+      ? selectedAgent.agent.name
+      : selectedAgent?.type === 'project'
+      ? selectedAgent.project.name
+      : null
+
+  const sharedInputProps = {
+    input,
+    onInputChange: setInput,
+    onSubmit: handleSubmit,
+    isLoading,
+    projects,
+    selectedAgent,
+    onAgentSelect,
+    selectedModel,
+    onModelSelect: (model: ModelId) => {
+      setSelectedModel(model)
+      try { localStorage.setItem('xeref_selected_model', model) } catch {}
+    },
+    userPlan,
+    attachments,
+    onFileSelect: handleFileSelect,
+    onRemoveAttachment: (i: number) => setAttachments((prev) => prev.filter((_, idx) => idx !== i)),
+    webSearchEnabled,
+    onWebSearchToggle: () => setWebSearchEnabled((v) => !v),
+  }
 
   if (messages.length === 0) {
     return (
       <div className="flex flex-col flex-1 min-h-0">
         <div className="flex flex-col items-center justify-center flex-1 gap-4 p-8 text-center">
-          {selectedProject ? (
+          {selectedAgent ? (
             <>
               <div className="rounded-full bg-primary/10 p-4">
                 <Bot className="h-7 w-7 text-primary" />
               </div>
               <div>
                 <p className="text-base font-semibold">
-                  Ask {selectedProject.name} anything
+                  Ask {selectedLabel} anything
                 </p>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Powered by {selectedProject.selected_feature_ids.length} features · {MODELS.find((m) => m.id === selectedModel)?.label ?? 'Sonnet 4.6'}
+                  {selectedAgent.type === 'system'
+                    ? selectedAgent.agent.description
+                    : `Powered by ${selectedAgent.project.selected_feature_ids.length} features · ${MODELS.find((m) => m.id === selectedModel)?.label ?? 'Haiku 4.5'}`}
                 </p>
               </div>
             </>
@@ -169,7 +283,7 @@ export function ChatInterface({
               <div>
                 <p className="text-sm font-medium">Select an agent to start chatting</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Choose an agent from the selector below
+                  Choose XerefClaw, Xeref Agents, or one of your custom agents below
                 </p>
               </div>
             </>
@@ -179,26 +293,15 @@ export function ChatInterface({
                 <Bot className="h-7 w-7 text-muted-foreground" />
               </div>
               <div>
-                <p className="text-sm font-medium">No activated agents yet</p>
+                <p className="text-sm font-medium">Choose an agent below</p>
                 <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Go to Home and click &quot;Add Prompt&quot; on your saved agents to activate them.
+                  Pick XerefClaw or Xeref Agents to start, or go to Home to activate a custom agent.
                 </p>
               </div>
             </>
           )}
         </div>
-        <ChatInput
-          input={input}
-          onInputChange={setInput}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-          projects={projects}
-          selectedProject={selectedProject}
-          onProjectSelect={onProjectSelect}
-          selectedModel={selectedModel}
-          onModelSelect={setSelectedModel}
-          userPlan={userPlan}
-        />
+        <ChatInput {...sharedInputProps} />
       </div>
     )
   }
@@ -212,6 +315,7 @@ export function ChatInterface({
               key={message.id}
               role={message.role}
               content={message.content}
+              parts={message.parts}
               isStreaming={isLoading && i === renderedMessages.length - 1 && message.role === 'assistant'}
               userName={userName}
             />
@@ -219,18 +323,7 @@ export function ChatInterface({
           <div ref={bottomRef} />
         </div>
       </ScrollArea>
-      <ChatInput
-        input={input}
-        onInputChange={setInput}
-        onSubmit={handleSubmit}
-        isLoading={isLoading}
-        projects={projects}
-        selectedProject={selectedProject}
-        onProjectSelect={onProjectSelect}
-        selectedModel={selectedModel}
-        onModelSelect={setSelectedModel}
-        userPlan={userPlan}
-      />
+      <ChatInput {...sharedInputProps} />
     </div>
   )
 }

@@ -70,3 +70,41 @@ export interface Message {
   citations: Citation[];
   created_at: string;
 }
+
+export interface Task {
+  id: string;
+  user_id: string;
+  project_id: string | null;
+  title: string;
+  description: string | null;
+  status: 'todo' | 'in_progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  due_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Memory {
+  id: string;
+  user_id: string;
+  content: string;
+  source: 'chat' | 'manual';
+  tags: string[];
+  created_at: string;
+}
+
+export interface Workflow {
+  id: string;
+  user_id: string;
+  name: string;
+  trigger: string;
+  action: string;
+  enabled: boolean;
+  created_at: string;
+}
+
+export interface ChatAttachment {
+  url: string;
+  contentType: string;
+  name: string;
+}

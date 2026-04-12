@@ -138,3 +138,75 @@ create policy "Users can insert own events" on public.usage_events
 
 create policy "Users can read own events" on public.usage_events
   for select using (auth.uid() = user_id);
+
+-- ── Tasks ─────────────────────────────────────────────────────────────────
+-- User tasks (manual or created by AI via chat tools).
+create table public.tasks (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  project_id uuid references public.projects(id) on delete set null,
+  title text not null,
+  description text,
+  status text not null default 'todo' check (status in ('todo', 'in_progress', 'done')),
+  priority text not null default 'medium' check (priority in ('low', 'medium', 'high')),
+  due_date timestamptz,
+  created_at timestamptz default now() not null,
+  updated_at timestamptz default now() not null
+);
+
+alter table public.tasks enable row level security;
+
+create policy "Users can CRUD own tasks" on public.tasks
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+create index idx_tasks_user_id on public.tasks(user_id, created_at desc);
+
+-- ── Memories ──────────────────────────────────────────────────────────────
+-- Long-term memory items saved manually or from chat messages.
+create table public.memories (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  content text not null,
+  source text not null default 'manual' check (source in ('chat', 'manual')),
+  tags text[] default '{}',
+  created_at timestamptz default now() not null
+);
+
+alter table public.memories enable row level security;
+
+create policy "Users can CRUD own memories" on public.memories
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── Workflows ─────────────────────────────────────────────────────────────
+-- Automation workflows (e.g., save memory on chat message).
+create table public.workflows (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  name text not null,
+  trigger text not null,
+  action text not null,
+  enabled boolean not null default true,
+  created_at timestamptz default now() not null
+);
+
+alter table public.workflows enable row level security;
+
+create policy "Users can CRUD own workflows" on public.workflows
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ── Profile onboarding columns ────────────────────────────────────────────
+-- Add these if they don't exist yet.
+alter table public.profiles add column if not exists role text;
+alter table public.profiles add column if not exists primary_goal text;
+alter table public.profiles add column if not exists preferred_model text;
+alter table public.profiles add column if not exists onboarding_completed boolean default false;
+
+-- ── Google Calendar Integration ───────────────────────────────────────────
+-- Stores OAuth tokens for Google Calendar. Add GOOGLE_CALENDAR_CLIENT_ID
+-- and GOOGLE_CALENDAR_CLIENT_SECRET to your environment variables.
+alter table public.profiles add column if not exists google_calendar_token jsonb;
+
+-- Per-user Google OAuth credentials (so each user brings their own OAuth app).
+-- Falls back to server-side env vars if these are null.
+alter table public.profiles add column if not exists google_oauth_client_id text;
+alter table public.profiles add column if not exists google_oauth_client_secret text;
