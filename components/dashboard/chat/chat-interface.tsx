@@ -198,21 +198,20 @@ export function ChatInterface({
 
     // Build multimodal message content if there are attachments
     if (currentAttachments.length > 0) {
-      type ContentPart =
-        | { type: 'text'; text: string }
-        | { type: 'image'; image: URL }
-        | { type: 'file'; data: URL; mimeType: string }
-
-      const content: ContentPart[] = []
-      if (text) content.push({ type: 'text', text })
+      type AnyPart = { type: string; [key: string]: unknown }
+      const parts: AnyPart[] = []
+      if (text) parts.push({ type: 'text', text })
       for (const att of currentAttachments) {
         if (att.contentType.startsWith('image/')) {
-          content.push({ type: 'image', image: new URL(att.url) })
+          parts.push({ type: 'image', image: new URL(att.url) })
         } else {
-          content.push({ type: 'file', data: new URL(att.url), mimeType: att.contentType })
+          parts.push({ type: 'file', data: new URL(att.url), mimeType: att.contentType })
         }
       }
-      await sendMessage({ role: 'user', content }, { body })
+      // AI SDK v6: UIMessagePart doesn't include image/file shapes in types but
+      // the runtime accepts them — cast to satisfy the compiler.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await sendMessage({ role: 'user', parts: parts as any }, { body })
     } else {
       await sendMessage({ text }, { body })
     }
