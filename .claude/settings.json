@@ -3,7 +3,10 @@
     "allow": [
       "Bash(cmd /c \"taskkill /PID 26096 /F\")",
       "Bash(cmd /c \"taskkill /IM node.exe /F\")",
-      "Bash(npm list:*)"
+      "Bash(npm list:*)",
+      "Bash(netstat -ano)",
+      "Bash(findstr \":3000\")",
+      "Bash(cmd /c \"taskkill /F /IM node.exe 2>&1\")"
     ]
   }
 }
