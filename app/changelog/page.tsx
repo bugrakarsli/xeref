@@ -7,9 +7,53 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.6.0',
+    date: 'April 15, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Plan-aware chat routing — Basic users get the free Xeref model, Pro unlocks Haiku 4.5 and Sonnet 4.6, Ultra keeps Best (Auto), Opus 4.6, and Opus Plan Mode',
+          'Xeref model — new default model for Basic plan, powered by OpenRouter\'s free tier (openrouter/free)',
+          'Per-plan API key isolation — each plan tier uses a dedicated OpenRouter key for cost control and spend visibility',
+          'OpenRouter attribution headers — every request now sends HTTP-Referer and X-Title for accurate usage tracking on openrouter.ai',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Haiku 4.5 moved to Pro plan — Claude models now start at Pro tier',
+          'Model selector labels updated to reflect new plan tiers (BASIC / PRO / ULTRA)',
+          'Chat errors now return structured JSON responses instead of plain text strings',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Centralized OpenRouter config in lib/ai/openrouter-config.ts — plan-to-key mapping, model allowlists, and provider factory in one server-only module',
+          'Server-side plan enforcement on every chat request — client-supplied model IDs are validated against the authenticated user\'s plan before any upstream call',
+          'Unit tests added (vitest) — 24 tests covering plan gating, model resolution, and routing logic',
+          'AgentPanel.tsx legacy API call replaced — no longer calls OpenRouter directly from the browser; all requests route through /api/chat',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Removed NEXT_PUBLIC_OPENROUTER_API_KEY exposure in client-side components',
+          'Silent stream failures now return visible 502 errors instead of empty assistant responses',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.5.0',
     date: 'April 12, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

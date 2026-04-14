@@ -5,13 +5,13 @@ import Link from 'next/link'
 import { X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const CURRENT_VERSION = 'v1.4.0'
+const CURRENT_VERSION = 'v1.6.0'
 const STORAGE_KEY = 'xeref_dismissed_version'
 
 const highlights = [
-  'Chat & Tasks toggle on Home page',
-  'Xeref Agents team view',
-  'Stats now show live data',
+  'Xeref model — free plan default',
+  'Plan-aware model routing (Basic / Pro / Ultra)',
+  'Per-plan API key isolation for cost control',
 ]
 
 export function WhatsNewToast() {
