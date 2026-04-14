@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
+import {
   MessageSquarePlus, History, MoreHorizontal, X, Minus, Maximize2, Settings, Copy, Play, Trash2, Save,
-  FileText, Code, Plus
+  FileText, Code, Plus, Pencil, ThumbsUp, ThumbsDown, Check
 } from 'lucide-react';
 import ChatInput from './ChatInput';
 import { createChatSession, sendMessageToGemini, OpenRouterChatSession } from '@/lib/apiService';
@@ -44,6 +44,8 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
   const [currentInput, setCurrentInput] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [attachedImage, setAttachedImage] = useState<{ data: string; mimeType: string } | null>(null);
+  const [messageFeedback, setMessageFeedback] = useState<Record<string, 'up' | 'down' | null>>({});
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
   
   // Customizations State
   const [customizationTab, setCustomizationTab] = useState<'rules' | 'workflows'>('rules');
@@ -330,6 +332,21 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     setContextMenu(null);
   };
 
+  const handleEditMessage = (msg: Message) => {
+    setCurrentInput(msg.text);
+    setChatState(prev => {
+      const newMessages = prev.messages.filter(m => m.timestamp < msg.timestamp);
+      if (activeSessionId) {
+        setSessions(sessions => sessions.map(s => s.id === activeSessionId ? { ...s, messages: newMessages } : s));
+      }
+      return { ...prev, messages: newMessages };
+    });
+  };
+
+  const handleMessageFeedback = (msgId: string, type: 'up' | 'down') => {
+    setMessageFeedback(prev => ({ ...prev, [msgId]: prev[msgId] === type ? null : type }));
+  };
+
   // Customization Handlers
   const addRule = (type: 'global' | 'workspace') => {
       setRules([...rules, { id: Date.now().toString(), type, content: `New ${type} rule` }]);
@@ -556,11 +573,11 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                         </button>
                     </div>
                     {chatState.messages.map((msg) => (
-                    <div 
-                    key={msg.id} 
-                    className={`flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`} 
+                    <div
+                    key={msg.id}
+                    className={`group flex flex-col gap-1 ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
                     onContextMenu={(e) => handleMessageContextMenu(e, msg)}
-                    title={new Date(msg.timestamp).toLocaleString()} // Timestamp on hover
+                    title={new Date(msg.timestamp).toLocaleString()}
                     >
                         <div className="flex items-center gap-2 mb-1">
                             <span className={`text-xs font-medium ${msg.role === 'user' ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400'}`}>
@@ -597,6 +614,48 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                         <div className={`text-xs text-gray-400 dark:text-gray-600 ${msg.role === 'user' ? 'mr-1' : 'ml-1'} mt-0.5`}>
                         {new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </div>
+                        {/* Message action buttons */}
+                        {msg.text && (
+                          <div className={`opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5 mt-0.5 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(msg.text);
+                                setCopiedMessageId(msg.id);
+                                setTimeout(() => setCopiedMessageId(null), 2000);
+                              }}
+                              className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                              title="Copy message"
+                            >
+                              {copiedMessageId === msg.id ? <Check size={12} /> : <Copy size={12} />}
+                            </button>
+                            {msg.role === 'user' ? (
+                              <button
+                                onClick={() => handleEditMessage(msg)}
+                                className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                                title="Edit message"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => handleMessageFeedback(msg.id, 'up')}
+                                  className={`p-1 rounded transition-colors ${messageFeedback[msg.id] === 'up' ? 'text-emerald-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                                  title="Good response"
+                                >
+                                  <ThumbsUp size={12} />
+                                </button>
+                                <button
+                                  onClick={() => handleMessageFeedback(msg.id, 'down')}
+                                  className={`p-1 rounded transition-colors ${messageFeedback[msg.id] === 'down' ? 'text-red-500' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'}`}
+                                  title="Poor response"
+                                >
+                                  <ThumbsDown size={12} />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        )}
                     </div>
                     ))}
                     </>

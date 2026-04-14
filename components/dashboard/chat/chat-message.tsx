@@ -5,6 +5,7 @@ import remarkGfm from 'remark-gfm'
 import { XerefLogo } from '@/components/xeref-logo'
 import { cn } from '@/lib/utils'
 import { CheckCircle, ListTodo, Brain, AlertCircle } from 'lucide-react'
+import { UserMessageActions, AssistantMessageActions } from './message-actions'
 
 interface ToolResult {
   success?: boolean
@@ -31,6 +32,8 @@ interface ChatMessageProps {
   parts?: MessagePart[]
   isStreaming?: boolean
   userName?: string
+  messageId?: string
+  onEdit?: (content: string) => void
 }
 
 function UserAvatar({ name }: { name: string }) {
@@ -155,7 +158,7 @@ function ToolResultCard({ toolName, result }: { toolName: string; result: ToolRe
   return null
 }
 
-export function ChatMessage({ role, content, parts, isStreaming, userName = 'U' }: ChatMessageProps) {
+export function ChatMessage({ role, content, parts, isStreaming, userName = 'U', messageId, onEdit }: ChatMessageProps) {
   const isUser = role === 'user'
 
   // Collect tool results from parts
@@ -164,7 +167,7 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U' 
   )
 
   return (
-    <div className={cn('flex gap-3 px-4 py-3', isUser && 'justify-end')}>
+    <div className={cn('flex gap-3 px-4 py-3 group/message', isUser && 'justify-end')}>
       {!isUser && (
         <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-card border">
           <XerefLogo className="h-4 w-4" />
@@ -202,6 +205,21 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U' 
             result={part.result as ToolResult}
           />
         ))}
+
+        {/* Message action buttons */}
+        {!isStreaming && content && (
+          isUser ? (
+            <UserMessageActions
+              content={content}
+              onEdit={() => onEdit?.(content)}
+            />
+          ) : (
+            <AssistantMessageActions
+              content={content}
+              messageId={messageId ?? ''}
+            />
+          )
+        )}
       </div>
 
       {isUser && <UserAvatar name={userName} />}

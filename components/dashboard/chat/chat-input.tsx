@@ -130,6 +130,22 @@ export function ChatInput({
     }
   }
 
+  function handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>) {
+    const items = e.clipboardData?.items
+    if (!items) return
+    const dt = new DataTransfer()
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) dt.items.add(file)
+      }
+    }
+    if (dt.files.length > 0) {
+      e.preventDefault()
+      onFileSelect(dt.files)
+    }
+  }
+
   const placeholderText =
     selectedAgent?.type === 'system'
       ? `Ask ${selectedAgent.agent.name} anything…`
@@ -161,6 +177,7 @@ export function ChatInput({
               handleInput()
             }}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             placeholder={placeholderText}
             rows={1}
             className={cn(
@@ -295,7 +312,7 @@ export function ChatInput({
                     <>
                       <DropdownMenuSeparator />
                       <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground font-semibold px-2 py-1">
-                        My Agents
+                        My Projects
                       </DropdownMenuLabel>
                       {activatedProjects.map((p) => (
                         <DropdownMenuItem

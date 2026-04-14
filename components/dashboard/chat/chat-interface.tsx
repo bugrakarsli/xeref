@@ -66,15 +66,23 @@ export function ChatInterface({
     },
     onFinish: async ({ message }) => {
       const chatId = activeChatIdRef.current
-      if (!chatId) return
       if (message.role === 'assistant') {
         const text = getMessageText(message)
-        if (text) {
-          try {
-            await saveMessage(chatId, 'assistant', text)
-          } catch {
-            // non-critical
-          }
+        if (!text?.trim()) {
+          setMessages((prev) =>
+            prev.map((m) =>
+              m.id === message.id
+                ? { ...m, parts: [{ type: 'text' as const, text: "I wasn't able to generate a response. Please try again." }] }
+                : m
+            )
+          )
+          return
+        }
+        if (!chatId) return
+        try {
+          await saveMessage(chatId, 'assistant', text)
+        } catch {
+          // non-critical
         }
       }
     },
@@ -217,6 +225,11 @@ export function ChatInterface({
     }
   }
 
+  function handleEditMessage(index: number, content: string) {
+    setInput(content)
+    setMessages((prev) => prev.slice(0, index))
+  }
+
   const hasActivatedAgents = projects.some((p) => p.prompt)
 
   const renderedMessages = messages.map((m) => ({
@@ -317,6 +330,8 @@ export function ChatInterface({
               parts={message.parts}
               isStreaming={isLoading && i === renderedMessages.length - 1 && message.role === 'assistant'}
               userName={userName}
+              messageId={message.id}
+              onEdit={(content) => handleEditMessage(i, content)}
             />
           ))}
           <div ref={bottomRef} />

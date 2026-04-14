@@ -59,6 +59,26 @@ const ChatInput: React.FC<ChatInputProps> = ({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
+    const items = e.clipboardData?.items;
+    if (!items || !onImageSelect) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile();
+        if (!file) continue;
+        e.preventDefault();
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const result = ev.target?.result as string;
+          const base64 = result.split(',')[1];
+          onImageSelect(base64, file.type);
+        };
+        reader.readAsDataURL(file);
+        break;
+      }
+    }
+  };
+
   const handleSubmit = () => {
     const safeValue = value || '';
     if ((safeValue.trim() || onImageSelect) && !isLoading) { 
@@ -145,8 +165,9 @@ const ChatInput: React.FC<ChatInputProps> = ({
           data-id="agent-chat-input"
           ref={textareaRef}
           value={value || ''} 
-          onChange={(e) => onChange(e.target.value)} 
+          onChange={(e) => onChange(e.target.value)}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
           placeholder="Ask anything (⌘L), @ to mention, / for workflows"
           className="w-full bg-transparent p-3 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none resize-none min-h-[48px] max-h-[200px]"
           rows={1}

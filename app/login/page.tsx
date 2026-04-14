@@ -266,22 +266,22 @@ export default function LoginPage() {
               <Badge variant="secondary" className="mb-3">Dashboard</Badge>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Everything in one place</h2>
               <p className="mt-3 max-w-[600px] text-muted-foreground">
-                Home and XerefClaw are live. The full platform rolls out in phases.
+                7 of 12 sections are live — and shipping fast.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {[
                 { icon: <Home className="h-5 w-5" />, title: 'Home', desc: 'Agent overview, Daily Targets, saved agents', live: true },
                 { icon: <Cpu className="h-5 w-5" />, title: 'XerefClaw', desc: 'Agent builder, CLAWS methodology', live: true },
-                { icon: <CheckSquare className="h-5 w-5" />, title: 'All Tasks', desc: 'Unified tasks + AI prioritization', live: false },
+                { icon: <CheckSquare className="h-5 w-5" />, title: 'All Tasks', desc: 'Unified tasks + AI prioritization', live: true },
                 { icon: <FolderKanban className="h-5 w-5" />, title: 'Projects', desc: 'Goal decomposition + kanban board', live: false },
                 { icon: <BookOpen className="h-5 w-5" />, title: 'Classroom', desc: 'Lessons + semantic search', live: false },
                 { icon: <Brain className="h-5 w-5" />, title: 'Memory', desc: 'Document brain, OCR ingestion', live: false },
                 { icon: <Send className="h-5 w-5" />, title: 'Deploy', desc: 'Telegram, Discord, WhatsApp, web widget', live: false },
-                { icon: <Calendar className="h-5 w-5" />, title: 'Calendar', desc: 'Deadlines + focus blocks + Google Sync', live: false },
-                { icon: <Zap className="h-5 w-5" />, title: 'Workflows', desc: 'Cron triggers + multi-channel automation', live: false },
-                { icon: <MessageSquare className="h-5 w-5" />, title: 'Chats', desc: 'In-app agent chat with streaming + sources', live: false },
-                { icon: <BarChart2 className="h-5 w-5" />, title: 'Stats', desc: 'Productivity trends + agent usage', live: false },
+                { icon: <Calendar className="h-5 w-5" />, title: 'Calendar', desc: 'Deadlines + focus blocks + Google Sync', live: true },
+                { icon: <Zap className="h-5 w-5" />, title: 'Workflows', desc: 'Cron triggers + multi-channel automation', live: true },
+                { icon: <MessageSquare className="h-5 w-5" />, title: 'Chats', desc: 'In-app agent chat with streaming + sources', live: true },
+                { icon: <BarChart2 className="h-5 w-5" />, title: 'Stats', desc: 'Productivity trends + agent usage', live: true },
                 { icon: <Inbox className="h-5 w-5" />, title: 'Inbox', desc: 'Bot replies + activity feed', live: false },
               ].map(({ icon, title, desc, live }) => (
                 <div key={title} className={`flex flex-col border rounded-xl p-4 transition-colors hover:border-primary/50 ${live ? 'bg-card' : 'bg-card'}`}>
@@ -346,13 +346,13 @@ export default function LoginPage() {
                   title: 'Core Platform',
                   timeline: '4–8 weeks',
                   items: [
-                    { text: 'Classroom section + semantic search', priority: true },
-                    { text: 'UserContext onboarding form', priority: true },
-                    { text: 'Projects CRUD + AI goal decomposition', priority: true },
-                    { text: 'Tasks & Notes CRUD + Daily Targets', priority: true },
-                    { text: 'Xeref MCP Server v1 (all CRUD tools)', priority: true },
-                    { text: 'Guest mode (Supabase anon + rate limit)', priority: true },
-                    { text: 'Streaming responses in Chat', priority: true },
+                    { text: 'Classroom section + semantic search', status: 'todo' as const },
+                    { text: 'UserContext onboarding form', status: 'done' as const },
+                    { text: 'Projects CRUD + AI goal decomposition', status: 'partial' as const },
+                    { text: 'Tasks & Notes CRUD + Daily Targets', status: 'partial' as const },
+                    { text: 'Xeref MCP Server v1 (all CRUD tools)', status: 'todo' as const },
+                    { text: 'Guest mode (Supabase anon + rate limit)', status: 'partial' as const },
+                    { text: 'Streaming responses in Chat', status: 'done' as const },
                   ],
                 },
                 {
@@ -361,12 +361,12 @@ export default function LoginPage() {
                   title: 'Memory & Community',
                   timeline: '8–16 weeks',
                   items: [
-                    { text: 'Gemini Embedding 2 auto-embedding (Edge Functions)', priority: false },
-                    { text: 'Pinecone user namespaces + Memory dashboard', priority: false },
-                    { text: 'YouTube Chat with timestamped sources', priority: false },
-                    { text: 'Saved posts, bookmarks, community search', priority: false },
-                    { text: 'Calendar + Google Calendar sync', priority: false },
-                    { text: 'Image uploads in Chat (Gemini Vision)', priority: false },
+                    { text: 'Gemini Embedding 2 auto-embedding (Edge Functions)', status: 'todo' as const },
+                    { text: 'Pinecone user namespaces + Memory dashboard', status: 'todo' as const },
+                    { text: 'YouTube Chat with timestamped sources', status: 'todo' as const },
+                    { text: 'Saved posts, bookmarks, community search', status: 'todo' as const },
+                    { text: 'Calendar + Google Calendar sync', status: 'done' as const },
+                    { text: 'Image uploads in Chat (Gemini Vision)', status: 'done' as const },
                   ],
                 },
                 {
@@ -375,12 +375,12 @@ export default function LoginPage() {
                   title: 'Deploy & Automate',
                   timeline: '16–24 weeks',
                   items: [
-                    { text: 'Telegram bot wizard (priority channel)', priority: false },
-                    { text: 'Discord, WhatsApp, web widget', priority: false },
-                    { text: 'Workflows: cron + webhook triggers', priority: false },
-                    { text: 'AI News Feed + daily digest', priority: false },
-                    { text: 'OCR Document Brain (18 file types)', priority: false },
-                    { text: 'Stats: heatmap, velocity charts', priority: false },
+                    { text: 'Telegram bot wizard (priority channel)', status: 'todo' as const },
+                    { text: 'Discord, WhatsApp, web widget', status: 'todo' as const },
+                    { text: 'Workflows: cron + webhook triggers', status: 'partial' as const },
+                    { text: 'AI News Feed + daily digest', status: 'todo' as const },
+                    { text: 'OCR Document Brain (18 file types)', status: 'todo' as const },
+                    { text: 'Stats: heatmap, velocity charts', status: 'partial' as const },
                   ],
                 },
               ].map(({ phase, color, title, timeline, items }) => (
@@ -395,10 +395,20 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <ul className="flex flex-col gap-2">
-                    {items.map(({ text, priority }) => (
-                      <li key={text} className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className={`inline-flex h-1.5 w-1.5 rounded-full shrink-0 ${priority ? 'bg-primary' : 'bg-border'}`} />
-                        {text}
+                    {items.map(({ text, status }) => (
+                      <li key={text} className="flex items-center gap-2 text-xs">
+                        <span className={`inline-flex h-1.5 w-1.5 rounded-full shrink-0 ${
+                          status === 'done' ? 'bg-green-500' : status === 'partial' ? 'bg-amber-500' : 'bg-border'
+                        }`} />
+                        <span className={`flex-1 ${
+                          status === 'done' ? 'line-through text-muted-foreground/60' : 'text-muted-foreground'
+                        }`}>{text}</span>
+                        {status === 'done' && (
+                          <span className="text-[10px] font-medium text-green-500 shrink-0">DONE</span>
+                        )}
+                        {status === 'partial' && (
+                          <span className="text-[10px] font-medium text-amber-500 shrink-0">IN PROGRESS</span>
+                        )}
                       </li>
                     ))}
                   </ul>
