@@ -44,17 +44,24 @@ export function ChatInterface({
 }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<ModelId>('claude-haiku-4-5-20251001')
+  const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const activeChatIdRef = useRef<string | null>(null)
 
-  // Restore persisted model on mount
+  // Restore persisted model on mount.
+  // If a previously-saved model is no longer on the user's plan, fall back to xeref-free.
   useEffect(() => {
     try {
       const saved = localStorage.getItem('xeref_selected_model')
       if (saved && MODELS.find((m) => m.id === saved)) {
-        setSelectedModel(saved as ModelId)
+        const savedModel = saved as ModelId
+        // Haiku moved from free→pro; reset free users who had it saved
+        if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') {
+          setSelectedModel('xeref-free')
+        } else {
+          setSelectedModel(savedModel)
+        }
       }
     } catch {}
   }, [])

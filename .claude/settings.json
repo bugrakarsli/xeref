@@ -6,7 +6,10 @@
       "Bash(npm list:*)",
       "Bash(netstat -ano)",
       "Bash(findstr \":3000\")",
-      "Bash(cmd /c \"taskkill /F /IM node.exe 2>&1\")"
+      "Bash(cmd /c \"taskkill /F /IM node.exe 2>&1\")",
+      "Bash(ls d:/bugrakarsli/02-projects/xeref/xeref-claw/middleware*)",
+      "Bash(ls d:/bugrakarsli/02-projects/xeref/xeref-claw/src/middleware*)",
+      "Bash(npm run *)"
     ]
   }
 }

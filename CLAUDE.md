@@ -23,12 +23,17 @@ npx shadcn@latest add <component-name>
 
 Required in `.env.local`:
 ```
-NEXT_PUBLIC_SUPABASE_URL=        # From Supabase dashboard → Settings → API
-NEXT_PUBLIC_SUPABASE_ANON_KEY=   # From Supabase dashboard → Settings → API
-SUPABASE_SERVICE_ROLE_KEY=       # Keep server-only — never expose to client
-NEXT_PUBLIC_SITE_URL=            # http://localhost:3000 in dev, https://xeref.ai in prod
-OPENROUTER_API_KEY=              # openrouter.ai → Keys
-CREEM_WEBHOOK_SECRET=            # Creem dashboard → Webhooks
+NEXT_PUBLIC_SUPABASE_URL=                 # From Supabase dashboard → Settings → API
+NEXT_PUBLIC_SUPABASE_ANON_KEY=            # From Supabase dashboard → Settings → API
+SUPABASE_SERVICE_ROLE_KEY=                # Keep server-only — never expose to client
+NEXT_PUBLIC_SITE_URL=                     # http://localhost:3000 in dev, https://xeref.ai in prod
+OPENROUTER_API_KEY_BASIC=                 # OpenRouter key for free/basic plan users
+OPENROUTER_API_KEY_PRO=                   # OpenRouter key for pro plan users
+OPENROUTER_API_KEY_ULTRA=                 # OpenRouter key for ultra plan users
+OPENROUTER_BASE_URL=                      # Optional override (omit to use OpenRouter default)
+XEREF_DEFAULT_OPENROUTER_SITE_URL=        # Site URL sent as HTTP-Referer for OpenRouter attribution
+XEREF_DEFAULT_OPENROUTER_APP_NAME=        # App name sent as X-Title for OpenRouter attribution
+CREEM_WEBHOOK_SECRET=                     # Creem dashboard → Webhooks
 ```
 
 ## Architecture
@@ -81,6 +86,7 @@ CREEM_WEBHOOK_SECRET=            # Creem dashboard → Webhooks
   - `utils.ts` — `cn()` Tailwind merge utility
   - `supabase/client.ts` — Browser Supabase client (for `'use client'` components)
   - `supabase/server.ts` — Server Supabase client (for Server Components and Server Actions)
+  - `ai/openrouter-config.ts` — **Server-only** OpenRouter config: plan-to-key mapping, model allowlists, model resolution, per-request provider factory with attribution headers
 
 - `proxy.ts` — Refreshes Supabase session tokens on every request (Next.js 16 uses `proxy.ts` + `export function proxy()` instead of the deprecated `middleware.ts`)
 
@@ -112,19 +118,34 @@ The builder (`/builder`) is fully usable without auth — unauthenticated users 
 
 ### Chat & Model Routing
 
-`POST /api/chat` streams text via OpenRouter using Vercel AI SDK (`streamText`). Model resolution:
+`POST /api/chat` streams text via OpenRouter using Vercel AI SDK (`streamText`). Routing is **plan-aware and server-enforced** — the client-supplied model is validated against the user's plan before any upstream request.
 
-| `model` field | Resolves to |
+All routing logic lives in `lib/ai/openrouter-config.ts` (server-only).
+
+**Plan entitlements:**
+
+| Plan | Allowed models |
 |---|---|
-| `claude-haiku-4-5-20251001` (default) | `anthropic/claude-haiku-4-5` |
-| `claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6` |
-| `claude-opus-4-6` | `anthropic/claude-opus-4-6` |
-| `opus-plan` | Opus if message matches planning keywords, else Sonnet |
-| `best` | `openrouter/auto` |
+| `free` (Basic) | `xeref-free` only |
+| `pro` | `xeref-free`, `claude-haiku-4-5-20251001`, `claude-sonnet-4-6` |
+| `ultra` | All models |
+
+**Model resolution:**
+
+| `model` field | Resolves to | Plan |
+|---|---|---|
+| `xeref-free` (default) | `openrouter/free` | Basic |
+| `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5` | Pro |
+| `claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6` | Pro |
+| `best` | `openrouter/auto` | Ultra |
+| `claude-opus-4-6` | `anthropic/claude-opus-4-6` | Ultra |
+| `opus-plan` | Opus if message matches planning keywords, else Sonnet | Ultra |
+
+**Per-plan API keys:** `OPENROUTER_API_KEY_BASIC` / `_PRO` / `_ULTRA` — the correct key is selected server-side based on the authenticated user's plan. Keys are never exposed to the client.
 
 If `projectId` is passed in the request body, the project's stored `prompt` field is injected as the system prompt.
 
-Errors are surfaced to the client via `onError` in `toUIMessageStreamResponse` — do not swallow them silently.
+Disallowed model requests return `403 { error, code: 'PLAN_LIMIT' }`. Upstream failures return `502`. Errors are also surfaced to the client via `onError` in `toUIMessageStreamResponse`.
 
 ### Payments (Creem)
 
