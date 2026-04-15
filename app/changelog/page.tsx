@@ -7,9 +7,23 @@ import { MobileNav } from '@/components/mobile-nav';
 
 const entries = [
   {
+    version: 'v1.7.0',
+    date: 'April 16, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'New Conversation view is now truly centered on screen — the icon, prompt text, and chat input render as a single unit in the vertical and horizontal center of the available space, regardless of window size',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v1.6.0',
     date: 'April 15, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

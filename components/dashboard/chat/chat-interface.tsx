@@ -2,16 +2,15 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useEffect, useRef, useState } from 'react'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { ChatMessage } from './chat-message'
 import { toast } from 'sonner'
-import { ChatInput, type ModelId, type AgentSelection, MODELS } from './chat-input'
+import { ChatInput, type ChatInputHandle, type ModelId, type AgentSelection, MODELS } from './chat-input'
 import { saveMessage, createChat } from '@/app/actions/chats'
 import { uploadChatAttachment } from '@/app/actions/upload'
 import type { Project, Chat, Message, ChatAttachment } from '@/lib/types'
 import { SYSTEM_AGENTS } from '@/lib/system-agents'
-import { Bot } from 'lucide-react'
+import { Bot, ArrowDown } from 'lucide-react'
 
 function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
   if (!message.parts) return ''
@@ -43,6 +42,9 @@ export function ChatInterface({
   userPlan = 'free',
 }: ChatInterfaceProps) {
   const bottomRef = useRef<HTMLDivElement>(null)
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+  const chatInputRef = useRef<ChatInputHandle>(null)
+  const [showScrollButton, setShowScrollButton] = useState(false)
   const [input, setInput] = useState('')
   const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
@@ -111,10 +113,34 @@ export function ChatInterface({
     )
   }, [activeChat?.id, initialMessages, setMessages])
 
-  // Auto-scroll to bottom on new messages
-  useEffect(() => {
+  const scrollToBottom = useCallback(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  }, [])
+
+  // Auto-scroll to bottom on new messages (only when already near bottom)
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    const distanceFromBottom = el.scrollHeight - el.scrollTop - el.clientHeight
+    if (distanceFromBottom < 120) {
+      scrollToBottom()
+    }
+  }, [messages, scrollToBottom])
+
+  // Show/hide scroll-to-bottom button
+  useEffect(() => {
+    const el = scrollContainerRef.current
+    if (!el) return
+    function onScroll() {
+      const distanceFromBottom = el!.scrollHeight - el!.scrollTop - el!.clientHeight
+      setShowScrollButton(distanceFromBottom > 120)
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    // Check immediately in case content overflows on mount
+    onScroll()
+    return () => el.removeEventListener('scroll', onScroll)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
@@ -232,19 +258,33 @@ export function ChatInterface({
     }
   }
 
-  function handleEditMessage(index: number, content: string) {
-    setInput(content)
-    setMessages((prev) => prev.slice(0, index))
-  }
-
-  const hasActivatedAgents = projects.some((p) => p.prompt)
-
   const renderedMessages = messages.map((m) => ({
     id: m.id,
     role: m.role as 'user' | 'assistant',
     content: getMessageText(m),
     parts: m.parts,
   }))
+
+  async function handleEditMessage(index: number, newContent: string) {
+    setMessages((prev) => prev.slice(0, index))
+    const body: Record<string, unknown> = { model: selectedModel, webSearchEnabled }
+    if (selectedAgent?.type === 'system') body.systemAgentId = selectedAgent.agent.id
+    else if (selectedAgent?.type === 'project') body.projectId = selectedAgent.project.id
+    await sendMessage({ text: newContent }, { body })
+  }
+
+  async function handleRetry(assistantIndex: number) {
+    if (isLoading) return
+    const userMsg = renderedMessages.slice(0, assistantIndex).reverse().find((m) => m.role === 'user')
+    if (!userMsg) return
+    setMessages((prev) => prev.slice(0, assistantIndex))
+    const body: Record<string, unknown> = { model: selectedModel, webSearchEnabled }
+    if (selectedAgent?.type === 'system') body.systemAgentId = selectedAgent.agent.id
+    else if (selectedAgent?.type === 'project') body.projectId = selectedAgent.project.id
+    await sendMessage({ text: userMsg.content }, { body })
+  }
+
+  const hasActivatedAgents = projects.some((p) => p.prompt)
 
   const selectedLabel =
     selectedAgent?.type === 'system'
@@ -276,14 +316,14 @@ export function ChatInterface({
 
   if (messages.length === 0) {
     return (
-      <div className="flex flex-col flex-1 min-h-0">
-        <div className="flex flex-col items-center justify-center flex-1 gap-4 p-8 text-center">
+      <div className="flex flex-col flex-1 min-h-0 items-center justify-center p-6">
+        <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
           {selectedAgent ? (
             <>
               <div className="rounded-full bg-primary/10 p-4">
                 <Bot className="h-7 w-7 text-primary" />
               </div>
-              <div>
+              <div className="text-center">
                 <p className="text-base font-semibold">
                   Ask {selectedLabel} anything
                 </p>
@@ -299,7 +339,7 @@ export function ChatInterface({
               <div className="rounded-full bg-muted p-4">
                 <Bot className="h-7 w-7 text-muted-foreground" />
               </div>
-              <div>
+              <div className="text-center">
                 <p className="text-sm font-medium">Select an agent to start chatting</p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Choose XerefClaw, Xeref Agents, or one of your custom agents below
@@ -311,7 +351,7 @@ export function ChatInterface({
               <div className="rounded-full bg-muted p-4">
                 <Bot className="h-7 w-7 text-muted-foreground" />
               </div>
-              <div>
+              <div className="text-center">
                 <p className="text-sm font-medium">Choose an agent below</p>
                 <p className="text-xs text-muted-foreground mt-1 max-w-xs">
                   Pick XerefClaw or Xeref Agents to start, or go to Home to activate a custom agent.
@@ -319,15 +359,15 @@ export function ChatInterface({
               </div>
             </>
           )}
+          <ChatInput ref={chatInputRef} {...sharedInputProps} />
         </div>
-        <ChatInput {...sharedInputProps} />
       </div>
     )
   }
 
   return (
     <div className="flex flex-col flex-1 min-h-0">
-      <ScrollArea className="flex-1 min-h-0">
+      <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-y-auto">
         <div className="py-4">
           {renderedMessages.map((message, i) => (
             <ChatMessage
@@ -339,12 +379,26 @@ export function ChatInterface({
               userName={userName}
               messageId={message.id}
               onEdit={(content) => handleEditMessage(i, content)}
+              onRetry={message.role === 'assistant' ? () => handleRetry(i) : undefined}
             />
           ))}
           <div ref={bottomRef} />
         </div>
-      </ScrollArea>
-      <ChatInput {...sharedInputProps} />
+      </div>
+      <div className="relative">
+        {showScrollButton && (
+          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-10">
+            <button
+              onClick={scrollToBottom}
+              aria-label="Scroll to bottom"
+              className="flex items-center justify-center h-9 w-9 rounded-full bg-neutral-800 hover:bg-neutral-700 border border-white/10 shadow-lg transition-all duration-150 text-white"
+            >
+              <ArrowDown className="h-4 w-4" />
+            </button>
+          </div>
+        )}
+        <ChatInput ref={chatInputRef} {...sharedInputProps} />
+      </div>
     </div>
   )
 }
