@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import ChatInput from './ChatInput';
 import { createChatSession, sendMessageToGemini, OpenRouterChatSession } from '@/lib/apiService';
+import { AVAILABLE_MODELS, DEFAULT_MODEL } from '@/lib/models-config';
 import { ChatState, Message, AgentSettings, ChatSession, Theme } from '@/types/agent-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -21,7 +22,7 @@ interface AgentPanelProps {
 }
 
 const DEFAULT_SETTINGS: AgentSettings = {
-  modelName: 'google/gemini-2.5-flash',
+  modelName: DEFAULT_MODEL,
   temperature: 0.7,
   systemInstruction: "You are Xeref.ai, an advanced AI coding assistant embedded in an IDE. You are helpful, concise, and expert in React, TypeScript, and modern web development. When providing code, use Markdown code blocks.",
   enableSynthID: false,
@@ -262,7 +263,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
               }
               return { ...prev, messages: newMessages };
           });
-      });
+      }, settings.modelName);
     } catch (error) {
         console.error("Error during message streaming:", error);
         setChatState((prev) => {
@@ -741,10 +742,9 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                     <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Model</label>
                         <select value={settings.modelName} onChange={(e) => setSettings({...settings, modelName: e.target.value})} className={`w-full p-2 rounded text-sm border ${theme === 'dark' ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-200'}`}>
-                            <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
-                            <option value="google/gemini-2.5-pro">Gemini 2.5 Pro</option>
-                            <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                            <option value="openai/o3-mini">O3 Mini</option>
+                            {AVAILABLE_MODELS.map(model => (
+                                <option key={model.id} value={model.id}>{model.name}</option>
+                            ))}
                         </select>
                     </div>
                     
@@ -826,4 +826,4 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
   );
 };
 
-export default AgentPanel;
+// Exported as named export above

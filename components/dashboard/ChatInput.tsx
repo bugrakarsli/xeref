@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Plus, ChevronDown, ArrowUp, File, Image, Code, Check } from 'lucide-react';
+import { AVAILABLE_MODELS } from '@/lib/models-config';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -135,13 +136,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
       e.target.value = ''; 
   };
 
-  // OpenRouter compatible models
-  const models = [
-      { id: 'google/gemini-2.5-flash', name: 'Gemini 2.5 Flash' },
-      { id: 'google/gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
-      { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
-      { id: 'openai/o3-mini', name: 'O3 Mini' }
-  ];
+  // models moved to lib/models-config.ts
 
   return (
     <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-[#1e1e1e]">
@@ -228,13 +223,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
                     className="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-xs text-gray-600 dark:text-gray-400 transition-colors font-medium"
                     title="Select AI Model"
                 >
-                    {models.find(m => m.id === selectedModel)?.name || 'Select Model'}
+                    {AVAILABLE_MODELS.find(m => m.id === selectedModel)?.name || 'Select Model'}
                     <ChevronDown size={12} />
                 </button>
                 
                 {showModelMenu && (
                     <div className="absolute bottom-full mb-2 left-0 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-1 z-20">
-                        {models.map(model => (
+                        {AVAILABLE_MODELS.map(model => (
                             <button 
                                 key={model.id}
                                 onClick={() => {

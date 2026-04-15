@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
-import type { Project, Chat, ViewKey } from '@/lib/types'
+import type { Project, Chat, ViewKey, SidebarTab } from '@/lib/types'
 import type { UserPlan } from '@/app/actions/profile'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
@@ -17,7 +17,9 @@ import { InboxView } from './inbox-view'
 import { ChatsView } from './chats-view'
 import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
-import { AgentTeamView } from './agent-team-view'
+import { AgentManagerView } from './AgentManagerView'
+import { ComingSoonView } from './coming-soon-view'
+import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { WhatsNewToast } from './whats-new-toast'
 import { OnboardingModal } from './onboarding-modal'
@@ -34,6 +36,26 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const [activeView, setActiveView] = useState<ViewKey>('home')
+  const [activeTab, setActiveTab] = useState<SidebarTab>('chat')
+
+  // Default main-area view for each sidebar tab
+  const TAB_DEFAULT_VIEW: Record<SidebarTab, ViewKey> = {
+    chat: 'chat',
+    tasks: 'tasks',
+    code: 'code',
+  }
+
+  function handleTabChange(tab: SidebarTab) {
+    setActiveTab(tab)
+    const defaultView = TAB_DEFAULT_VIEW[tab]
+    setActiveView(defaultView)
+    localStorage.setItem('xeref_active_view', defaultView)
+    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: defaultView }))
+    if (window.innerWidth < 768) setCollapsed(true)
+  }
+
+  const [showAgentPanel, setShowAgentPanel] = useState(true)
+  const [agentPanelMinimized, setAgentPanelMinimized] = useState(false)
 
   useEffect(() => {
     const saved = localStorage.getItem('xeref_active_view') as ViewKey | null
@@ -43,6 +65,38 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     } else {
       window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'home' }))
     }
+    
+    // Load agent panel states
+    const savedPanelOpen = localStorage.getItem('xeref_agent_panel_open') !== 'false'
+    const savedPanelMinimized = localStorage.getItem('xeref_agent_panel_minimized') === 'true'
+    setShowAgentPanel(savedPanelOpen)
+    setAgentPanelMinimized(savedPanelMinimized)
+  }, [])
+
+  // Ctrl+1/2/3 keyboard shortcuts for tab switching
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === '1') { e.preventDefault(); handleTabChange('chat') }
+        if (e.key === '2') { e.preventDefault(); handleTabChange('tasks') }
+        if (e.key === '3') { e.preventDefault(); handleTabChange('code') }
+        if (e.key === 'e' || e.key === 'E') {
+          e.preventDefault()
+          setActiveView(prev => prev === 'agents' ? 'home' : 'agents')
+        }
+        if (e.key === 'l' || e.key === 'L') {
+          e.preventDefault()
+          setShowAgentPanel(prev => {
+            const next = !prev
+            localStorage.setItem('xeref_agent_panel_open', String(next))
+            return next
+          })
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
@@ -78,6 +132,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     setChats((prev) => prev.filter((c) => c.id !== id))
   }
 
+  function handleProjectCreated(project: Project) {
+    setProjects((prev) => [project, ...prev])
+    window.history.pushState({}, '', `/builder?project=${project.id}`)
+    setActiveView('home')
+  }
+
   const isChatView = activeView === 'chat'
 
   return (
@@ -102,6 +162,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         collapsed={collapsed}
         onToggle={() => setCollapsed((c) => !c)}
         activeView={activeView}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
         onViewChange={(view) => {
           setActiveView(view)
           localStorage.setItem('xeref_active_view', view)
@@ -121,6 +183,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         userName={userName}
         userPlan={userPlan}
         onSignOut={handleSignOut}
+        onProjectCreated={handleProjectCreated}
         onProjectRenamed={handleProjectRenamed}
         onProjectDeleted={handleProjectDeleted}
         onChatRenamed={handleChatRenamed}
@@ -179,13 +242,39 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'referral':
                 return <ReferralView />
               case 'agents':
-                return <AgentTeamView />
+                return <AgentManagerView onOpenEditor={() => setActiveView('home')} />
+              case 'code':
+                return <ComingSoonView viewName="Workspaces" />
             }
           })()}
         </main>
 
-        {/* Right-hand sidebar — always visible on large screens */}
-        {isChatView && <RhsSidebar />}
+        {/* Right-hand sidebar/AgentPanel area */}
+        {showAgentPanel && (
+          <div className={cn(
+            "border-l bg-card transition-all duration-300 shrink-0",
+            agentPanelMinimized ? "w-12" : "w-80 xl:w-96"
+          )}>
+            <AgentPanel 
+              theme="dark" // Or detect system theme
+              isMinimized={agentPanelMinimized}
+              onMinimize={() => {
+                setAgentPanelMinimized(p => {
+                  const next = !p
+                  localStorage.setItem('xeref_agent_panel_minimized', String(next))
+                  return next
+                })
+              }}
+              onClose={() => {
+                setShowAgentPanel(false)
+                localStorage.setItem('xeref_agent_panel_open', 'false')
+              }}
+            />
+          </div>
+        )}
+        
+        {/* Legacy RhsSidebar if needed or fallback when agent is closed */}
+        {isChatView && !showAgentPanel && <RhsSidebar />}
       </div>
 
       <WhatsNewToast />

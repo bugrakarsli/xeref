@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import AgentManagerView from './AgentManagerView';
-import AgentPanel from './AgentPanel';
+import { AgentManagerView } from './AgentManagerView';
+import { AgentPanel } from './AgentPanel';
 import StatusBar from './StatusBar';
 import { usePathname } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';

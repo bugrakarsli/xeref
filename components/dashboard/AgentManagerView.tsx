@@ -7,6 +7,7 @@ import {
     ArrowRight, Mic, X, Image as ImageIcon, AtSign, Code,
     BookOpen, Command, Search, MessageSquare, PenLine, Layers, Info
 } from 'lucide-react';
+import StatusBar from './StatusBar';
 
 const SlashBoxIcon = ({size=14, className=""}: {size?: number, className?: string}) => (
     <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -22,7 +23,7 @@ interface AgentManagerViewProps {
     initialView?: ViewType;
 }
 
-const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initialView = 'new_conversation' }) => {
+export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initialView = 'new_conversation' }) => {
     const [activeView, setActiveView] = useState<ViewType>(initialView === 'settings' ? 'new_conversation' : initialView);
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [settingsOpen, setSettingsOpen] = useState(initialView === 'settings');
@@ -213,36 +214,10 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                         </div>
                     </div>
 
-                    {/* Systems Tasks/Workflows kept from original Agent Manager */}
-                    <div>
-                        <div className="flex items-center justify-between px-3 py-1 mb-1 text-[11px] uppercase tracking-wider font-semibold text-gray-500">
-                            <span>System</span>
-                        </div>
-                        <div className="space-y-0.5">
-                            <button 
-                                onClick={() => setActiveView('tasks')} 
-                                className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${activeView === 'tasks' ? 'bg-[#1e1e1e] text-gray-200' : 'text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200'}`}
-                            >
-                                <CheckSquare size={14} className="text-gray-500 ml-1" />
-                                <span>Tasks</span>
-                            </button>
-                            <button 
-                                onClick={() => setActiveView('workflows')} 
-                                className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${activeView === 'workflows' ? 'bg-[#1e1e1e] text-gray-200' : 'text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200'}`}
-                            >
-                                <GitMerge size={14} className="text-gray-500 ml-1" />
-                                <span>Workflows</span>
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 {/* Bottom Actions */}
                 <div className="px-2 py-3 border-t border-[#2d2d2d]/60 bg-[#09090b] space-y-0.5 shrink-0 relative">
-                    <button onClick={() => setSettingsOpen(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200 transition-colors">
-                        <Settings size={14} className="text-gray-500" />
-                        <span>Settings</span>
-                    </button>
                     <button className="w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200 transition-colors">
                         <Lightbulb size={14} className="text-gray-500" />
                         <span>Provide Feedback</span>
@@ -533,6 +508,18 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                 )}
              </div>
 
+             {/* Status Bar */}
+             <div className="absolute bottom-4 right-6 z-10">
+                <StatusBar 
+                    onOpenSettings={() => setSettingsOpen(true)}
+                    onOpenShortcuts={() => setShortcutsOpen(true)}
+                    onOpenCustomizations={() => {
+                        setSettingsOpen(true);
+                        setSettingsTab('customizations'); // Note: I might need to add this tab logic
+                    }}
+                />
+             </div>
+
              {/* Keyboard Shortcuts Modal */}
              {shortcutsOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -598,7 +585,7 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                     >
                         {/* Header */}
                         <div className="h-14 flex items-center justify-center border-b border-[#27272a] bg-[#0f0f11] shrink-0 sticky top-0 z-10 w-full relative">
-                            <h3 className="text-sm font-medium text-gray-300">Settings - Account</h3>
+                            <h3 className="text-sm font-medium text-gray-300 capitalize">Settings - {settingsTab.replace('_', ' ')}</h3>
                             <button onClick={() => setSettingsOpen(false)} className="absolute right-4 p-1 rounded hover:bg-[#27272a] text-gray-400 hover:text-white transition-colors">
                                 <X size={18} />
                             </button>
@@ -610,7 +597,10 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                             <div className="w-[240px] bg-[#0f0f11] border-r border-[#27272a] flex flex-col pt-4 overflow-y-auto shrink-0 custom-scrollbar">
                                 <div className="px-3 pb-4">
                                     <div className="space-y-0.5 mb-6">
-                                        <button className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${settingsTab === 'account' ? 'bg-[#18181b] text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-[#18181b]'}`}>
+                                        <button 
+                                            onClick={() => setSettingsTab('account')}
+                                            className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] font-medium transition-colors ${settingsTab === 'account' ? 'bg-[#18181b] text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-[#18181b]'}`}
+                                        >
                                             Account
                                         </button>
                                     </div>
@@ -618,11 +608,18 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                                     <div className="mb-6">
                                         <p className="px-3 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Global</p>
                                         <div className="space-y-0.5">
-                                            {['Agent', 'Notifications', 'Models', 'Customizations', 'Browser', 'Tab', 'Editor'].map(item => (
-                                                <button key={item} className="w-full text-left px-3 py-1.5 rounded-md text-[13px] text-gray-400 hover:text-gray-200 hover:bg-[#18181b] transition-colors">
-                                                    {item}
-                                                </button>
-                                            ))}
+                                            {['Agent', 'Notifications', 'Models', 'Customizations', 'Browser', 'Tab', 'Editor'].map(item => {
+                                                const tabKey = item.toLowerCase();
+                                                return (
+                                                    <button 
+                                                        key={item} 
+                                                        onClick={() => setSettingsTab(tabKey)}
+                                                        className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors ${settingsTab === tabKey ? 'bg-[#18181b] text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-[#18181b]'}`}
+                                                    >
+                                                        {item}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
 
@@ -630,7 +627,11 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                                         <p className="px-3 mb-2 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Workspaces</p>
                                         <div className="space-y-0.5">
                                             {['portfolio', 'xeref-claw', 'XerefWhisper-desktop'].map(item => (
-                                                <button key={item} className="w-full text-left px-3 py-1.5 rounded-md text-[13px] text-gray-400 hover:text-gray-200 hover:bg-[#18181b] transition-colors truncate">
+                                                <button 
+                                                    key={item} 
+                                                    onClick={() => setSettingsTab(`workspace_${item.toLowerCase()}`)}
+                                                    className={`w-full text-left px-3 py-1.5 rounded-md text-[13px] transition-colors truncate ${settingsTab === `workspace_${item.toLowerCase()}` ? 'bg-[#18181b] text-blue-400' : 'text-gray-400 hover:text-gray-200 hover:bg-[#18181b]'}`}
+                                                >
                                                     {item}
                                                 </button>
                                             ))}
@@ -647,6 +648,8 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                             {/* Settings Main Content */}
                             <div className="flex-1 bg-[#121214] overflow-y-auto px-10 py-10 lg:px-20 lg:py-12 custom-scrollbar">
                                <div className="max-w-3xl">
+                                   {settingsTab === 'account' ? (
+                                       <>
                                    
                                    {/* General Section */}
                                    <div className="mb-10">
@@ -693,6 +696,24 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
                                             </button>
                                        </div>
                                    </div>
+                                   </>
+                                   ) : (
+                                       <div className="py-20 flex flex-col items-center justify-center text-center">
+                                           <div className="w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center mb-6 border border-blue-500/20">
+                                               <Settings className="text-blue-500" size={28} />
+                                           </div>
+                                           <h4 className="text-2xl font-bold text-white mb-3 tracking-tight capitalize">{settingsTab.replace('_', ' ')} Settings</h4>
+                                           <p className="text-gray-400 max-w-sm mx-auto leading-relaxed">
+                                               This configuration module is currently being optimized. Enhanced controls for <span className="text-blue-400 font-medium">{settingsTab}</span> will be available in the next release.
+                                           </p>
+                                           <button 
+                                               onClick={() => setSettingsTab('account')}
+                                               className="mt-8 text-xs font-semibold text-blue-500 hover:text-blue-400 transition-colors flex items-center gap-1.5"
+                                           >
+                                               <ArrowRight size={14} className="rotate-180" /> Back to Account Settings
+                                           </button>
+                                       </div>
+                                   )}
 
                                    {/* Footer Link */}
                                    <div>
@@ -714,4 +735,4 @@ const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor, initi
     );
 };
 
-export default AgentManagerView;
+// Exported as named export above

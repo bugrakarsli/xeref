@@ -20,7 +20,8 @@ export function createChatSession(
 export async function sendMessageToGemini(
   session: OpenRouterChatSession,
   contents: string | Array<{ type: string; text?: string; source?: unknown }>,
-  onChunk: (text: string) => void
+  onChunk: (text: string) => void,
+  model?: string
 ): Promise<void> {
   // Extract text from multipart contents
   const userText =
@@ -44,8 +45,8 @@ export async function sendMessageToGemini(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       messages,
-      // Use the free model — legacy panel has no plan context
-      model: 'xeref-free',
+      // Use the provided model or fallback to xeref-free
+      model: model || 'xeref-free',
     }),
   })
 
