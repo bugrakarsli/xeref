@@ -238,7 +238,7 @@ export async function POST(req: Request) {
 
     // Legacy mode: plain text stream for non-SDK clients (AgentPanel)
     if (legacyMode) {
-      return createTextStreamResponse(result.textStream)
+      return createTextStreamResponse(result)
     }
 
     return result.toUIMessageStreamResponse({
