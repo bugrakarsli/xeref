@@ -2,6 +2,7 @@
 
 import React, { useRef, useEffect } from 'react';
 import { Plus, ChevronDown, ArrowUp, File, Image, Code, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { AVAILABLE_MODELS } from '@/lib/models-config';
 
 interface ChatInputProps {
@@ -228,25 +229,46 @@ const ChatInput: React.FC<ChatInputProps> = ({
                 </button>
                 
                 {showModelMenu && (
-                    <div className="absolute bottom-full mb-2 left-0 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-1 z-20">
-                        {AVAILABLE_MODELS.map(model => (
-                            <button 
-                                key={model.id}
-                                onClick={() => {
-                                    onSelectModel(model.id);
-                                    setShowModelMenu(false);
-                                }}
-                                className={`w-full text-left px-3 py-2 text-xs rounded flex items-center justify-between ${
-                                    selectedModel === model.id 
-                                    ? 'bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' 
-                                    : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'
-                                }`}
-                            >
-                                {model.name}
-                                {selectedModel === model.id && <Check size={12} />}
-                            </button>
-                        ))}
+                  <div className="absolute bottom-full mb-2 left-0 w-72 bg-white dark:bg-[#1e1e1e] rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 p-1.5 z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
+                    <div className="flex flex-col gap-1">
+                      {AVAILABLE_MODELS.map((model) => (
+                        <button
+                          key={model.id}
+                          onClick={() => {
+                            onSelectModel(model.id)
+                            setShowModelMenu(false)
+                          }}
+                          className={`w-full text-left px-3 py-2.5 rounded-lg transition-all duration-200 group ${
+                            selectedModel === model.id
+                              ? 'bg-blue-50/50 dark:bg-blue-900/20'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-800/50'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className={`text-sm font-semibold ${
+                              selectedModel === model.id ? 'text-blue-600 dark:text-blue-400' : 'text-gray-900 dark:text-gray-100'
+                            }`}>
+                              {model.name}
+                            </span>
+                            <span className={cn(
+                              "text-[10px] px-1.5 py-0.5 rounded font-bold tracking-tight",
+                              model.tier === 'BASIC' && "bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400",
+                              model.tier === 'PRO' && "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400",
+                              model.tier === 'ULTRA' && "bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-500"
+                            )}>
+                              {model.tier}
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400 leading-tight">
+                            {model.description}
+                          </p>
+                          {selectedModel === model.id && (
+                            <div className="absolute left-1 top-1/2 -translate-y-1/2 w-0.5 h-8 bg-blue-500 rounded-full" />
+                          )}
+                        </button>
+                      ))}
                     </div>
+                  </div>
                 )}
             </div>
           </div>

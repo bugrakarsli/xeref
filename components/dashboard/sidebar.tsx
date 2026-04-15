@@ -21,7 +21,6 @@ import {
 } from '@/components/ui/tooltip'
 
 import {
-  Home,
   CheckSquare,
   BarChart2,
   CalendarDays,
@@ -47,19 +46,13 @@ import {
   Code2,
   Pin,
   FolderOpen,
-  GripVertical,
 } from 'lucide-react'
 
-import {
-  DndContext,
-  type DragEndEvent,
-  useDraggable,
-  useDroppable,
-} from '@dnd-kit/core'
-import { CSS } from '@dnd-kit/utilities'
 import { renameProject, deleteProject, saveProject } from '@/app/actions/projects'
 import { updateChatTitle, deleteChat } from '@/app/actions/chats'
 import { toast } from 'sonner'
+import { MoreVertical } from 'lucide-react'
+import { AddChatToProjectDialog } from '@/components/dashboard/add-chat-to-project-dialog'
 
 const SIDEBAR_PROJECT_LIMIT = 5
 
@@ -84,6 +77,7 @@ interface SidebarProps {
   onChatRenamed?: (id: string, title: string) => void
   onChatDeleted?: (id: string) => void
   onChatSelect?: (id: string) => void
+  onNewChat?: () => void
   className?: string
 }
 
@@ -240,41 +234,178 @@ function InlineEditRow({ label, onSave, onNavigate, onDelete, active }: InlineEd
 
 /* ── Drag-and-drop sub-components ─────────────────────────────── */
 
-interface DraggableRecentItemProps {
+interface RecentChatItemProps {
   chat: Chat
   onNavigate: () => void
   onSave: (title: string) => Promise<void>
   onDelete: () => Promise<void>
+  onPin: () => void
+  isPinned?: boolean
+  onUnpin?: () => void
+  onAddToProject?: (chat: Chat) => void
 }
 
-function DraggableRecentItem({ chat, onNavigate, onSave, onDelete }: DraggableRecentItemProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
-    id: chat.id,
-    data: { chatId: chat.id },
-  })
+function RecentChatItem({ chat, onNavigate, onSave, onDelete, onPin, isPinned, onUnpin, onAddToProject }: RecentChatItemProps) {
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [value, setValue] = useState(chat.title)
+  const [renaming, setRenaming] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!menuOpen) return
+    const close = () => setMenuOpen(false)
+    window.addEventListener('click', close)
+    window.addEventListener('keydown', close)
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('keydown', close)
+    }
+  }, [menuOpen])
+
+  async function handleRename() {
+    const trimmed = value.trim()
+    if (!trimmed || trimmed === chat.title) {
+      setRenaming(false)
+      setValue(chat.title)
+      setMenuOpen(false)
+      return
+    }
+    try {
+      await onSave(trimmed)
+      setRenaming(false)
+      setMenuOpen(false)
+    } catch {
+      toast.error('Failed to rename')
+      setValue(chat.title)
+    }
+  }
+
+  if (renaming) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1">
+        <Dot className="h-4 w-4 shrink-0 text-primary" />
+        <input
+          ref={inputRef}
+          autoFocus
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleRename()
+            if (e.key === 'Escape') {
+              setRenaming(false)
+              setValue(chat.title)
+            }
+          }}
+          onBlur={handleRename}
+          className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-primary/60 pb-0.5"
+        />
+        <button
+          onClick={handleRename}
+          className="shrink-0 text-emerald-400 hover:text-emerald-300"
+        >
+          <Check className="h-3 w-3" />
+        </button>
+        <button
+          onClick={() => {
+            setRenaming(false)
+            setValue(chat.title)
+          }}
+          className="shrink-0 text-muted-foreground hover:text-foreground"
+        >
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    )
+  }
+
   return (
     <div
-      ref={setNodeRef}
-      className={cn('relative group/draggable', isDragging && 'opacity-40')}
-      style={transform ? { transform: CSS.Transform.toString(transform) } : undefined}
+      className="group flex items-center gap-1 w-full rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer relative"
+      onClick={onNavigate}
     >
-      {/* Grip handle — appears on row hover */}
-      <button
-        {...listeners}
-        {...attributes}
-        tabIndex={-1}
-        aria-label="Drag to pin"
-        className="absolute left-0.5 top-1/2 -translate-y-1/2 z-10 h-5 w-4 flex items-center justify-center opacity-0 group-hover/draggable:opacity-50 cursor-grab active:cursor-grabbing text-muted-foreground"
-      >
-        <GripVertical className="h-3 w-3" />
-      </button>
-      <InlineEditRow
-        label={chat.title}
-        active={false}
-        onNavigate={onNavigate}
-        onSave={onSave}
-        onDelete={onDelete}
-      />
+      <Dot className="h-4 w-4 shrink-0 text-primary" />
+      <span className="truncate flex-1 text-sm">{chat.title}</span>
+
+      {/* Three-dots menu button */}
+      <div className="relative">
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setMenuOpen(!menuOpen)
+          }}
+          className={cn(
+            'h-5 w-5 flex items-center justify-center rounded shrink-0 transition-colors',
+            'opacity-0 group-hover:opacity-100',
+            menuOpen ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+          )}
+          aria-label="Chat options"
+        >
+          <MoreVertical className="h-3 w-3" />
+        </button>
+
+        {/* Context menu popup */}
+        {menuOpen && (
+          <div
+            ref={menuRef}
+            className="absolute min-w-[160px] rounded-md border bg-card text-card-foreground shadow-md py-1 z-50 top-full right-0 mt-1"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                if (isPinned) {
+                  onUnpin?.()
+                  toast.success('Chat unpinned')
+                } else {
+                  onPin()
+                  toast.success('Chat pinned')
+                }
+                setMenuOpen(false)
+              }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <Pin className="h-3 w-3" />
+              {isPinned ? 'Unpin' : 'Pin'}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                setValue(chat.title)
+                setRenaming(true)
+                setMenuOpen(false)
+              }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <Pencil className="h-3 w-3" />
+              Rename
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onAddToProject?.(chat)
+                setMenuOpen(false)
+              }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              <FolderOpen className="h-3 w-3" />
+              Add to project
+            </button>
+            <div className="border-t border-border/50 my-0.5" />
+            <button
+              onClick={(e) => {
+                e.stopPropagation()
+                onDelete()
+                setMenuOpen(false)
+              }}
+              className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-destructive hover:text-destructive-foreground transition-colors"
+            >
+              <Trash2 className="h-3 w-3" />
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -286,42 +417,66 @@ interface PinnedChatItemProps {
 }
 
 function PinnedChatItem({ chat, onNavigate, onUnpin }: PinnedChatItemProps) {
-  const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null)
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!ctx) return
-    const close = () => setCtx(null)
+    if (!menuOpen) return
+    const close = () => setMenuOpen(false)
     window.addEventListener('click', close)
     window.addEventListener('keydown', close)
-    return () => { window.removeEventListener('click', close); window.removeEventListener('keydown', close) }
-  }, [ctx])
+    return () => {
+      window.removeEventListener('click', close)
+      window.removeEventListener('keydown', close)
+    }
+  }, [menuOpen])
 
   return (
-    <>
+    <div className="relative group">
       <div
         onClick={onNavigate}
-        onContextMenu={(e) => { e.preventDefault(); setCtx({ x: e.clientX, y: e.clientY }) }}
         className="flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
       >
         <Pin className="h-3 w-3 shrink-0 text-primary" />
         <span className="truncate flex-1 text-sm">{chat.title}</span>
+
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setMenuOpen(!menuOpen)
+          }}
+          className={cn(
+            'h-5 w-5 flex items-center justify-center rounded shrink-0 transition-colors',
+            'opacity-0 group-hover:opacity-100',
+            menuOpen ? 'bg-accent text-foreground' : 'text-muted-foreground hover:bg-background/50 hover:text-foreground'
+          )}
+          aria-label="Chat options"
+        >
+          <MoreVertical className="h-3 w-3" />
+        </button>
       </div>
-      {ctx && (
+
+      {menuOpen && (
         <div
-          className="fixed z-50 min-w-[120px] rounded-md border bg-popover text-popover-foreground shadow-md py-1"
-          style={{ left: ctx.x, top: ctx.y }}
+          ref={menuRef}
+          className="absolute min-w-[160px] rounded-md border bg-card text-card-foreground shadow-md py-1 z-50 top-full right-0 mt-1"
           onClick={(e) => e.stopPropagation()}
         >
           <button
-            onClick={() => { onUnpin(); setCtx(null) }}
-            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground transition-colors"
+            onClick={(e) => {
+              e.stopPropagation()
+              onUnpin()
+              setMenuOpen(false)
+              toast.success('Chat unpinned')
+            }}
+            className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
           >
             <X className="h-3 w-3" />
             Unpin
           </button>
         </div>
       )}
-    </>
+    </div>
   )
 }
 
@@ -344,33 +499,34 @@ export function Sidebar({
   onChatRenamed,
   onChatDeleted,
   onChatSelect,
+  onNewChat,
   className,
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
   const [chatsOpen, setChatsOpen] = useState(true)
   const [projectsOpen, setProjectsOpen] = useState(true)
-  const [pinnedChats, setPinnedChats] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return []
-    try { return JSON.parse(localStorage.getItem('xeref_pinned_chats') ?? '[]') } catch { return [] }
-  })
+  const [pinnedChats, setPinnedChats] = useState<string[]>([])
+  const [isHydrated, setIsHydrated] = useState(false)
+  const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false)
+  const [selectedChatForProject, setSelectedChatForProject] = useState<Chat | null>(null)
   const pathname = usePathname()
   const isBuilderActive = pathname === '/builder'
 
-  // Persist pinned chats to localStorage
+  // Load pinned chats from localStorage on mount and persist changes
   useEffect(() => {
-    localStorage.setItem('xeref_pinned_chats', JSON.stringify(pinnedChats))
-  }, [pinnedChats])
-
-  // Drop zone for Pinned section
-  const { setNodeRef: setPinnedRef, isOver: isPinnedOver } = useDroppable({ id: 'pinned-zone' })
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (over?.id === 'pinned-zone') {
-      const chatId = active.id as string
-      setPinnedChats((prev) => prev.includes(chatId) ? prev : [...prev, chatId])
+    try {
+      const saved = localStorage.getItem('xeref_pinned_chats')
+      setPinnedChats(saved ? JSON.parse(saved) : [])
+    } catch {
+      setPinnedChats([])
     }
-  }
+    setIsHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (!isHydrated) return
+    localStorage.setItem('xeref_pinned_chats', JSON.stringify(pinnedChats))
+  }, [pinnedChats, isHydrated])
 
   const emailUsername = userEmail.split('@')[0]
   const displayName = userName || (emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1))
@@ -450,10 +606,10 @@ export function Sidebar({
           className="flex items-center gap-1 px-2 py-1.5 border-b shrink-0"
         >
           {([
-            { id: 'chat' as SidebarTab, icon: <MessageSquare className="h-4 w-4" />, label: 'Chat', shortcut: 'Ctrl+1' },
-            { id: 'tasks' as SidebarTab, icon: <CheckSquare className="h-4 w-4" />, label: 'Tasks', shortcut: 'Ctrl+2' },
-            { id: 'code' as SidebarTab, icon: <Code2 className="h-4 w-4" />, label: 'Code', shortcut: 'Ctrl+3' },
-          ] as { id: SidebarTab; icon: React.ReactNode; label: string; shortcut: string }[]).map((tab) => {
+            { id: 'chat' as SidebarTab, icon: <MessageSquare className="h-4 w-4" />, label: 'Chat', shortcut: 'Ctrl+1', newItemShortcut: 'Ctrl+Shift+O' },
+            { id: 'tasks' as SidebarTab, icon: <CheckSquare className="h-4 w-4" />, label: 'Tasks', shortcut: 'Ctrl+2', newItemShortcut: 'Ctrl+Shift+O' },
+            { id: 'code' as SidebarTab, icon: <Code2 className="h-4 w-4" />, label: 'Code', shortcut: 'Ctrl+3', newItemShortcut: 'Ctrl+Shift+O' },
+          ] as { id: SidebarTab; icon: React.ReactNode; label: string; shortcut: string; newItemShortcut: string }[]).map((tab) => {
             const isActive = activeTab === tab.id
             const btn = (
               <button
@@ -462,7 +618,7 @@ export function Sidebar({
                 aria-selected={isActive}
                 onClick={() => onTabChange(tab.id)}
                 className={cn(
-                  'flex items-center gap-1.5 rounded-md text-xs font-medium transition-all duration-150 px-2 py-1.5',
+                  'group relative flex items-center gap-1.5 rounded-md text-xs font-medium transition-all duration-150 px-2 py-1.5',
                   isActive
                     ? 'text-primary bg-primary/10'
                     : 'text-muted-foreground hover:text-foreground hover:bg-accent',
@@ -479,6 +635,7 @@ export function Sidebar({
                 <TooltipTrigger asChild>{btn}</TooltipTrigger>
                 <TooltipContent side="bottom">
                   {tab.label} <kbd className="ml-1 text-[10px] opacity-60">{tab.shortcut}</kbd>
+                  <div className="mt-1 text-[10px] opacity-50">New: {tab.newItemShortcut}</div>
                 </TooltipContent>
               </Tooltip>
             )
@@ -492,14 +649,70 @@ export function Sidebar({
         {/* ── CHAT TAB ─────────────────────────────────────── */}
         {(collapsed || activeTab === 'chat') && (
           <>
-            {/* Home always visible */}
-            <NavItem
-              icon={<Home className="h-4 w-4" />}
-              label="Home"
-              active={activeView === 'home'}
-              collapsed={collapsed}
-              onClick={() => onViewChange('home')}
-            />
+            {/* Attached sections - replaces Home */}
+            {!collapsed && (
+              <div className="flex flex-col gap-1 mb-2">
+                {/* New Chat Button with Shortcut */}
+                <div className="group relative">
+                  <button
+                    onClick={() => onNewChat?.()}
+                    className={cn(
+                      'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                      'hover:bg-accent hover:text-accent-foreground',
+                      focusRing
+                    )}
+                  >
+                    <span className="flex items-center gap-3">
+                      <MessageSquare className="h-4 w-4" />
+                      New chat
+                    </span>
+                    <kbd className="hidden group-hover:block text-xs text-muted-foreground ml-auto">⌘⇧O</kbd>
+                  </button>
+                </div>
+
+                {/* Projects Link */}
+                <button
+                  onClick={() => onViewChange('home')}
+                  className={cn(
+                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing,
+                    activeView === 'home' && 'bg-accent text-accent-foreground'
+                  )}
+                >
+                  <FolderOpen className="h-4 w-4" />
+                  Projects
+                </button>
+
+                {/* Customize Link */}
+                <button
+                  onClick={() => onViewChange('settings')}
+                  className={cn(
+                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing,
+                    activeView === 'settings' && 'bg-accent text-accent-foreground'
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                  Customize
+                </button>
+
+                {/* Artifacts Link */}
+                <button
+                  onClick={() => onViewChange('code')}
+                  className={cn(
+                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing,
+                    activeView === 'code' && 'bg-accent text-accent-foreground'
+                  )}
+                >
+                  <Code2 className="h-4 w-4" />
+                  Artifacts
+                </button>
+              </div>
+            )}
 
             <NavItem
               icon={<Mail className="h-4 w-4" />}
@@ -509,27 +722,18 @@ export function Sidebar({
               onClick={() => onViewChange('inbox')}
             />
 
-            {/* ── DnD: Pinned drop zone + Recents draggable list ── */}
+            {/* ── Pinned Chats + Recents section ── */}
             {!collapsed && (
-              <DndContext onDragEnd={handleDragEnd}>
-                {/* Pinned drop zone */}
-                <div
-                  ref={setPinnedRef}
-                  className={cn(
-                    'mt-2 rounded-lg transition-all duration-150',
-                    isPinnedOver && 'ring-2 ring-primary/40 bg-primary/5'
-                  )}
-                >
+              <div className="flex flex-col flex-1 mt-2 min-h-0">
+                {/* Pinned section */}
+                <div className="rounded-lg transition-all duration-150 shrink-0">
                   <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
                     <Pin className="h-3 w-3" />
                     Pinned
                   </p>
                   {pinnedChats.length === 0 ? (
-                    <div className={cn(
-                      'mx-2 mb-1 px-2 py-2 rounded border border-dashed border-muted-foreground/20 text-xs text-muted-foreground/50 italic text-center transition-colors',
-                      isPinnedOver && 'border-primary/50 text-primary/70 bg-primary/5'
-                    )}>
-                      Drag to pin
+                    <div className="mx-2 mb-1 px-2 py-2 rounded border border-dashed border-muted-foreground/20 text-xs text-muted-foreground/50 italic text-center">
+                      Pin chats from menu
                     </div>
                   ) : (
                     <div className="flex flex-col gap-0.5 mt-0.5">
@@ -540,42 +744,56 @@ export function Sidebar({
                           <PinnedChatItem
                             key={c!.id}
                             chat={c!}
-                            onNavigate={() => { onChatSelect?.(c!.id); onViewChange('chat') }}
-                            onUnpin={() => setPinnedChats((prev) => prev.filter((id) => id !== c!.id))}
+                            onNavigate={() => {
+                              onChatSelect?.(c!.id)
+                              onViewChange('chat')
+                            }}
+                            onUnpin={() =>
+                              setPinnedChats((prev) =>
+                                prev.filter((id) => id !== c!.id)
+                              )
+                            }
                           />
                         ))}
                     </div>
                   )}
                 </div>
 
-                {/* Recents — draggable items, isolated scroll */}
-                <div className="mt-2">
+                {/* Recents section */}
+                <div className="mt-auto pt-2 flex flex-col-reverse min-h-0">
                   <button
                     onClick={() => setChatsOpen((o) => !o)}
                     aria-expanded={chatsOpen}
                     className={cn(
-                      'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors shrink-0',
+                      'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0 rounded-lg',
                       focusRing
                     )}
                   >
                     <span className="flex items-center gap-1">
                       Recents
                       <ChevronRight
-                        className={cn('h-3 w-3 transition-transform duration-150', chatsOpen && 'rotate-90')}
+                        className={cn(
+                          'h-3 w-3 transition-transform duration-150',
+                          chatsOpen && '-rotate-90'
+                        )}
                       />
                     </span>
                   </button>
                   {chatsOpen && (
                     <div
-                      className="mt-1 flex flex-col gap-0.5"
+                      className="mb-1 flex flex-col gap-0.5 min-h-0"
                       style={{ overflowY: 'auto', maxHeight: '40vh' }}
                     >
                       {chats.length > 0 ? (
                         chats.map((c) => (
-                          <DraggableRecentItem
+                          <RecentChatItem
                             key={c.id}
                             chat={c}
-                            onNavigate={() => { onChatSelect?.(c.id); onViewChange('chat') }}
+                            isPinned={pinnedChats.includes(c.id)}
+                            onNavigate={() => {
+                              onChatSelect?.(c.id)
+                              onViewChange('chat')
+                            }}
                             onSave={async (title) => {
                               await updateChatTitle(c.id, title)
                               onChatRenamed?.(c.id, title)
@@ -585,15 +803,33 @@ export function Sidebar({
                               onChatDeleted?.(c.id)
                               toast.success('Chat deleted')
                             }}
+                            onPin={() =>
+                              setPinnedChats((prev) =>
+                                prev.includes(c.id)
+                                  ? prev
+                                  : [...prev, c.id]
+                              )
+                            }
+                            onUnpin={() =>
+                              setPinnedChats((prev) =>
+                                prev.filter((id) => id !== c.id)
+                              )
+                            }
+                            onAddToProject={(chat) => {
+                              setSelectedChatForProject(chat)
+                              setAddProjectDialogOpen(true)
+                            }}
                           />
                         ))
                       ) : (
-                        <p className="px-3 py-2 text-xs text-muted-foreground/60 italic">No recent chats</p>
+                        <p className="px-3 py-2 text-xs text-muted-foreground/60 italic">
+                          No recent chats
+                        </p>
                       )}
                     </div>
                   )}
                 </div>
-              </DndContext>
+              </div>
             )}
           </>
         )}
@@ -601,6 +837,26 @@ export function Sidebar({
         {/* ── TASKS TAB ────────────────────────────────────── */}
         {!collapsed && activeTab === 'tasks' && (
           <>
+            {/* New Task Button */}
+            <div className="mb-2">
+              <div className="group relative">
+                <button
+                  onClick={() => onViewChange('tasks')}
+                  className={cn(
+                    'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <CheckSquare className="h-4 w-4" />
+                    New task
+                  </span>
+                  <kbd className="hidden group-hover:block text-xs text-muted-foreground ml-auto">⌘⇧O</kbd>
+                </button>
+              </div>
+            </div>
+
             {/* Projects section */}
             <div className="mt-2">
               <button
@@ -722,22 +978,58 @@ export function Sidebar({
                 </div>
               )}
             </div>
-
-            <div className="mt-2">
-              <NavItem
-                icon={<CheckSquare className="h-4 w-4" />}
-                label="Tasks"
-                active={activeView === 'tasks'}
-                collapsed={collapsed}
-                onClick={() => onViewChange('tasks')}
-              />
-            </div>
           </>
         )}
 
         {/* ── CODE TAB ─────────────────────────────────────── */}
         {!collapsed && activeTab === 'code' && (
           <div className="flex flex-col gap-4 mt-1">
+            {/* New Session Button */}
+            <div>
+              <div className="group relative">
+                <button
+                  onClick={() => onViewChange('code')}
+                  className={cn(
+                    'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing
+                  )}
+                >
+                  <span className="flex items-center gap-3">
+                    <Code2 className="h-4 w-4" />
+                    New session
+                  </span>
+                  <kbd className="hidden group-hover:block text-xs text-muted-foreground ml-auto">⌘⇧O</kbd>
+                </button>
+              </div>
+            </div>
+
+            {/* Routines */}
+            <div>
+              <button
+                className={cn(
+                  'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
+                  focusRing
+                )}
+              >
+                <Zap className="h-3 w-3" />
+                Routines
+              </button>
+            </div>
+
+            {/* Customize */}
+            <div>
+              <button
+                className={cn(
+                  'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
+                  focusRing
+                )}
+              >
+                <Settings className="h-3 w-3" />
+                Customize
+              </button>
+            </div>
+
             <div>
               <p className="px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
                 Workspaces
@@ -847,6 +1139,17 @@ export function Sidebar({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {/* Add Chat to Project Dialog */}
+      <AddChatToProjectDialog
+        open={addProjectDialogOpen}
+        onOpenChange={setAddProjectDialogOpen}
+        chat={selectedChatForProject}
+        projects={projects}
+        onProjectAdded={() => {
+          // Optionally refresh chats list if needed
+        }}
+      />
     </aside>
   )
 }

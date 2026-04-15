@@ -48,7 +48,7 @@ export function ComingSoonView({ viewName }: ComingSoonViewProps) {
       <p className="text-xs text-muted-foreground/60">
         Want this sooner?{' '}
         <a
-          href="mailto:hi@xeref.ai"
+          href="mailto:bugra@xeref.ai"
           className="underline underline-offset-2 hover:text-foreground transition-colors"
         >
           Let us know

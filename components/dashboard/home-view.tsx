@@ -229,24 +229,6 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
         </p>
       </div>
 
-      {/* Chat / Tasks / Home toggle */}
-      <div className="flex items-center gap-1 bg-muted rounded-full p-1 text-sm w-fit mb-6">
-        {(['home', 'chat', 'tasks'] as HomeTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={cn(
-              'px-4 py-1 rounded-full text-xs font-medium transition-colors capitalize',
-              activeTab === tab
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
       {/* Tab content */}
       {activeTab === 'home' && (
         <div>

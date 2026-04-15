@@ -66,6 +66,21 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Sync chats state when initialChats prop changes (e.g., new chat created in parent)
+  useEffect(() => {
+    setChats(initialChats)
+    // If activeChat was deleted, reset to first available
+    if (activeChat && !initialChats.find((c) => c.id === activeChat.id)) {
+      const first = initialChats[0]
+      setActiveChat(first ?? null)
+      if (first) {
+        getChatMessages(first.id).then(setChatMessages).catch(() => {})
+      } else {
+        setChatMessages([])
+      }
+    }
+  }, [initialChats, activeChat])
+
   // Navigate to a specific chat when selectedChatId changes (sidebar click)
   useEffect(() => {
     if (!selectedChatId) return
@@ -74,8 +89,7 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
       handleSelectChat(chat)
       setActiveTab('chat')
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedChatId])
+  }, [selectedChatId, chats])
 
   function handleChatCreated(chat: Chat) {
     setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])

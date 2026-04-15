@@ -9,7 +9,16 @@
       "Bash(cmd /c \"taskkill /F /IM node.exe 2>&1\")",
       "Bash(ls d:/bugrakarsli/02-projects/xeref/xeref-claw/middleware*)",
       "Bash(ls d:/bugrakarsli/02-projects/xeref/xeref-claw/src/middleware*)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(pkill -f \"next dev\")",
+      "Bash(curl -s http://localhost:3001)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs kill *)",
+      "Bash(pkill -f \"node|npm\")",
+      "Bash(TaskKill /F /PID 29644)",
+      "Bash(pkill -9 node)",
+      "Bash(curl -s http://localhost:3000)",
+      "Bash(curl -s http://localhost:3006)"
     ]
   }
 }
