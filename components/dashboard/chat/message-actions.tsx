@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Copy, Check, Pencil, ThumbsUp, ThumbsDown } from 'lucide-react'
+import { Copy, Check, Pencil, ThumbsUp, ThumbsDown, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -60,9 +60,10 @@ export function UserMessageActions({ content, onEdit }: UserMessageActionsProps)
 interface AssistantMessageActionsProps {
   content: string
   messageId: string
+  onRetry?: () => void
 }
 
-export function AssistantMessageActions({ content, messageId }: AssistantMessageActionsProps) {
+export function AssistantMessageActions({ content, messageId, onRetry }: AssistantMessageActionsProps) {
   const [copied, setCopied] = useState(false)
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null)
 
@@ -127,6 +128,19 @@ export function AssistantMessageActions({ content, messageId }: AssistantMessage
       >
         <ThumbsDown className="h-3 w-3" />
       </Button>
+      {onRetry && (
+        <button
+          type="button"
+          onClick={onRetry}
+          title="Retry"
+          className="group/retry flex items-center gap-1 h-6 rounded px-1 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <RotateCcw className="h-3 w-3 shrink-0" />
+          <span className="max-w-0 overflow-hidden group-hover/retry:max-w-[36px] transition-all duration-200 text-xs whitespace-nowrap">
+            Retry
+          </span>
+        </button>
+      )}
     </div>
   )
 }

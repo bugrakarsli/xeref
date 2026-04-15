@@ -193,9 +193,8 @@ Dark mode is forced globally in `layout.tsx` via `className="dark"` on `<html>`.
 
 ## Branding Assets
 
-All three assets exist in `public/`:
-- `xeref-logo.png` — used in `XerefLogo` component
-- `xeref-favicon.png` — wired in `layout.tsx` metadata `icons`
-- `xeref-ogimage.png` — wired in `layout.tsx` OG + Twitter metadata
+Assets in `public/`:
+- `xeref.svg` — used in `XerefLogo` component and as favicon (`icons` in `layout.tsx`)
+- `xeref-ai-og-image.jpg` — wired in `layout.tsx` OG + Twitter metadata
 
 OG image URLs resolve correctly on Vercel because `metadataBase` is set in `layout.tsx`.

@@ -1,4 +1,4 @@
-import { streamText, convertToModelMessages, tool } from 'ai'
+import { streamText, convertToModelMessages, tool, stepCountIs, createTextStreamResponse } from 'ai'
 import { z } from 'zod'
 import { tavily } from '@tavily/core'
 import { createClient } from '@/lib/supabase/server'
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
   const userPlan = (profile?.plan ?? 'free') as UserPlan
 
   const body = await req.json()
-  const { messages, projectId, systemAgentId, model, webSearchEnabled } = body
+  const { messages, projectId, systemAgentId, model, webSearchEnabled, legacyMode } = body
   const requestedModel = typeof model === 'string' && model ? model : DEFAULT_MODEL
 
   // Server-side plan enforcement — never trust the client model ID
@@ -93,6 +93,7 @@ export async function POST(req: Request) {
       model: openrouter(resolvedModelId),
       system: systemPrompt,
       messages: modelMessages,
+      stopWhen: stepCountIs(5),
       tools: {
         create_task: tool({
           description:
@@ -234,6 +235,11 @@ export async function POST(req: Request) {
         } : {}),
       },
     })
+
+    // Legacy mode: plain text stream for non-SDK clients (AgentPanel)
+    if (legacyMode) {
+      return createTextStreamResponse(result.textStream)
+    }
 
     return result.toUIMessageStreamResponse({
       onError: (err) => {

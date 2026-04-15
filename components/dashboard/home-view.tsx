@@ -5,12 +5,11 @@ import { toast } from 'sonner'
 import type { User } from '@supabase/supabase-js'
 import type { Project, Chat, Message } from '@/lib/types'
 import type { UserPlan } from '@/app/actions/profile'
-import { deleteProject } from '@/app/actions/projects'
-import { activateProjectPrompt } from '@/app/actions/prompt'
-import { createChat, getChatMessages, updateChatTitle } from '@/app/actions/chats'
+import { deleteProject, updateProjectPrompt } from '@/app/actions/projects'
+import { createChat, getChatMessages, updateChatTitle, removeChatFromProject } from '@/app/actions/chats'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Calendar, Layers, CheckCircle2, Zap, Bot } from 'lucide-react'
+import { Trash2, Calendar, Layers, CheckCircle2, Zap, Bot, Pencil, MessageSquare, FolderMinus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChatInterface } from './chat/chat-interface'
 import { ChatList } from './chat/chat-list'
@@ -28,6 +27,7 @@ interface HomeViewProps {
   userPlan: UserPlan
   onProjectDeleted: (id: string) => void
   onProjectUpdated: (project: Project) => void
+  onChatProjectRemoved?: (chatId: string) => void
 }
 
 function getGreeting(): string {
@@ -47,15 +47,20 @@ function formatDate(dateStr: string): string {
 
 function ProjectCard({
   project,
+  chats,
   onDelete,
   onPromptAdded,
+  onChatRemoved,
 }: {
   project: Project
+  chats: Chat[]
   onDelete: (id: string) => void
-  onPromptAdded: (id: string) => void
+  onPromptAdded: (id: string, prompt: string) => void
+  onChatRemoved: (chatId: string) => void
 }) {
   const [isPending, startTransition] = useTransition()
-  const [isActivating, setIsActivating] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [promptText, setPromptText] = useState(project.prompt ?? '')
   const hasPrompt = !!project.prompt
 
   function handleDelete() {
@@ -69,18 +74,19 @@ function ProjectCard({
     })
   }
 
-  async function handleAddPrompt() {
-    if (hasPrompt) return
-    setIsActivating(true)
-    try {
-      await activateProjectPrompt(project.id)
-      onPromptAdded(project.id)
-      toast.success('Agent activated! You can now chat with it.')
-    } catch {
-      toast.error('Failed to activate agent. Please try again.')
-    } finally {
-      setIsActivating(false)
-    }
+  function handleSavePrompt() {
+    const trimmed = promptText.trim()
+    if (!trimmed) return
+    startTransition(async () => {
+      try {
+        await updateProjectPrompt(project.id, trimmed)
+        onPromptAdded(project.id, trimmed)
+        setEditing(false)
+        toast.success('Prompt saved.')
+      } catch {
+        toast.error('Failed to save prompt. Please try again.')
+      }
+    })
   }
 
   return (
@@ -118,34 +124,109 @@ function ProjectCard({
         </div>
       </div>
 
-      {hasPrompt ? (
-        <div className="flex items-center justify-center gap-1.5 w-full h-8 text-xs rounded-md border border-primary/30 text-primary bg-primary/5">
+      {editing ? (
+        <div className="flex flex-col gap-2">
+          <textarea
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
+            placeholder="Enter a system prompt for this agent…"
+            rows={4}
+            autoFocus
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+          />
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              className="flex-1 h-7 text-xs"
+              onClick={handleSavePrompt}
+              disabled={!promptText.trim() || isPending}
+            >
+              Save
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 text-xs"
+              onClick={() => {
+                setPromptText(project.prompt ?? '')
+                setEditing(false)
+              }}
+              disabled={isPending}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : hasPrompt ? (
+        <button
+          onClick={() => setEditing(true)}
+          className="flex items-center justify-center gap-1.5 w-full h-8 text-xs rounded-md border border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+        >
           <CheckCircle2 className="h-3.5 w-3.5" />
           Prompt Added
-        </div>
+          <Pencil className="h-3 w-3 ml-1 opacity-60" />
+        </button>
       ) : (
         <Button
           variant="outline"
           size="sm"
           className="w-full h-8 text-xs"
-          onClick={handleAddPrompt}
-          disabled={isActivating}
+          onClick={() => {
+            setPromptText('')
+            setEditing(true)
+          }}
         >
-          {isActivating ? (
-            <>Activating…</>
-          ) : (
-            <>
-              <Zap className="h-3 w-3 mr-1" />
-              Add Prompt
-            </>
-          )}
+          <Zap className="h-3 w-3 mr-1" />
+          Add Prompt
         </Button>
       )}
+
+      {/* Chats linked to this project */}
+      <div className="border-t pt-3 mt-1">
+        {chats.length === 0 ? (
+          <div className="flex flex-col items-center gap-1.5 py-3 text-center">
+            <MessageSquare className="h-4 w-4 text-muted-foreground/40" />
+            <p className="text-[11px] text-muted-foreground/60 leading-snug">
+              Start a chat to keep conversations organized and re-use project knowledge.
+            </p>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-0.5">
+            {chats.map((chat) => (
+              <div
+                key={chat.id}
+                className="group flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-accent/40 transition-colors"
+              >
+                <MessageSquare className="h-3 w-3 shrink-0 text-muted-foreground" />
+                <span className="flex-1 text-xs truncate text-muted-foreground">{chat.title}</span>
+                <button
+                  onClick={() => {
+                    startTransition(async () => {
+                      try {
+                        await removeChatFromProject(chat.id)
+                        onChatRemoved(chat.id)
+                      } catch {
+                        toast.error('Failed to remove chat from project')
+                      }
+                    })
+                  }}
+                  disabled={isPending}
+                  className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                  aria-label="Remove from project"
+                >
+                  <FolderMinus className="h-3 w-3" />
+                  Remove from project
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
 
-export function HomeView({ user, projects, chats: initialChats, userName, userPlan, onProjectDeleted, onProjectUpdated }: HomeViewProps) {
+export function HomeView({ user, projects, chats: initialChats, userName, userPlan, onProjectDeleted, onProjectUpdated, onChatProjectRemoved }: HomeViewProps) {
   const raw = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
   const displayName = raw.charAt(0).toUpperCase() + raw.slice(1)
 
@@ -204,10 +285,10 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
     }
   }
 
-  function handlePromptAdded(id: string) {
+  function handlePromptAdded(id: string, prompt: string) {
     const project = projects.find((p) => p.id === id)
     if (project) {
-      onProjectUpdated({ ...project, prompt: '__activated__' })
+      onProjectUpdated({ ...project, prompt })
     }
   }
 
@@ -234,7 +315,7 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
         <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-xs uppercase tracking-widest text-muted-foreground">
-              Saved Agents
+              Saved Projects
             </h2>
             <Badge variant="secondary">{projects.length}</Badge>
           </div>
@@ -258,8 +339,13 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
                 <ProjectCard
                   key={project.id}
                   project={project}
+                  chats={chats.filter((c) => c.project_id === project.id)}
                   onDelete={onProjectDeleted}
                   onPromptAdded={handlePromptAdded}
+                  onChatRemoved={(chatId) => {
+                    setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, project_id: null } : c))
+                    onChatProjectRemoved?.(chatId)
+                  }}
                 />
               ))}
             </div>

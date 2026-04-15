@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useRef, useEffect } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { XerefLogo } from '@/components/xeref-logo'
@@ -34,6 +35,7 @@ interface ChatMessageProps {
   userName?: string
   messageId?: string
   onEdit?: (content: string) => void
+  onRetry?: () => void
 }
 
 function UserAvatar({ name }: { name: string }) {
@@ -45,12 +47,28 @@ function UserAvatar({ name }: { name: string }) {
   )
 }
 
-function StreamingDots() {
+function ThinkingIndicator() {
+  const letters = 'Thinking'.split('')
   return (
-    <span className="inline-flex items-center gap-0.5 h-4">
-      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
-      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
-      <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
+    <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex items-baseline text-sm font-medium">
+        {letters.map((letter, i) => (
+          <span
+            key={i}
+            style={{
+              animation: 'rainbow-wave 2.4s linear infinite',
+              animationDelay: `${i * 0.12}s`,
+            }}
+          >
+            {letter}
+          </span>
+        ))}
+      </span>
+      <span className="inline-flex items-center gap-0.5">
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.3s]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce [animation-delay:-0.15s]" />
+        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground animate-bounce" />
+      </span>
     </span>
   )
 }
@@ -158,8 +176,47 @@ function ToolResultCard({ toolName, result }: { toolName: string; result: ToolRe
   return null
 }
 
-export function ChatMessage({ role, content, parts, isStreaming, userName = 'U', messageId, onEdit }: ChatMessageProps) {
+export function ChatMessage({ role, content, parts, isStreaming, userName = 'U', messageId, onEdit, onRetry }: ChatMessageProps) {
   const isUser = role === 'user'
+  const [isEditing, setIsEditing] = useState(false)
+  const [editContent, setEditContent] = useState(content)
+  const editRef = useRef<HTMLTextAreaElement>(null)
+
+  // Sync editContent if content prop changes externally
+  useEffect(() => {
+    if (!isEditing) setEditContent(content)
+  }, [content, isEditing])
+
+  // Auto-resize + focus on enter edit mode
+  useEffect(() => {
+    if (isEditing && editRef.current) {
+      const el = editRef.current
+      el.focus()
+      el.style.height = 'auto'
+      el.style.height = `${el.scrollHeight}px`
+      const len = el.value.length
+      el.setSelectionRange(len, len)
+    }
+  }, [isEditing])
+
+  function handleEditDone() {
+    const trimmed = editContent.trim()
+    if (trimmed && trimmed !== content) {
+      onEdit?.(trimmed)
+    }
+    setIsEditing(false)
+  }
+
+  function handleEditKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleEditDone()
+    }
+    if (e.key === 'Escape') {
+      setEditContent(content)
+      setIsEditing(false)
+    }
+  }
 
   // Collect tool results from parts
   const toolResults = (parts ?? []).filter(
@@ -175,50 +232,87 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
       )}
 
       <div className={cn('flex flex-col gap-1', isUser ? 'items-end max-w-[80%]' : 'max-w-[80%]')}>
-        <div
-          className={cn(
-            'rounded-2xl px-4 py-2.5 text-sm',
-            isUser
-              ? 'bg-primary text-primary-foreground rounded-br-sm'
-              : 'bg-card border rounded-bl-sm'
-          )}
-        >
-          {isUser ? (
-            <p className="whitespace-pre-wrap">{content}</p>
-          ) : isStreaming && !content ? (
-            <StreamingDots />
-          ) : (
-            <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content}
-              </ReactMarkdown>
-              {isStreaming && <StreamingDots />}
+        {/* Inline edit mode */}
+        {isUser && isEditing ? (
+          <div className="flex flex-col gap-2 w-full">
+            <textarea
+              ref={editRef}
+              value={editContent}
+              onChange={(e) => {
+                setEditContent(e.target.value)
+                e.target.style.height = 'auto'
+                e.target.style.height = `${e.target.scrollHeight}px`
+              }}
+              onKeyDown={handleEditKeyDown}
+              rows={1}
+              className="w-full resize-none rounded-2xl rounded-br-sm border border-primary/50 bg-card px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+            />
+            <div className="flex items-center gap-2 justify-end">
+              <button
+                type="button"
+                onClick={() => { setEditContent(content); setIsEditing(false) }}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors px-3 py-1.5 rounded-lg hover:bg-accent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleEditDone}
+                className="text-xs font-medium bg-foreground text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+              >
+                Done
+              </button>
             </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <>
+            <div
+              className={cn(
+                'rounded-2xl px-4 py-2.5 text-sm',
+                isUser
+                  ? 'bg-primary text-primary-foreground rounded-br-sm'
+                  : 'bg-card border rounded-bl-sm'
+              )}
+            >
+              {isUser ? (
+                <p className="whitespace-pre-wrap">{content}</p>
+              ) : isStreaming && !content ? (
+                <ThinkingIndicator />
+              ) : (
+                <div className="prose prose-sm prose-invert max-w-none [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {content}
+                  </ReactMarkdown>
+                  {isStreaming && <ThinkingIndicator />}
+                </div>
+              )}
+            </div>
 
-        {/* Tool result cards */}
-        {toolResults.map((part, i) => (
-          <ToolResultCard
-            key={i}
-            toolName={part.toolName ?? ''}
-            result={part.result as ToolResult}
-          />
-        ))}
+            {/* Tool result cards */}
+            {toolResults.map((part, i) => (
+              <ToolResultCard
+                key={i}
+                toolName={part.toolName ?? ''}
+                result={part.result as ToolResult}
+              />
+            ))}
 
-        {/* Message action buttons */}
-        {!isStreaming && content && (
-          isUser ? (
-            <UserMessageActions
-              content={content}
-              onEdit={() => onEdit?.(content)}
-            />
-          ) : (
-            <AssistantMessageActions
-              content={content}
-              messageId={messageId ?? ''}
-            />
-          )
+            {/* Message action buttons */}
+            {!isStreaming && content && (
+              isUser ? (
+                <UserMessageActions
+                  content={content}
+                  onEdit={() => setIsEditing(true)}
+                />
+              ) : (
+                <AssistantMessageActions
+                  content={content}
+                  messageId={messageId ?? ''}
+                  onRetry={onRetry}
+                />
+              )
+            )}
+          </>
         )}
       </div>
 

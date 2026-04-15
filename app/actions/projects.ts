@@ -90,6 +90,21 @@ export async function renameProject(id: string, name: string): Promise<void> {
   revalidatePath('/')
 }
 
+export async function updateProjectPrompt(id: string, prompt: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('projects')
+    .update({ prompt, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+  revalidatePath('/')
+}
+
 export async function logPromptGenerated(featureCount: number): Promise<void> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

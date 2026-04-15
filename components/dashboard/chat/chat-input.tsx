@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, type KeyboardEvent } from 'react'
+import { useRef, forwardRef, useImperativeHandle, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -61,7 +61,11 @@ interface ChatInputProps {
   onWebSearchToggle: () => void
 }
 
-export function ChatInput({
+export interface ChatInputHandle {
+  focus: () => void
+}
+
+export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function ChatInput({
   input,
   onInputChange,
   onSubmit,
@@ -77,10 +81,18 @@ export function ChatInput({
   onRemoveAttachment,
   webSearchEnabled,
   onWebSearchToggle,
-}: ChatInputProps) {
+}: ChatInputProps, ref) {
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useImperativeHandle(ref, () => ({
+    focus: () => {
+      textareaRef.current?.focus()
+      const len = textareaRef.current?.value.length ?? 0
+      textareaRef.current?.setSelectionRange(len, len)
+    },
+  }))
 
   const activatedProjects = projects.filter((p) => p.prompt)
 
@@ -161,6 +173,7 @@ export function ChatInput({
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
+        id="chat-file-input"
         type="file"
         accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
         multiple
@@ -251,12 +264,14 @@ export function ChatInput({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-52">
-                  <DropdownMenuItem
-                    onClick={() => fileInputRef.current?.click()}
-                    className="cursor-pointer gap-2"
-                  >
-                    <Paperclip className="h-4 w-4 text-muted-foreground" />
-                    <span>Files & Photos</span>
+                  <DropdownMenuItem asChild>
+                    <label
+                      htmlFor="chat-file-input"
+                      className="cursor-pointer gap-2 flex items-center w-full"
+                    >
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
+                      <span>Files & Photos</span>
+                    </label>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -410,4 +425,4 @@ export function ChatInput({
       </div>
     </form>
   )
-}
+})

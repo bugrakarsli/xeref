@@ -32,6 +32,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/xeref.svg",
     shortcut: "/xeref.svg",
+    apple: "/xeref.svg",
   },
   openGraph: {
     title: "xeref.ai | AI Agent Builder with Long-Term Memory",

@@ -174,9 +174,16 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     setChats((prev) => prev.filter((c) => c.id !== id))
   }
 
+  function handleChatProjectAdded(chatId: string, projectId: string) {
+    setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, project_id: projectId } : c))
+  }
+
+  function handleChatProjectRemoved(chatId: string) {
+    setChats((prev) => prev.map((c) => c.id === chatId ? { ...c, project_id: null } : c))
+  }
+
   function handleProjectCreated(project: Project) {
     setProjects((prev) => [project, ...prev])
-    window.history.pushState({}, '', `/builder?project=${project.id}`)
     setActiveView('home')
   }
 
@@ -231,6 +238,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         onProjectDeleted={handleProjectDeleted}
         onChatRenamed={handleChatRenamed}
         onChatDeleted={handleChatDeleted}
+        onChatProjectAdded={handleChatProjectAdded}
+        onChatProjectRemoved={handleChatProjectRemoved}
         className={cn(
           'fixed z-30 md:relative md:z-auto transition-transform duration-200',
           collapsed ? '-translate-x-full md:translate-x-0' : 'translate-x-0'
@@ -252,6 +261,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     userPlan={userPlan}
                     onProjectDeleted={handleProjectDeleted}
                     onProjectUpdated={handleProjectUpdated}
+                    onChatProjectRemoved={handleChatProjectRemoved}
                   />
                 )
               case 'tasks':

@@ -18,7 +18,8 @@
       "Bash(TaskKill /F /PID 29644)",
       "Bash(pkill -9 node)",
       "Bash(curl -s http://localhost:3000)",
-      "Bash(curl -s http://localhost:3006)"
+      "Bash(curl -s http://localhost:3006)",
+      "Bash(node -e \"const ai = require\\('ai'\\); const keys = Object.keys\\(ai\\).filter\\(k => k.toLowerCase\\(\\).includes\\('stream'\\) || k.toLowerCase\\(\\).includes\\('data'\\) || k.toLowerCase\\(\\).includes\\('text'\\)\\); console.log\\(keys.join\\('\\\\n'\\)\\)\")"
     ]
   }
 }

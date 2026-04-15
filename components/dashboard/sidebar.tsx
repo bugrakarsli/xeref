@@ -28,7 +28,7 @@ import {
   Mail,
   Bot,
   BrainCircuit,
-  LayoutDashboard,
+  PanelLeft,
   ChevronDown,
   ChevronUp,
   ChevronRight,
@@ -48,11 +48,12 @@ import {
   FolderOpen,
 } from 'lucide-react'
 
-import { renameProject, deleteProject, saveProject } from '@/app/actions/projects'
-import { updateChatTitle, deleteChat } from '@/app/actions/chats'
+import { renameProject, deleteProject } from '@/app/actions/projects'
+import { updateChatTitle, deleteChat, removeChatFromProject } from '@/app/actions/chats'
 import { toast } from 'sonner'
 import { MoreVertical } from 'lucide-react'
 import { AddChatToProjectDialog } from '@/components/dashboard/add-chat-to-project-dialog'
+import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog'
 
 const SIDEBAR_PROJECT_LIMIT = 5
 
@@ -78,6 +79,8 @@ interface SidebarProps {
   onChatDeleted?: (id: string) => void
   onChatSelect?: (id: string) => void
   onNewChat?: () => void
+  onChatProjectAdded?: (chatId: string, projectId: string) => void
+  onChatProjectRemoved?: (chatId: string) => void
   className?: string
 }
 
@@ -243,9 +246,10 @@ interface RecentChatItemProps {
   isPinned?: boolean
   onUnpin?: () => void
   onAddToProject?: (chat: Chat) => void
+  onRemoveFromProject?: (chat: Chat) => void
 }
 
-function RecentChatItem({ chat, onNavigate, onSave, onDelete, onPin, isPinned, onUnpin, onAddToProject }: RecentChatItemProps) {
+function RecentChatItem({ chat, onNavigate, onSave, onDelete, onPin, isPinned, onUnpin, onAddToProject, onRemoveFromProject }: RecentChatItemProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [value, setValue] = useState(chat.title)
   const [renaming, setRenaming] = useState(false)
@@ -383,13 +387,17 @@ function RecentChatItem({ chat, onNavigate, onSave, onDelete, onPin, isPinned, o
             <button
               onClick={(e) => {
                 e.stopPropagation()
-                onAddToProject?.(chat)
+                if (chat.project_id) {
+                  onRemoveFromProject?.(chat)
+                } else {
+                  onAddToProject?.(chat)
+                }
                 setMenuOpen(false)
               }}
               className="flex items-center gap-2 w-full px-3 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
             >
               <FolderOpen className="h-3 w-3" />
-              Add to project
+              {chat.project_id ? 'Remove from project' : 'Add to project'}
             </button>
             <div className="border-t border-border/50 my-0.5" />
             <button
@@ -500,6 +508,8 @@ export function Sidebar({
   onChatDeleted,
   onChatSelect,
   onNewChat,
+  onChatProjectAdded,
+  onChatProjectRemoved,
   className,
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
@@ -509,6 +519,7 @@ export function Sidebar({
   const [isHydrated, setIsHydrated] = useState(false)
   const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false)
   const [selectedChatForProject, setSelectedChatForProject] = useState<Chat | null>(null)
+  const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
   const pathname = usePathname()
   const isBuilderActive = pathname === '/builder'
 
@@ -541,12 +552,7 @@ export function Sidebar({
       )}
     >
       {/* Logo + toggle */}
-      <div
-        className={cn(
-          'flex items-center h-14 border-b shrink-0',
-          collapsed ? 'justify-center px-3' : 'px-3 gap-2'
-        )}
-      >
+      <div className="flex items-center h-14 border-b shrink-0 px-3 gap-2">
         {collapsed ? (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -559,29 +565,34 @@ export function Sidebar({
                 )}
               >
                 <XerefLogo className="h-6 w-6 absolute transition-opacity duration-150 group-hover:opacity-0" />
-                <LayoutDashboard className="h-5 w-5 absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100 text-primary" />
+                <PanelLeft className="h-5 w-5 absolute opacity-0 transition-opacity duration-150 group-hover:opacity-100 text-primary" />
               </button>
             </TooltipTrigger>
             <TooltipContent side="right">Expand Sidebar</TooltipContent>
           </Tooltip>
         ) : (
           <>
-            <button
-              onClick={onToggle}
-              aria-label="Collapse sidebar"
-              className={cn(
-                'group flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent shrink-0',
-                focusRing
-              )}
-            >
-              <LayoutDashboard className="h-5 w-5 text-muted-foreground transition-colors group-hover:text-foreground" />
-            </button>
             <Link href="/" className="flex items-center gap-2 flex-1 min-w-0">
               <XerefLogo className="h-5 w-5 shrink-0" />
               <span className="font-semibold text-sm tracking-tight truncate">
                 xeref<span className="text-primary">.ai</span>
               </span>
             </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={onToggle}
+                  aria-label="Collapse sidebar"
+                  className={cn(
+                    'flex items-center justify-center h-7 w-7 rounded-lg transition-colors hover:bg-accent shrink-0',
+                    focusRing
+                  )}
+                >
+                  <PanelLeft className="h-4 w-4 text-muted-foreground transition-colors hover:text-foreground" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Collapse Sidebar</TooltipContent>
+            </Tooltip>
           </>
         )}
       </div>
@@ -819,6 +830,11 @@ export function Sidebar({
                               setSelectedChatForProject(chat)
                               setAddProjectDialogOpen(true)
                             }}
+                            onRemoveFromProject={async (chat) => {
+                              await removeChatFromProject(chat.id)
+                              onChatProjectRemoved?.(chat.id)
+                              toast.success('Chat removed from project')
+                            }}
                           />
                         ))
                       ) : (
@@ -884,11 +900,8 @@ export function Sidebar({
                     <InlineEditRow
                       key={project.id}
                       label={project.name}
-                      active={activeView === 'home' && pathname === `/builder?project=${project.id}`}
-                      onNavigate={() => {
-                        window.history.pushState({}, '', `/builder?project=${project.id}`)
-                        onViewChange('home')
-                      }}
+                      active={false}
+                      onNavigate={() => onViewChange('home')}
                       onSave={async (name) => {
                         await renameProject(project.id, name)
                         onProjectRenamed?.(project.id, name)
@@ -902,17 +915,9 @@ export function Sidebar({
                   ))}
                   
                   {/* Creation row */}
-                  <div 
+                  <div
                     className="group flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground transition-colors cursor-pointer"
-                    onClick={async () => {
-                      try {
-                        const newProj = await saveProject('New Project', [])
-                        onProjectCreated?.(newProj)
-                        toast.success('Project created')
-                      } catch (err) {
-                        toast.error('Failed to create project')
-                      }
-                    }}
+                    onClick={() => setCreateProjectDialogOpen(true)}
                   >
                     <div className="flex items-center justify-center h-4 w-4 rounded-full border border-dashed border-muted-foreground/40 group-hover:border-primary transition-colors">
                       <X className="h-2.5 w-2.5 rotate-45" />
@@ -1140,14 +1145,23 @@ export function Sidebar({
         </DropdownMenu>
       </div>
 
+      {/* Create Project Dialog */}
+      <CreateProjectDialog
+        open={createProjectDialogOpen}
+        onOpenChange={setCreateProjectDialogOpen}
+        onProjectCreated={(project) => {
+          onProjectCreated?.(project)
+        }}
+      />
+
       {/* Add Chat to Project Dialog */}
       <AddChatToProjectDialog
         open={addProjectDialogOpen}
         onOpenChange={setAddProjectDialogOpen}
         chat={selectedChatForProject}
         projects={projects}
-        onProjectAdded={() => {
-          // Optionally refresh chats list if needed
+        onProjectAdded={(chatId, projectId) => {
+          onChatProjectAdded?.(chatId, projectId)
         }}
       />
     </aside>

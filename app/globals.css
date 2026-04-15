@@ -47,6 +47,16 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+@keyframes rainbow-wave {
+  0%   { color: hsl(0,   100%, 72%); }
+  16%  { color: hsl(60,  100%, 72%); }
+  33%  { color: hsl(120, 100%, 65%); }
+  50%  { color: hsl(190, 100%, 65%); }
+  66%  { color: hsl(260, 100%, 75%); }
+  83%  { color: hsl(310, 100%, 72%); }
+  100% { color: hsl(360, 100%, 72%); }
+}
+
 :root {
   --color-accent: #22d3ee;
   --radius: 0.625rem;

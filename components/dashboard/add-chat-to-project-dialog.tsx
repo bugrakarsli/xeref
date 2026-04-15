@@ -14,7 +14,7 @@ interface AddChatToProjectDialogProps {
   onOpenChange: (open: boolean) => void
   chat: Chat | null
   projects: Project[]
-  onProjectAdded?: () => void
+  onProjectAdded?: (chatId: string, projectId: string) => void
 }
 
 export function AddChatToProjectDialog({
@@ -34,9 +34,9 @@ export function AddChatToProjectDialog({
     try {
       await addChatToProject(chat.id, selectedProjectId)
       toast.success('Chat added to project')
+      onProjectAdded?.(chat.id, selectedProjectId)
       onOpenChange(false)
       setSelectedProjectId(null)
-      onProjectAdded?.()
     } catch (error) {
       toast.error('Failed to add chat to project')
       console.error(error)

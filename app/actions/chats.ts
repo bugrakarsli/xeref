@@ -99,6 +99,21 @@ export async function addChatToProject(chatId: string, projectId: string): Promi
   revalidatePath('/')
 }
 
+export async function removeChatFromProject(chatId: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('chats')
+    .update({ project_id: null, updated_at: new Date().toISOString() })
+    .eq('id', chatId)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+  revalidatePath('/')
+}
+
 export async function saveMessage(
   chatId: string,
   role: 'user' | 'assistant',

@@ -8,6 +8,7 @@ import {
     BookOpen, Command, Search, MessageSquare, PenLine, Layers, Info
 } from 'lucide-react';
 import StatusBar from './StatusBar';
+import { MODELS, type ModelId } from './chat/chat-input';
 
 const SlashBoxIcon = ({size=14, className=""}: {size?: number, className?: string}) => (
     <svg width={size} height={size} className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -29,7 +30,7 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
     const [settingsOpen, setSettingsOpen] = useState(initialView === 'settings');
     const [settingsTab, setSettingsTab] = useState('account');
     const [modelDropdownOpen, setModelDropdownOpen] = useState(false);
-    const [selectedModel, setSelectedModel] = useState('Gemini 3.1 Pro (High)');
+    const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free');
     const [telemetry, setTelemetry] = useState(true);
     const [marketing, setMarketing] = useState(true);
 
@@ -390,7 +391,9 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
                                                 className={`flex items-center gap-1.5 px-2.5 py-1.5 cursor-pointer rounded-r-md transition-all ${modelDropdownOpen ? 'bg-[#2d2d30] text-gray-200' : 'text-gray-400 hover:bg-[#27272a] hover:text-gray-300'}`}
                                                 onClick={() => setModelDropdownOpen(!modelDropdownOpen)}
                                             >
-                                                <span className="text-[11px] font-semibold tracking-tight uppercase truncate max-w-[120px]">{selectedModel}</span>
+                                                <span className="text-[11px] font-semibold tracking-tight uppercase truncate max-w-[120px]">
+                                                    {MODELS.find(m => m.id === selectedModel)?.label ?? selectedModel}
+                                                </span>
                                                 <ChevronDown size={10} className="opacity-60" />
                                             </div>
                                             
@@ -401,32 +404,26 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
                                                        <div className="px-3 py-1.5 mb-1">
                                                             <p className="text-[10px] font-semibold text-gray-500 tracking-wider">Model</p>
                                                        </div>
-                                                       <div className="space-y-0.5">
-                                                            <div onClick={(e) => { setSelectedModel('Gemini 3.1 Pro (High)'); e.stopPropagation(); setModelDropdownOpen(false);}} className={`px-3 py-2 hover:bg-[#27272a] cursor-pointer flex items-center justify-between transition-colors ${selectedModel === 'Gemini 3.1 Pro (High)' ? 'bg-[#27272a]' : ''}`}>
-                                                                <span className="text-xs font-medium text-gray-200">Gemini 3.1 Pro (High)</span>
-                                                                <span className="text-[9px] bg-[#27272a] px-1.5 rounded-sm py-0.5 text-gray-400 border border-[#3f3f46]">New</span>
-                                                            </div>
-                                                            <div onClick={(e) => { setSelectedModel('Gemini 3.1 Pro (Low)'); e.stopPropagation(); setModelDropdownOpen(false);}} className={`px-3 py-2 hover:bg-[#27272a] cursor-pointer flex items-center justify-between transition-colors ${selectedModel === 'Gemini 3.1 Pro (Low)' ? 'bg-[#27272a]' : ''}`}>
-                                                                <span className="text-xs font-medium text-gray-200">Gemini 3.1 Pro (Low)</span>
-                                                                <span className="text-[9px] bg-[#27272a] px-1.5 rounded-sm py-0.5 text-gray-400 border border-[#3f3f46]">New</span>
-                                                            </div>
-                                                            <div onClick={(e) => { setSelectedModel('Gemini 3 Flash'); e.stopPropagation(); setModelDropdownOpen(false);}} className={`px-3 py-2 hover:bg-[#27272a] cursor-pointer transition-colors ${selectedModel === 'Gemini 3 Flash' ? 'bg-[#27272a]' : ''}`}>
-                                                                <span className="text-xs font-medium text-gray-300">Gemini 3 Flash</span>
-                                                            </div>
-                                                            <div onClick={(e) => { setSelectedModel('Claude Sonnet 4.6 (Thinking)'); e.stopPropagation(); setModelDropdownOpen(false);}} className={`px-3 py-2 hover:bg-[#27272a] cursor-pointer flex items-center justify-between transition-colors ${selectedModel === 'Claude Sonnet 4.6 (Thinking)' ? 'bg-[#27272a]' : ''}`}>
-                                                                <span className="text-xs font-medium text-gray-300">Claude Sonnet 4.6 (Thinking)</span>
-                                                                <span className="text-xs text-yellow-500" title="Warning">⚠</span>
-                                                            </div>
-                                                            <div className="px-3 py-2 flex items-center justify-between opacity-50 cursor-not-allowed group relative pt-3 border-t border-[#27272a] mt-1">
-                                                                <span className="text-xs font-medium text-gray-400">Custom</span>
-                                                                <div className="relative flex items-center">
-                                                                    <span className="text-xs text-yellow-600 peer cursor-help">⚠</span>
-                                                                    <div className="absolute right-0 bottom-full mb-3 w-[260px] p-2.5 bg-[#1c1c1f] border border-[#3f3f46] rounded shadow-xl opacity-0 group-hover:opacity-100 transition-opacity z-50 pointer-events-none">
-                                                                        <p className="text-[12px] text-gray-300 font-medium leading-relaxed">Custom models are only supported on Cloudtop / Linux machines.</p>
-                                                                        <div className="absolute top-full right-2 w-3 h-3 bg-[#1c1c1f] border-r border-b border-[#3f3f46] transform rotate-45 -mt-1.5"></div>
+                                                       <div className="py-0.5">
+                                                            {MODELS.map((m) => (
+                                                                <div
+                                                                    key={m.id}
+                                                                    onClick={(e) => { e.stopPropagation(); setSelectedModel(m.id); setModelDropdownOpen(false); }}
+                                                                    className={`px-3 py-2.5 cursor-pointer flex items-start justify-between gap-3 transition-colors hover:bg-[#27272a] ${selectedModel === m.id ? 'bg-[#27272a]' : ''}`}
+                                                                >
+                                                                    <div className="min-w-0">
+                                                                        <p className="text-xs font-medium text-gray-200 truncate">{m.label}</p>
+                                                                        <p className="text-[11px] text-gray-500 mt-0.5 leading-snug">{m.description}</p>
                                                                     </div>
+                                                                    <span className={`shrink-0 text-[9px] font-bold px-1.5 py-0.5 rounded mt-0.5 ${
+                                                                        m.plan === 'ultra' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' :
+                                                                        m.plan === 'pro'   ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                                                                                             'bg-[#27272a] text-gray-400 border border-[#3f3f46]'
+                                                                    }`}>
+                                                                        {m.planLabel}
+                                                                    </span>
                                                                 </div>
-                                                            </div>
+                                                            ))}
                                                        </div>
                                                   </div>
                                               </>
