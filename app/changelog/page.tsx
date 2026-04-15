@@ -15,7 +15,7 @@ const entries = [
         type: 'Improved',
         color: 'text-purple-400',
         items: [
-          'New Conversation view is now truly centered on screen — the icon, prompt text, and chat input render as a single unit in the vertical and horizontal center of the available space, regardless of window size',
+          'New Conversation view layout — empty chat state now uses `items-center justify-center` on the outer container to vertically and horizontally center the entire block (icon + heading + input) as a single unit with `max-w-2xl` constraint, instead of expanding the content area with `flex-1` and pushing the input to the bottom',
         ],
       },
     ],
