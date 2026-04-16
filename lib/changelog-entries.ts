@@ -1,8 +1,42 @@
 export const changelogEntries = [
   {
     version: 'v1.8',
-    date: 'April 16, 2026',
+    date: 'April 17, 2026',
     badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Notes view — persistent note-taking integrated with the dashboard sidebar',
+          'Stats view — real-time usage analytics and performance metrics',
+          'Workflows view — cron job scheduling and webhook-based automation',
+          'Customize Views — personalize dashboard layout with draggable view cards',
+          'Comprehensive dashboard chat UI — improved message rendering, typing indicators, and input handling',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Task management UI — enhanced with better status indicators and inline actions',
+          'Dashboard shell performance — optimized component rendering and state management',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Dashboard UI components refactored for maintainability and reusability',
+          'Chat interface standardized with proper error handling and edge cases',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'v1.7',
+    date: 'April 16, 2026',
+    badge: null,
     sections: [
       {
         type: 'Improved',
