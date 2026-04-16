@@ -97,6 +97,11 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
   }
 
   async function handleNewChat() {
+    if (chatMessages.length === 0) {
+      window.dispatchEvent(new CustomEvent('xeref_focus_chat_input'))
+      return
+    }
+
     // Save title of current chat from its first message
     if (activeChat && chatMessages.length > 0) {
       const firstUserMsg = chatMessages.find((m) => m.role === 'user')

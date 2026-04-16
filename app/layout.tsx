@@ -21,7 +21,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://xeref.ai"),
-  title: "xeref.ai | AI Agent Builder with Long-Term Memory",
+  title: {
+    default: "Xeref",
+    template: "%s | Xeref",
+  },
   description: "Xeref is an AI agent platform that remembers everything — build, manage, and deploy agents to Telegram, Discord, and WhatsApp.",
   keywords: ["AI Agent", "Long-Term Memory", "Telegram AI", "Discord AI", "WhatsApp AI", "Autonomous Agents"],
   robots: {

@@ -1,15 +1,15 @@
 'use client'
 
-import { useTransition, useState } from 'react'
+import { useTransition, useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import type { User } from '@supabase/supabase-js'
-import type { Project, Chat, Message } from '@/lib/types'
+import type { Project, Chat, Message, ProjectGoal } from '@/lib/types'
 import type { UserPlan } from '@/app/actions/profile'
-import { deleteProject, updateProjectPrompt } from '@/app/actions/projects'
+import { deleteProject, updateProjectPrompt, getProjectGoals, toggleProjectGoal } from '@/app/actions/projects'
 import { createChat, getChatMessages, updateChatTitle, removeChatFromProject } from '@/app/actions/chats'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Trash2, Calendar, Layers, CheckCircle2, Zap, Bot, Pencil, MessageSquare, FolderMinus } from 'lucide-react'
+import { Trash2, Calendar, Layers, CheckCircle2, Zap, Bot, Pencil, MessageSquare, FolderMinus, Target, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ChatInterface } from './chat/chat-interface'
 import { ChatList } from './chat/chat-list'
@@ -43,6 +43,69 @@ function formatDate(dateStr: string): string {
     day: 'numeric',
     year: 'numeric',
   })
+}
+
+function ProjectGoalsList({ projectId }: { projectId: string }) {
+  const [goals, setGoals] = useState<ProjectGoal[]>([])
+  const [loading, setLoading] = useState(true)
+  const [, startTransition] = useTransition()
+
+  useEffect(() => {
+    getProjectGoals(projectId).then((g) => {
+      setGoals(g)
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [projectId])
+
+  function handleToggle(goal: ProjectGoal) {
+    const next = !goal.completed
+    setGoals((prev) => prev.map((g) => g.id === goal.id ? { ...g, completed: next } : g))
+    startTransition(async () => {
+      try {
+        await toggleProjectGoal(goal.id, next)
+      } catch {
+        setGoals((prev) => prev.map((g) => g.id === goal.id ? { ...g, completed: goal.completed } : g))
+      }
+    })
+  }
+
+  if (loading || goals.length === 0) return null
+
+  return (
+    <div className="flex flex-col gap-1.5 border-t pt-3 mt-1">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
+        <Target className="h-3 w-3" />
+        <span className="font-medium">Sub-goals</span>
+        <span className="ml-auto text-muted-foreground/60">
+          {goals.filter((g) => g.completed).length}/{goals.length}
+        </span>
+      </div>
+      {goals.map((goal) => (
+        <button
+          key={goal.id}
+          onClick={() => handleToggle(goal)}
+          className="flex items-start gap-2 text-left group/goal"
+        >
+          <span className={cn(
+            'mt-0.5 h-3.5 w-3.5 shrink-0 rounded-sm border flex items-center justify-center transition-colors',
+            goal.completed
+              ? 'bg-primary border-primary text-primary-foreground'
+              : 'border-muted-foreground/40 group-hover/goal:border-primary/60'
+          )}>
+            {goal.completed && <Check className="h-2.5 w-2.5" />}
+          </span>
+          <span className={cn(
+            'text-xs leading-snug transition-colors',
+            goal.completed
+              ? 'line-through text-muted-foreground/50'
+              : 'text-muted-foreground group-hover/goal:text-foreground'
+          )}>
+            {goal.title}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
 }
 
 function ProjectCard({
@@ -112,6 +175,8 @@ function ProjectCard({
       {project.description && (
         <p className="text-xs text-muted-foreground line-clamp-2">{project.description}</p>
       )}
+
+      <ProjectGoalsList projectId={project.id} />
 
       <div className="flex items-center gap-3 mt-auto pt-1">
         <div className="flex items-center gap-1 text-xs text-muted-foreground">

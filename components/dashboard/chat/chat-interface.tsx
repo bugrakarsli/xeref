@@ -10,7 +10,16 @@ import { saveMessage, createChat } from '@/app/actions/chats'
 import { uploadChatAttachment } from '@/app/actions/upload'
 import type { Project, Chat, Message, ChatAttachment } from '@/lib/types'
 import { SYSTEM_AGENTS } from '@/lib/system-agents'
-import { Bot, ArrowDown } from 'lucide-react'
+import { ScrollToBottomButton } from '@/components/ui/ScrollToBottomButton'
+import Image from 'next/image'
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  if (hour < 21) return 'Good evening'
+  return 'Good night'
+}
 
 function getMessageText(message: { parts?: Array<{ type: string; text?: string }> }): string {
   if (!message.parts) return ''
@@ -44,7 +53,6 @@ export function ChatInterface({
   const bottomRef = useRef<HTMLDivElement>(null)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<ChatInputHandle>(null)
-  const [showScrollButton, setShowScrollButton] = useState(false)
   const [input, setInput] = useState('')
   const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
@@ -102,6 +110,13 @@ export function ChatInterface({
     activeChatIdRef.current = activeChat?.id ?? null
   }, [activeChat?.id])
 
+  // Focus input when a new-chat-requested event fires on an already-empty chat
+  useEffect(() => {
+    const focus = () => chatInputRef.current?.focus()
+    window.addEventListener('xeref_focus_chat_input', focus)
+    return () => window.removeEventListener('xeref_focus_chat_input', focus)
+  }, [])
+
   // Load existing messages when active chat changes
   useEffect(() => {
     setMessages(
@@ -127,20 +142,6 @@ export function ChatInterface({
     }
   }, [messages, scrollToBottom])
 
-  // Show/hide scroll-to-bottom button
-  useEffect(() => {
-    const el = scrollContainerRef.current
-    if (!el) return
-    function onScroll() {
-      const distanceFromBottom = el!.scrollHeight - el!.scrollTop - el!.clientHeight
-      setShowScrollButton(distanceFromBottom > 120)
-    }
-    el.addEventListener('scroll', onScroll, { passive: true })
-    // Check immediately in case content overflows on mount
-    onScroll()
-    return () => el.removeEventListener('scroll', onScroll)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
@@ -315,51 +316,26 @@ export function ChatInterface({
   }
 
   if (messages.length === 0) {
+    const greeting = `${getGreeting()}${userName ? `, ${userName.split(' ')[0]}` : ''}`
     return (
-      <div className="flex flex-col flex-1 min-h-0 items-center justify-center p-6">
-        <div className="flex flex-col items-center gap-6 w-full max-w-2xl">
-          {selectedAgent ? (
-            <>
-              <div className="rounded-full bg-primary/10 p-4">
-                <Bot className="h-7 w-7 text-primary" />
-              </div>
-              <div className="text-center">
-                <p className="text-base font-semibold">
-                  Ask {selectedLabel} anything
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  {selectedAgent.type === 'system'
-                    ? selectedAgent.agent.description
-                    : `Powered by ${selectedAgent.project.selected_feature_ids.length} features · ${MODELS.find((m) => m.id === selectedModel)?.label ?? 'Haiku 4.5'}`}
-                </p>
-              </div>
-            </>
-          ) : hasActivatedAgents ? (
-            <>
-              <div className="rounded-full bg-muted p-4">
-                <Bot className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium">Select an agent to start chatting</p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Choose XerefClaw, Xeref Agents, or one of your custom agents below
-                </p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="rounded-full bg-muted p-4">
-                <Bot className="h-7 w-7 text-muted-foreground" />
-              </div>
-              <div className="text-center">
-                <p className="text-sm font-medium">Choose an agent below</p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-xs">
-                  Pick XerefClaw or Xeref Agents to start, or go to Home to activate a custom agent.
-                </p>
-              </div>
-            </>
-          )}
-          <ChatInput ref={chatInputRef} {...sharedInputProps} />
+      <div className="flex flex-col flex-1 min-h-0 items-center justify-center py-6">
+        <div className="flex flex-col items-center gap-6 w-full">
+          <div className="rounded-full bg-primary/10 p-4">
+            <Image src="/xeref.svg" alt="Xeref" width={28} height={28} className="h-7 w-7" />
+          </div>
+          <div className="text-center">
+            <p className="text-base font-semibold">{greeting}</p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {selectedAgent?.type === 'system'
+                ? selectedAgent.agent.description
+                : selectedAgent?.type === 'project'
+                ? `Powered by ${selectedAgent.project.selected_feature_ids.length} features · ${MODELS.find((m) => m.id === selectedModel)?.label ?? 'Xeref'}`
+                : hasActivatedAgents
+                ? 'Choose XerefClaw, Xeref Agents, or one of your custom agents below'
+                : 'Pick XerefClaw or Xeref Agents to start, or go to Home to activate a custom agent.'}
+            </p>
+          </div>
+          <ChatInput ref={chatInputRef} {...sharedInputProps} tall />
         </div>
       </div>
     )
@@ -386,17 +362,7 @@ export function ChatInterface({
         </div>
       </div>
       <div className="relative">
-        {showScrollButton && (
-          <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-3 z-10">
-            <button
-              onClick={scrollToBottom}
-              aria-label="Scroll to bottom"
-              className="flex items-center justify-center h-9 w-9 rounded-full bg-neutral-800 hover:bg-neutral-700 border border-white/10 shadow-lg transition-all duration-150 text-white"
-            >
-              <ArrowDown className="h-4 w-4" />
-            </button>
-          </div>
-        )}
+        <ScrollToBottomButton scrollContainerRef={scrollContainerRef} />
         <ChatInput ref={chatInputRef} {...sharedInputProps} />
       </div>
     </div>

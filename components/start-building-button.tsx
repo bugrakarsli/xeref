@@ -32,6 +32,7 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [guestLoading, setGuestLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
   // Track dialog open state in a ref so the onAuthStateChange closure sees updates
@@ -78,6 +79,18 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
     } else {
       setSent(true)
       toast.success('Magic link sent — check your inbox!')
+    }
+  }
+
+  const handleGuestSignIn = async () => {
+    setGuestLoading(true)
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInAnonymously()
+    setGuestLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      router.push('/')
     }
   }
 
@@ -185,6 +198,22 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
               </form>
             </div>
           )}
+
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex-1 border-t" />
+            <span>or</span>
+            <div className="flex-1 border-t" />
+          </div>
+
+          <Button
+            variant="ghost"
+            className="w-full text-muted-foreground text-xs"
+            onClick={handleGuestSignIn}
+            disabled={guestLoading}
+          >
+            {guestLoading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+            Continue as guest
+          </Button>
 
           <p className="text-center text-xs text-muted-foreground pt-1">
             By signing in, you agree to our{' '}

@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/reset-daily-targets",
+      "schedule": "0 21 * * *"
+    },
+    {
+      "path": "/api/cron/run-workflows",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}

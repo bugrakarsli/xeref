@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import type { Task } from '@/lib/types'
+import type { Task, DailyTarget } from '@/lib/types'
 
 export async function createTask(
   title: string,
@@ -84,4 +84,77 @@ export async function deleteTask(id: string): Promise<void> {
 
   if (error) throw error
   revalidatePath('/')
+}
+
+export async function getDailyTarget(): Promise<DailyTarget> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('daily_task_goal, daily_completed, daily_reset_at')
+    .eq('id', user.id)
+    .single()
+
+  if (error) throw error
+
+  const today = new Date().toISOString().slice(0, 10)
+  const resetAt = data?.daily_reset_at ?? today
+
+  // Client-side reset: if stored date is before today, reset the counter
+  if (resetAt < today) {
+    await resetDailyTarget()
+    return { goal: data?.daily_task_goal ?? 3, completed: 0, resetAt: today }
+  }
+
+  return {
+    goal: data?.daily_task_goal ?? 3,
+    completed: data?.daily_completed ?? 0,
+    resetAt,
+  }
+}
+
+export async function setDailyGoal(goal: number): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ daily_task_goal: goal })
+    .eq('id', user.id)
+
+  if (error) throw error
+}
+
+export async function incrementDailyCompleted(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data } = await supabase
+    .from('profiles')
+    .select('daily_completed')
+    .eq('id', user.id)
+    .single()
+
+  await supabase
+    .from('profiles')
+    .update({ daily_completed: (data?.daily_completed ?? 0) + 1 })
+    .eq('id', user.id)
+}
+
+export async function resetDailyTarget(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const today = new Date().toISOString().slice(0, 10)
+  const { error } = await supabase
+    .from('profiles')
+    .update({ daily_completed: 0, daily_reset_at: today })
+    .eq('id', user.id)
+
+  if (error) throw error
 }

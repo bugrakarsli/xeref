@@ -10,14 +10,14 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { saveProject } from '@/app/actions/projects'
+import { saveProject, decomposeProjectGoals } from '@/app/actions/projects'
 import { toast } from 'sonner'
-import type { Project } from '@/lib/types'
+import type { Project, ProjectGoal } from '@/lib/types'
 
 interface CreateProjectDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onProjectCreated?: (project: Project) => void
+  onProjectCreated?: (project: Project, goals: ProjectGoal[]) => void
 }
 
 export function CreateProjectDialog({
@@ -42,12 +42,22 @@ export function CreateProjectDialog({
     if (!trimmedName) return
     startTransition(async () => {
       try {
-        const project = await saveProject(
-          trimmedName,
-          [],
-          description.trim() || undefined
-        )
-        onProjectCreated?.(project)
+        const trimmedDescription = description.trim()
+        const project = await saveProject(trimmedName, [], trimmedDescription || undefined)
+
+        let goals: ProjectGoal[] = []
+        if (trimmedDescription) {
+          const toastId = toast.loading('Analysing project goals…')
+          try {
+            goals = await decomposeProjectGoals(project.id, trimmedDescription)
+            toast.dismiss(toastId)
+            if (goals.length > 0) toast.success(`${goals.length} goals generated`)
+          } catch {
+            toast.dismiss(toastId)
+          }
+        }
+
+        onProjectCreated?.(project, goals)
         toast.success('Project created')
         setName('')
         setDescription('')

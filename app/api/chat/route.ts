@@ -2,7 +2,53 @@ import { streamText, convertToModelMessages, tool, stepCountIs, createTextStream
 import { z } from 'zod'
 import { tavily } from '@tavily/core'
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { SYSTEM_AGENTS } from '@/lib/system-agents'
+
+const ANON_RATE_LIMIT = 10 // requests per minute for anonymous users
+
+async function checkAnonRateLimit(userId: string): Promise<boolean> {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) return true // skip if not configured
+
+  const admin = createAdminClient(url, key)
+  const window = Math.floor(Date.now() / 60000) // current minute bucket
+
+  const { data, error } = await admin
+    .from('rate_limits')
+    .upsert({ user_id: userId, window_start: window, count: 1 }, {
+      onConflict: 'user_id,window_start',
+      ignoreDuplicates: false,
+    })
+    .select('count')
+    .single()
+
+  if (error) return true // allow on error
+
+  // If the upsert merged, we need to read the actual count after increment.
+  // Use a raw increment approach via RPC or read-then-check pattern.
+  const { data: row } = await admin
+    .from('rate_limits')
+    .select('count')
+    .eq('user_id', userId)
+    .eq('window_start', window)
+    .single()
+
+  const count = row?.count ?? 1
+
+  if (count <= ANON_RATE_LIMIT) {
+    // Increment
+    await admin
+      .from('rate_limits')
+      .update({ count: count + 1 })
+      .eq('user_id', userId)
+      .eq('window_start', window)
+    return true
+  }
+
+  return false
+}
 import { createTask, getUserTasks, updateTask } from '@/app/actions/tasks'
 import { saveMemory, getUserMemories } from '@/app/actions/memories'
 import { renameProject } from '@/app/actions/projects'
@@ -26,6 +72,18 @@ export async function POST(req: Request) {
 
   if (!user) {
     return new Response('Unauthorized', { status: 401 })
+  }
+
+  // Rate-limit anonymous (guest) users
+  const isAnon = user.is_anonymous === true
+  if (isAnon) {
+    const allowed = await checkAnonRateLimit(user.id)
+    if (!allowed) {
+      return Response.json(
+        { error: 'You have reached the guest rate limit. Sign up for unlimited access.', code: 'RATE_LIMIT' },
+        { status: 429 }
+      )
+    }
   }
 
   // Fetch user plan alongside auth — reuses the same supabase client, no extra round-trip

@@ -210,3 +210,88 @@ alter table public.profiles add column if not exists google_calendar_token jsonb
 -- Falls back to server-side env vars if these are null.
 alter table public.profiles add column if not exists google_oauth_client_id text;
 alter table public.profiles add column if not exists google_oauth_client_secret text;
+
+-- ── Project Goals ─────────────────────────────────────────────────────────────
+-- AI-decomposed sub-goals for each project, generated on project creation.
+create table if not exists public.project_goals (
+  id uuid default gen_random_uuid() primary key,
+  project_id uuid references public.projects(id) on delete cascade not null,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null,
+  completed boolean not null default false,
+  created_at timestamptz default now() not null
+);
+
+alter table public.project_goals enable row level security;
+
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where tablename = 'project_goals' and policyname = 'Users can CRUD own project goals'
+  ) then
+    create policy "Users can CRUD own project goals" on public.project_goals
+      for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+end $$;
+
+create index if not exists idx_project_goals_project_id on public.project_goals(project_id, created_at);
+
+-- ── Notes ─────────────────────────────────────────────────────────────────────
+-- User-authored notes with auto-save on blur.
+create table if not exists public.notes (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references auth.users(id) on delete cascade not null,
+  title text not null default 'Untitled',
+  content text not null default '',
+  updated_at timestamptz default now() not null,
+  created_at timestamptz default now() not null
+);
+
+alter table public.notes enable row level security;
+
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where tablename = 'notes' and policyname = 'Users can CRUD own notes'
+  ) then
+    create policy "Users can CRUD own notes" on public.notes
+      for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+  end if;
+end $$;
+
+create index if not exists idx_notes_user_id on public.notes(user_id, updated_at desc);
+
+-- ── Rate Limits (guest/anon users) ───────────────────────────────────────────
+-- Tracks per-minute request counts for anonymous users.
+-- window_start is a unix epoch minute bucket (floor(epoch / 60)).
+create table if not exists public.rate_limits (
+  user_id uuid not null,
+  window_start bigint not null,
+  count int not null default 0,
+  primary key (user_id, window_start)
+);
+
+alter table public.rate_limits enable row level security;
+
+do $$ begin
+  if not exists (
+    select 1 from pg_policies where tablename = 'rate_limits' and policyname = 'Service role only'
+  ) then
+    create policy "Service role only" on public.rate_limits
+      using (false)
+      with check (false);
+  end if;
+end $$;
+
+-- ── Workflow extensions ───────────────────────────────────────────────────────
+alter table public.workflows add column if not exists cron_expression text;
+alter table public.workflows add column if not exists webhook_secret text;
+alter table public.workflows add column if not exists last_run_at timestamptz;
+alter table public.workflows add column if not exists last_run_result text;
+create unique index if not exists idx_workflows_webhook_secret on public.workflows(webhook_secret) where webhook_secret is not null;
+
+-- ── Daily task target columns on profiles ─────────────────────────────────────
+-- daily_task_goal: how many tasks the user wants to complete per day
+-- daily_completed: running count for today (reset by cron at midnight Istanbul)
+-- daily_reset_at: the UTC date of the last reset
+alter table public.profiles add column if not exists daily_task_goal int not null default 3;
+alter table public.profiles add column if not exists daily_completed int not null default 0;
+alter table public.profiles add column if not exists daily_reset_at date default current_date;

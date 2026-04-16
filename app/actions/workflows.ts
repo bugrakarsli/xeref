@@ -72,15 +72,28 @@ export async function seedDefaultWorkflows(): Promise<void> {
 export async function createWorkflow(
   name: string,
   trigger: string,
-  action: string
+  action: string,
+  opts?: { cron_expression?: string }
 ): Promise<Workflow> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
+  const webhookSecret = trigger === 'webhook'
+    ? `wh_${crypto.randomUUID().replace(/-/g, '')}`
+    : null
+
   const { data, error } = await supabase
     .from('workflows')
-    .insert({ user_id: user.id, name, trigger, action, enabled: true })
+    .insert({
+      user_id: user.id,
+      name,
+      trigger,
+      action,
+      enabled: true,
+      cron_expression: opts?.cron_expression ?? null,
+      webhook_secret: webhookSecret,
+    })
     .select()
     .single()
 

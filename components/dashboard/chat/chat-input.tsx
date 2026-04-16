@@ -59,6 +59,7 @@ interface ChatInputProps {
   onRemoveAttachment: (index: number) => void
   webSearchEnabled: boolean
   onWebSearchToggle: () => void
+  tall?: boolean
 }
 
 export interface ChatInputHandle {
@@ -73,6 +74,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   projects,
   selectedAgent,
   onAgentSelect,
+  tall = false,
   selectedModel,
   onModelSelect,
   userPlan,
@@ -169,7 +171,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const hasExtras = attachments.length > 0 || webSearchEnabled
 
   return (
-    <form onSubmit={onSubmit} className="px-4 py-3 border-t bg-background/80 backdrop-blur-sm">
+    <form onSubmit={onSubmit} className="w-full px-4 py-3 border-t bg-background/80 backdrop-blur-sm">
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -181,7 +183,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         onChange={handleFileInputChange}
       />
 
-      <div className="max-w-3xl mx-auto">
+      <div className="w-full">
         <div className="relative flex flex-col rounded-2xl border bg-card focus-within:border-primary/50 transition-colors">
           <textarea
             ref={textareaRef}
@@ -193,11 +195,11 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={placeholderText}
-            rows={1}
+            rows={tall ? 4 : 1}
             className={cn(
               'w-full resize-none bg-transparent px-4 pt-3.5 pb-2 text-sm outline-none',
               'placeholder:text-muted-foreground',
-              'min-h-[44px] max-h-[200px]'
+              tall ? 'min-h-[100px] max-h-[200px]' : 'min-h-[44px] max-h-[200px]'
             )}
           />
 

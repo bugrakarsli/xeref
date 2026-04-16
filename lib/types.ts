@@ -1,6 +1,6 @@
 
 export type SidebarTab = 'chat' | 'tasks' | 'code'
-export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code'
+export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code' | 'customize'
 
 export type CategoryId = 'connect' | 'listen' | 'archive' | 'wire' | 'sense' | 'agent-architecture';
 
@@ -101,6 +101,10 @@ export interface Workflow {
   trigger: string;
   action: string;
   enabled: boolean;
+  cron_expression: string | null;
+  webhook_secret: string | null;
+  last_run_at: string | null;
+  last_run_result: string | null;
   created_at: string;
 }
 
@@ -108,4 +112,28 @@ export interface ChatAttachment {
   url: string;
   contentType: string;
   name: string;
+}
+
+export interface Note {
+  id: string;
+  user_id: string;
+  title: string;
+  content: string;
+  updated_at: string;
+  created_at: string;
+}
+
+export interface DailyTarget {
+  goal: number;
+  completed: number;
+  resetAt: string;
+}
+
+export interface ProjectGoal {
+  id: string;
+  project_id: string;
+  user_id: string;
+  title: string;
+  completed: boolean;
+  created_at: string;
 }

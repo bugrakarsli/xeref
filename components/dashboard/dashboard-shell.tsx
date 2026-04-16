@@ -20,6 +20,7 @@ import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
+import { CustomizeView } from './customize-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { WhatsNewToast } from './whats-new-toast'
@@ -66,6 +67,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   const userEmail = user.email ?? ''
 
   async function handleNewChat() {
+    const currentChat = chats.find((c) => c.id === selectedChatId)
+    if (currentChat?.title === 'New Chat' && activeView === 'chat') {
+      window.dispatchEvent(new CustomEvent('xeref_focus_chat_input'))
+      return
+    }
+
     try {
       const newChat = await createChat(null, 'New Chat')
       setChats((prev) => [newChat, ...prev])
@@ -298,6 +305,16 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 return <AgentTeamView />
               case 'code':
                 return <ComingSoonView viewName="Workspaces" />
+              case 'customize':
+                return (
+                  <CustomizeView
+                    onBack={() => {
+                      setActiveView('home')
+                      setCollapsed(false)
+                      localStorage.setItem('xeref_active_view', 'home')
+                    }}
+                  />
+                )
             }
           })()}
         </main>
@@ -320,7 +337,9 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               }}
               onClose={() => {
                 setShowAgentPanel(false)
+                setAgentPanelMinimized(false)
                 localStorage.setItem('xeref_agent_panel_open', 'false')
+                localStorage.setItem('xeref_agent_panel_minimized', 'false')
               }}
             />
           </div>

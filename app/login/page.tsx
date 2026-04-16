@@ -13,6 +13,7 @@ import {
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { MobileNav } from '@/components/mobile-nav';
+import { ScrollToTopButton } from '@/components/ui/ScrollToTopButton';
 
 export default function LoginPage() {
   return (
@@ -430,6 +431,8 @@ export default function LoginPage() {
           <Link className="hover:underline underline-offset-4" href="/privacy">Privacy</Link>
         </nav>
       </footer>
+
+      <ScrollToTopButton />
     </div>
   );
 }

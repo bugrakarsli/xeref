@@ -2,12 +2,13 @@
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  MessageSquarePlus, History, MoreHorizontal, X, Minus, Maximize2, Settings, Copy, Play, Trash2, Save,
-  FileText, Code, Plus, Pencil, ThumbsUp, ThumbsDown, Check
+  MessageSquarePlus, History, MoreHorizontal, Maximize2, Settings, Copy, Play, Trash2, Save,
+  FileText, Code, Plus, Pencil, ThumbsUp, ThumbsDown, Check, X
 } from 'lucide-react';
 import ChatInput from './ChatInput';
 import { createChatSession, sendMessageToGemini, OpenRouterChatSession } from '@/lib/apiService';
 import { AVAILABLE_MODELS, DEFAULT_MODEL } from '@/lib/models-config';
+import { ScrollToBottomButton } from '@/components/ui/ScrollToBottomButton';
 import { ChatState, Message, AgentSettings, ChatSession, Theme } from '@/types/agent-types';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -59,6 +60,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
 
   const chatSessionRef = useRef<OpenRouterChatSession | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
   const exportMenuRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
 
@@ -452,13 +454,6 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                 </>
             )}
             
-            <div className={`w-px h-4 mx-1 ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-200'}`}></div>
-             <button onClick={onMinimize} className={`p-1 rounded ${hoverClass}`} title="Minimize">
-                <Minus size={16} />
-            </button>
-            <button onClick={onClose} className={`p-1 rounded ${hoverClass}`} title="Close">
-                <X size={16} />
-            </button>
         </div>
       </div>
 
@@ -555,7 +550,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
           </div>
       ) : (
           <div className="flex-1 relative overflow-hidden flex flex-col">
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div ref={messagesScrollRef} className="flex-1 overflow-y-auto p-4 space-y-6">
                 {/* Existing Chat Content */}
                 {chatState.messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-gray-300 dark:text-gray-600 pb-20 select-none">
@@ -716,14 +711,17 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                 </div>
             )}
 
-            <ChatInput 
-                onSend={handleSendMessage} 
-                isLoading={chatState.isLoading} 
+            <div className="relative">
+              <ScrollToBottomButton scrollContainerRef={messagesScrollRef} />
+            </div>
+            <ChatInput
+                onSend={handleSendMessage}
+                isLoading={chatState.isLoading}
                 selectedModel={settings.modelName}
                 onSelectModel={(m) => setSettings(s => ({...s, modelName: m}))}
                 planningMode={planningMode}
                 onTogglePlanning={setPlanningMode}
-                value={currentInput} 
+                value={currentInput}
                 onChange={setCurrentInput}
                 onImageSelect={(base64, mimeType) => setAttachedImage({ data: base64, mimeType })}
             />

@@ -660,6 +660,16 @@ export function Sidebar({
         {/* ── CHAT TAB ─────────────────────────────────────── */}
         {(collapsed || activeTab === 'chat') && (
           <>
+            {/* Collapsed quick-nav icons */}
+            {collapsed && (
+              <div className="flex flex-col gap-1 mb-1">
+                <NavItem icon={<MessageSquare className="h-4 w-4" />} label="New Chat" collapsed={collapsed} onClick={() => onNewChat?.()} />
+                <NavItem icon={<FolderOpen className="h-4 w-4" />} label="Projects" active={activeView === 'home'} collapsed={collapsed} onClick={() => onViewChange('home')} />
+                <NavItem icon={<Settings className="h-4 w-4" />} label="Customize" active={activeView === 'customize'} collapsed={collapsed} onClick={() => onViewChange('customize')} />
+                <NavItem icon={<Code2 className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => onViewChange('code')} />
+              </div>
+            )}
+
             {/* Attached sections - replaces Home */}
             {!collapsed && (
               <div className="flex flex-col gap-1 mb-2">
@@ -697,12 +707,12 @@ export function Sidebar({
 
                 {/* Customize Link */}
                 <button
-                  onClick={() => onViewChange('settings')}
+                  onClick={() => { onViewChange('customize'); onToggle() }}
                   className={cn(
                     'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',
                     focusRing,
-                    activeView === 'settings' && 'bg-accent text-accent-foreground'
+                    activeView === 'customize' && 'bg-accent text-accent-foreground'
                   )}
                 >
                   <Settings className="h-4 w-4" />
@@ -1151,6 +1161,7 @@ export function Sidebar({
         onOpenChange={setCreateProjectDialogOpen}
         onProjectCreated={(project) => {
           onProjectCreated?.(project)
+          // goals are stored by the server action; ProjectCard fetches them on mount
         }}
       />
 

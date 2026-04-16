@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { GitFork, Brain, ToggleLeft, ToggleRight, Plus, Trash2, X } from 'lucide-react'
+import { GitFork, Brain, ToggleLeft, ToggleRight, Plus, Trash2, X, Link, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -22,7 +22,30 @@ const TRIGGER_OPTIONS: { value: string; label: string }[] = [
   { value: 'task_completed', label: 'When a task is completed' },
   { value: 'scheduled_daily', label: 'Daily at 9:00 AM' },
   { value: 'scheduled_weekly', label: 'Every Monday' },
+  { value: 'cron', label: 'Cron schedule (custom)' },
+  { value: 'webhook', label: 'Incoming webhook' },
 ]
+
+function parseCronToHuman(expr: string): string {
+  if (!expr.trim()) return ''
+  const parts = expr.trim().split(/\s+/)
+  if (parts.length !== 5) return expr
+
+  const [min, hour, dom, , dow] = parts
+  const pad = (n: string) => n.padStart(2, '0')
+
+  if (dow !== '*' && dom === '*') {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const day = days[parseInt(dow, 10)] ?? dow
+    if (min !== '*' && hour !== '*') return `Every ${day} at ${pad(hour)}:${pad(min)}`
+  }
+  if (dom === '*' && dow === '*') {
+    if (min !== '*' && hour !== '*') return `Every day at ${pad(hour)}:${pad(min)}`
+    if (min.startsWith('*/')) return `Every ${min.slice(2)} minutes`
+    if (hour.startsWith('*/')) return `Every ${hour.slice(2)} hours`
+  }
+  return expr
+}
 
 const ACTION_OPTIONS: { value: string; label: string }[] = [
   { value: 'save_memory', label: 'Save to memory' },
@@ -55,6 +78,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   const [newName, setNewName] = useState('')
   const [newTrigger, setNewTrigger] = useState(TRIGGER_OPTIONS[0].value)
   const [newAction, setNewAction] = useState(ACTION_OPTIONS[0].value)
+  const [cronExpr, setCronExpr] = useState('0 9 * * *')
 
   useEffect(() => {
     async function load() {
@@ -101,11 +125,14 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     if (!name) return
     startTransition(async () => {
       try {
-        const workflow = await createWorkflow(name, newTrigger, newAction)
+        const workflow = await createWorkflow(name, newTrigger, newAction, {
+          cron_expression: newTrigger === 'cron' ? cronExpr : undefined,
+        })
         setWorkflows((prev) => [...prev, workflow])
         setNewName('')
         setNewTrigger(TRIGGER_OPTIONS[0].value)
         setNewAction(ACTION_OPTIONS[0].value)
+        setCronExpr('0 9 * * *')
         setShowForm(false)
         toast.success('Workflow created')
       } catch {
@@ -176,6 +203,24 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+
+            {newTrigger === 'cron' && (
+              <div className="flex flex-col gap-1 w-full">
+                <label className="text-xs text-muted-foreground font-medium">Cron expression</label>
+                <Input
+                  value={cronExpr}
+                  onChange={(e) => setCronExpr(e.target.value)}
+                  placeholder="0 9 * * *"
+                  className="font-mono text-sm"
+                />
+                {parseCronToHuman(cronExpr) !== cronExpr && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {parseCronToHuman(cronExpr)}
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
               <label className="text-xs text-muted-foreground font-medium">Action</label>
@@ -266,9 +311,32 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   <span className="text-foreground/60">{TRIGGER_LABELS[workflow.trigger] ?? workflow.trigger}</span>
+                  {workflow.cron_expression && (
+                    <span className="ml-1 font-mono text-[10px] bg-muted px-1 rounded">{parseCronToHuman(workflow.cron_expression)}</span>
+                  )}
                   {' → '}
                   <span className="text-foreground/60">{ACTION_LABELS[workflow.action] ?? workflow.action}</span>
                 </p>
+                {workflow.trigger === 'webhook' && workflow.webhook_secret && (
+                  <button
+                    type="button"
+                    className="flex items-center gap-1 mt-1 text-[10px] text-primary/70 hover:text-primary transition-colors"
+                    onClick={() => {
+                      const webhookUrl = `${location.origin}/api/webhooks/workflow?secret=${workflow.webhook_secret}`
+                      navigator.clipboard.writeText(webhookUrl)
+                      toast.success('Webhook URL copied')
+                    }}
+                  >
+                    <Link className="h-2.5 w-2.5" />
+                    Copy webhook URL
+                  </button>
+                )}
+                {workflow.last_run_at && (
+                  <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+                    Last run: {new Date(workflow.last_run_at).toLocaleString()}
+                    {workflow.last_run_result && ` — ${workflow.last_run_result}`}
+                  </p>
+                )}
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
