@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { latestVersion } from '@/lib/changelog-entries'
 
 export function RhsSidebar() {
   return (
@@ -17,7 +18,7 @@ export function RhsSidebar() {
           title="Changelog"
         >
           <span className="h-1.5 w-1.5 rounded-full bg-primary" />
-          v1.7
+          {latestVersion}
         </Link>
       </div>
     </aside>
