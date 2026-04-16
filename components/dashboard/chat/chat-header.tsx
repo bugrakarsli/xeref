@@ -1,96 +1,65 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { SquarePen, List } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { SquarePen, Search } from 'lucide-react'
 
 interface ChatHeaderProps {
-  activeTab: 'chat' | 'tasks'
-  onTabChange: (tab: 'chat' | 'tasks') => void
   onNewChat: () => void
-  onShowList: () => void
-  showingList: boolean
   agentName?: string
 }
 
-export function ChatHeader({
-  activeTab,
-  onTabChange,
-  onNewChat,
-  onShowList,
-  showingList,
-  agentName,
-}: ChatHeaderProps) {
+export function ChatHeader({ onNewChat, agentName }: ChatHeaderProps) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'k' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('xeref_show_chat_list', { detail: { focusSearch: true } }))
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   return (
     <div className="flex items-center gap-2 px-4 h-14 border-b shrink-0">
-      {/* Chat/Tasks toggle */}
-      <div className="flex items-center gap-1 bg-muted rounded-full p-1 text-sm">
-        <button
-          onClick={() => onTabChange('chat')}
-          className={cn(
-            'px-4 py-1 rounded-full text-xs font-medium transition-colors',
-            activeTab === 'chat'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          chat
-        </button>
-        <button
-          onClick={() => onTabChange('tasks')}
-          className={cn(
-            'px-4 py-1 rounded-full text-xs font-medium transition-colors',
-            activeTab === 'tasks'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          tasks
-        </button>
-      </div>
-
       {/* Agent name */}
-      {agentName && activeTab === 'chat' && (
+      {agentName && (
         <span className="text-xs text-muted-foreground truncate hidden sm:block">
-          — {agentName}
+          {agentName}
         </span>
       )}
 
       <div className="ml-auto flex items-center gap-1">
-        {/* Chat list toggle */}
-        {activeTab === 'chat' && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onShowList}
-                aria-label="Show chat history"
-                className={cn(
-                  'flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent',
-                  showingList && 'bg-accent text-accent-foreground'
-                )}
-              >
-                <List className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">Chat History</TooltipContent>
-          </Tooltip>
-        )}
+        {/* Search */}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('xeref_show_chat_list', { detail: { focusSearch: true } }))}
+              aria-label="Search chats"
+              className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent text-muted-foreground hover:text-foreground"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Search chats <kbd className="ml-1 text-[10px] opacity-60">Ctrl+K</kbd>
+          </TooltipContent>
+        </Tooltip>
 
         {/* New Chat */}
-        {activeTab === 'chat' && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <button
-                onClick={onNewChat}
-                aria-label="New Chat"
-                className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent"
-              >
-                <SquarePen className="h-4 w-4" />
-              </button>
-            </TooltipTrigger>
-            <TooltipContent side="bottom">New Chat</TooltipContent>
-          </Tooltip>
-        )}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              onClick={onNewChat}
+              aria-label="New Chat"
+              className="flex items-center justify-center h-8 w-8 rounded-lg transition-colors hover:bg-accent"
+            >
+              <SquarePen className="h-4 w-4" />
+            </button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">New Chat</TooltipContent>
+        </Tooltip>
       </div>
     </div>
   )

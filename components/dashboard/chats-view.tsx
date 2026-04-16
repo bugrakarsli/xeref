@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { ChatHeader } from './chat/chat-header'
 import { ChatInterface } from './chat/chat-interface'
 import { ChatList } from './chat/chat-list'
-import { TasksView } from './tasks-view'
 import { createChat, getChatMessages, updateChatTitle } from '@/app/actions/chats'
 import { toast } from 'sonner'
 import type { Project, Chat, Message } from '@/lib/types'
@@ -20,7 +19,6 @@ interface ChatsViewProps {
 }
 
 export function ChatsView({ projects, initialChats, userName, userPlan = 'free', selectedChatId }: ChatsViewProps) {
-  const [activeTab, setActiveTab] = useState<'chat' | 'tasks'>('chat')
   const [showingList, setShowingList] = useState(false)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [activeChat, setActiveChat] = useState<Chat | null>(initialChats[0] ?? null)
@@ -87,9 +85,24 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
     const chat = chats.find((c) => c.id === selectedChatId)
     if (chat) {
       handleSelectChat(chat)
-      setActiveTab('chat')
     }
   }, [selectedChatId, chats])
+
+  const [initialFocusSearch, setInitialFocusSearch] = useState(false)
+
+  // Listen for "Chat History" icon click from the sidebar Recents hover effect, or Ctrl+K search triggers
+  useEffect(() => {
+    const handler = (e: Event) => {
+      setShowingList(true)
+      if (e instanceof CustomEvent && e.detail?.focusSearch) {
+        setInitialFocusSearch(true)
+      } else {
+        setInitialFocusSearch(false)
+      }
+    }
+    window.addEventListener('xeref_show_chat_list', handler)
+    return () => window.removeEventListener('xeref_show_chat_list', handler)
+  }, [])
 
   function handleChatCreated(chat: Chat) {
     setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
@@ -98,6 +111,7 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
 
   async function handleNewChat() {
     if (chatMessages.length === 0) {
+      setShowingList(false)
       window.dispatchEvent(new CustomEvent('xeref_focus_chat_input'))
       return
     }
@@ -151,11 +165,6 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
     }
   }
 
-  function handleTabChange(tab: 'chat' | 'tasks') {
-    setActiveTab(tab)
-    if (tab === 'tasks') setShowingList(false)
-  }
-
   const agentName =
     selectedAgent?.type === 'system'
       ? selectedAgent.agent.name
@@ -165,36 +174,34 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
 
   return (
     <section aria-label="Chat" className="flex flex-col flex-1 min-h-0">
-      <ChatHeader
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        onNewChat={handleNewChat}
-        onShowList={() => setShowingList((v) => !v)}
-        showingList={showingList}
-        agentName={agentName}
-      />
-
-      {activeTab === 'tasks' ? (
-        <TasksView />
-      ) : showingList ? (
+      {showingList ? (
+        /* Chat History list view — has its own header (image-2) */
         <ChatList
           chats={chats}
           activeChatId={activeChat?.id ?? null}
           onSelectChat={handleSelectChat}
           onDeleteChat={handleDeleteChat}
           onNewChat={handleNewChat}
+          initialFocusSearch={initialFocusSearch}
         />
       ) : (
-        <ChatInterface
-          projects={projects}
-          selectedAgent={selectedAgent}
-          onAgentSelect={handleAgentSelect}
-          activeChat={activeChat}
-          onChatCreated={handleChatCreated}
-          initialMessages={chatMessages}
-          userName={userName}
-          userPlan={userPlan}
-        />
+        /* Normal chat view — simplified header + interface */
+        <>
+          <ChatHeader
+            onNewChat={handleNewChat}
+            agentName={agentName}
+          />
+          <ChatInterface
+            projects={projects}
+            selectedAgent={selectedAgent}
+            onAgentSelect={handleAgentSelect}
+            activeChat={activeChat}
+            onChatCreated={handleChatCreated}
+            initialMessages={chatMessages}
+            userName={userName}
+            userPlan={userPlan}
+          />
+        </>
       )}
     </section>
   )

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition, useRef, useCallback } from 'react'
-import { CheckSquare, Plus, Trash2, ChevronDown, FileText, Target, Pencil } from 'lucide-react'
+import { CheckSquare, Plus, Trash2, ChevronDown, FileText, Target, Pencil, Kanban, List as ListIcon, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -16,6 +16,14 @@ import { toast } from 'sonner'
 import { createTask, getUserTasks, updateTask, deleteTask, getDailyTarget, setDailyGoal, incrementDailyCompleted } from '@/app/actions/tasks'
 import { getUserNotes, createNote, updateNote, deleteNote } from '@/app/actions/notes'
 import type { Task, Note, DailyTarget } from '@/lib/types'
+import { TaskDialog } from './task-dialog'
+import { KanbanSettingsDialog } from './kanban-settings-dialog'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 type StatusFilter = 'all' | 'todo' | 'in_progress' | 'done'
 type ViewTab = 'tasks' | 'notes'
@@ -256,9 +264,10 @@ export function TasksView({ projectCount }: TasksViewProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatusFilter>('all')
-  const [newTitle, setNewTitle] = useState('')
-  const [newPriority, setNewPriority] = useState<Task['priority']>('medium')
-  const [showForm, setShowForm] = useState(false)
+  const [taskDialogOpen, setTaskDialogOpen] = useState(false)
+  const [kanbanSettingsOpen, setKanbanSettingsOpen] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
+  const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [isPending, startTransition] = useTransition()
   const [dailyTarget, setDailyTarget] = useState<DailyTarget | null>(null)
 
@@ -273,22 +282,43 @@ export function TasksView({ projectCount }: TasksViewProps) {
       .catch(() => null)
   }, [])
 
+  useEffect(() => {
+    const handleOpenDialog = () => {
+      setEditingTask(null)
+      setTaskDialogOpen(true)
+    }
+    window.addEventListener('xeref_open_task_dialog', handleOpenDialog)
+    return () => window.removeEventListener('xeref_open_task_dialog', handleOpenDialog)
+  }, [])
+
   const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.status === filter)
 
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault()
-    const title = newTitle.trim()
-    if (!title) return
+  async function handleSaveTask(data: Partial<Task>) {
     startTransition(async () => {
       try {
-        const task = await createTask(title, { priority: newPriority })
-        setTasks((prev) => [task, ...prev])
-        setNewTitle('')
-        setShowForm(false)
-        toast.success('Task created')
+        if (editingTask) {
+          const updated = await updateTask(editingTask.id, data)
+          setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)))
+          toast.success('Task updated')
+        } else {
+          const task = await createTask(data.title as string, {
+            description: data.description ?? undefined,
+            priority: data.priority,
+            due_date: data.due_date,
+          })
+          if (data.status && data.status !== 'todo') {
+            const updated = await updateTask(task.id, { status: data.status })
+            setTasks((prev) => [updated, ...prev])
+          } else {
+            setTasks((prev) => [task, ...prev])
+          }
+          toast.success('Task created')
+        }
+        setTaskDialogOpen(false)
+        setEditingTask(null)
       } catch (err) {
         const msg = err instanceof Error ? err.message : 'Unknown error'
-        toast.error(`Failed to create task: ${msg}`)
+        toast.error(`Failed to save task: ${msg}`)
       }
     })
   }
@@ -317,6 +347,10 @@ export function TasksView({ projectCount }: TasksViewProps) {
         await deleteTask(task.id)
         setTasks((prev) => prev.filter((t) => t.id !== task.id))
         toast.success('Task deleted')
+        if (taskDialogOpen && editingTask?.id === task.id) {
+          setTaskDialogOpen(false)
+          setEditingTask(null)
+        }
       } catch {
         toast.error('Failed to delete task')
       }
@@ -383,159 +417,268 @@ export function TasksView({ projectCount }: TasksViewProps) {
             </div>
             <div className="flex items-center gap-2 shrink-0">
               {dailyTarget && (
-                <div className="w-48">
+                <div className="w-48 mr-2">
                   <DailyTargetBar target={dailyTarget} onGoalChange={handleGoalChange} />
                 </div>
               )}
-              <Button size="sm" className="gap-2" onClick={() => setShowForm((v) => !v)}>
+
+              <div className="flex items-center rounded-md border p-0.5">
+                <Button variant="ghost" size="sm" className={cn("px-2 py-1 h-7", viewMode === 'list' && "bg-accent")} onClick={() => setViewMode('list')}>
+                  <ListIcon className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className={cn("px-2 py-1 h-7", viewMode === 'kanban' && "bg-accent")} onClick={() => setViewMode('kanban')}>
+                  <Kanban className="h-4 w-4" />
+                </Button>
+                {viewMode === 'kanban' && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant="ghost" size="sm" className="px-2 py-1 h-7 ml-0.5 text-muted-foreground hover:text-foreground" onClick={() => setKanbanSettingsOpen(true)}>
+                          <Settings2 className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Customize kanban columns</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </div>
+
+              <Button size="sm" className="gap-2 ml-2" onClick={() => {
+                setEditingTask(null)
+                setTaskDialogOpen(true)
+              }}>
                 <Plus className="h-4 w-4" />
                 Add Task
               </Button>
             </div>
           </div>
 
-          {/* Create form */}
-          {showForm && (
-            <form onSubmit={handleCreate} className="flex gap-2 mb-4">
-              <Input
-                value={newTitle}
-                onChange={(e) => setNewTitle(e.target.value)}
-                placeholder="Task title…"
-                className="flex-1"
-                autoFocus
-              />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="outline" size="sm" className="gap-1.5 capitalize">
-                    {newPriority}
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {(['low', 'medium', 'high'] as Task['priority'][]).map((p) => (
-                    <DropdownMenuItem key={p} onClick={() => setNewPriority(p)} className="capitalize">
-                      {p}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button type="submit" size="sm" disabled={!newTitle.trim() || isPending}>
-                Create
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>
-                Cancel
-              </Button>
-            </form>
-          )}
-
           {/* Status filter tabs */}
-          <div className="flex gap-1 mb-4 border-b pb-2">
-            {(['all', 'todo', 'in_progress', 'done'] as StatusFilter[]).map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilter(s)}
-                className={cn(
-                  'px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors',
-                  filter === s
-                    ? 'bg-accent text-accent-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                )}
-              >
-                {s.replace('_', ' ')}
-                <span className={cn(
-                  'ml-1.5 text-[10px] font-bold px-1 py-0.5 rounded',
-                  filter === s ? 'bg-background/50' : 'bg-muted'
-                )}>
-                  {counts[s]}
-                </span>
-              </button>
-            ))}
-          </div>
-
-          {/* Column headers */}
-          <div className="grid grid-cols-12 gap-4 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b mb-1">
-            <span className="col-span-5">Task</span>
-            <span className="col-span-2">Status</span>
-            <span className="col-span-2">Priority</span>
-            <span className="col-span-2">Due</span>
-            <span className="col-span-1" />
-          </div>
-
-          {/* Task list */}
-          {loading ? (
-            <div className="flex items-center justify-center flex-1 py-12 text-sm text-muted-foreground">
-              Loading tasks…
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center flex-1 gap-3 rounded-xl border border-dashed mt-4 p-12 text-center">
-              <div className="rounded-full bg-muted p-4">
-                <CheckSquare className="h-6 w-6 text-muted-foreground" />
-              </div>
-              <p className="text-sm font-medium">
-                {filter === 'all' ? 'No tasks yet' : `No ${filter.replace('_', ' ')} tasks`}
-              </p>
-              <p className="text-xs text-muted-foreground max-w-xs">
-                {filter === 'all'
-                  ? 'Click "Add Task" or ask the chat assistant to create tasks for you.'
-                  : `Switch to "All" to see tasks with other statuses.`}
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col divide-y">
-              {filtered.map((task) => (
-                <div
-                  key={task.id}
-                  className="group grid grid-cols-12 gap-4 items-center px-3 py-3 hover:bg-accent/30 rounded-lg transition-colors"
-                >
-                  <div className="col-span-5 flex items-center gap-2 min-w-0">
-                    <button
-                      onClick={() => handleStatusCycle(task)}
-                      className={cn(
-                        'h-4 w-4 rounded border-2 shrink-0 transition-colors',
-                        task.status === 'done'
-                          ? 'bg-emerald-500 border-emerald-500'
-                          : task.status === 'in_progress'
-                          ? 'bg-blue-500/30 border-blue-500'
-                          : 'border-muted-foreground hover:border-primary'
-                      )}
-                      aria-label="Cycle status"
-                    >
-                      {task.status === 'done' && (
-                        <svg viewBox="0 0 12 12" className="w-full h-full text-white">
-                          <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      )}
-                    </button>
-                    <span className={cn('text-sm truncate', task.status === 'done' && 'line-through text-muted-foreground')}>
-                      {task.title}
+          {viewMode === 'list' ? (
+            <>
+              <div className="flex gap-1 mb-4 border-b pb-2">
+                {(['all', 'todo', 'in_progress', 'done'] as StatusFilter[]).map((s) => (
+                  <button
+                    key={s}
+                    onClick={() => setFilter(s)}
+                    className={cn(
+                      'px-3 py-1.5 rounded-md text-xs font-medium capitalize transition-colors',
+                      filter === s
+                        ? 'bg-accent text-accent-foreground'
+                        : 'text-muted-foreground hover:text-foreground'
+                    )}
+                  >
+                    {s.replace('_', ' ')}
+                    <span className={cn(
+                      'ml-1.5 text-[10px] font-bold px-1 py-0.5 rounded',
+                      filter === s ? 'bg-background/50' : 'bg-muted'
+                    )}>
+                      {counts[s]}
                     </span>
-                  </div>
-                  <div className="col-span-2">
-                    <Badge className={cn('text-[10px] capitalize cursor-pointer', STATUS_COLORS[task.status])} onClick={() => handleStatusCycle(task)}>
-                      {task.status.replace('_', ' ')}
-                    </Badge>
-                  </div>
-                  <div className="col-span-2">
-                    <Badge className={cn('text-[10px] capitalize', PRIORITY_COLORS[task.priority])}>
-                      {task.priority}
-                    </Badge>
-                  </div>
-                  <div className="col-span-2 text-xs text-muted-foreground truncate">
-                    {task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}
-                  </div>
-                  <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => handleDelete(task)}
-                      className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive transition-colors"
-                      aria-label="Delete task"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  </button>
+                ))}
+              </div>
+
+              {/* Column headers */}
+              <div className="grid grid-cols-12 gap-4 px-3 py-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b mb-1">
+                <span className="col-span-5">Task</span>
+                <span className="col-span-2">Status</span>
+                <span className="col-span-2">Priority</span>
+                <span className="col-span-2">Due</span>
+                <span className="col-span-1" />
+              </div>
+
+              {/* Task list */}
+              {loading ? (
+                <div className="flex items-center justify-center flex-1 py-12 text-sm text-muted-foreground">
+                  Loading tasks…
                 </div>
-              ))}
+              ) : filtered.length === 0 ? (
+                <div className="flex flex-col items-center justify-center flex-1 gap-3 rounded-xl border border-dashed mt-4 p-12 text-center">
+                  <div className="rounded-full bg-muted p-4">
+                    <CheckSquare className="h-6 w-6 text-muted-foreground" />
+                  </div>
+                  <p className="text-sm font-medium">
+                    {filter === 'all' ? 'No tasks yet' : `No ${filter.replace('_', ' ')} tasks`}
+                  </p>
+                  <p className="text-xs text-muted-foreground max-w-xs">
+                    {filter === 'all'
+                      ? 'Click "Add Task" or ask the chat assistant to create tasks for you.'
+                      : `Switch to "All" to see tasks with other statuses.`}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col divide-y">
+                  {filtered.map((task) => (
+                    <div
+                      key={task.id}
+                      className="group grid grid-cols-12 gap-4 items-center px-3 py-3 hover:bg-accent/30 rounded-lg transition-colors"
+                    >
+                      <div className="col-span-5 flex items-center gap-2 min-w-0">
+                        <button
+                          onClick={() => handleStatusCycle(task)}
+                          className={cn(
+                            'h-4 w-4 rounded border-2 shrink-0 transition-colors',
+                            task.status === 'done'
+                              ? 'bg-emerald-500 border-emerald-500'
+                              : task.status === 'in_progress'
+                              ? 'bg-blue-500/30 border-blue-500'
+                              : 'border-muted-foreground hover:border-primary'
+                          )}
+                          aria-label="Cycle status"
+                        >
+                          {task.status === 'done' && (
+                            <svg viewBox="0 0 12 12" className="w-full h-full text-white">
+                              <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </button>
+                        <span className={cn('text-sm truncate', task.status === 'done' && 'line-through text-muted-foreground')}>
+                          {task.title}
+                        </span>
+                      </div>
+                      <div className="col-span-2">
+                        <Badge className={cn('text-[10px] capitalize cursor-pointer', STATUS_COLORS[task.status])} onClick={() => handleStatusCycle(task)}>
+                          {task.status.replace('_', ' ')}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2">
+                        <Badge className={cn('text-[10px] capitalize', PRIORITY_COLORS[task.priority])}>
+                          {task.priority}
+                        </Badge>
+                      </div>
+                      <div className="col-span-2 text-xs text-muted-foreground truncate">
+                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}
+                      </div>
+                      <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={() => {
+                            setEditingTask(task)
+                            setTaskDialogOpen(true)
+                          }}
+                          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label="Edit task"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="flex-1 flex items-start gap-4 overflow-x-auto pb-4 min-h-0 scrollbar-thin">
+              {/* Basic Kanban Placeholder */}
+              {(['todo', 'in_progress', 'done'] as Task['status'][]).map(status => {
+                const columnTasks = tasks.filter(t => t.status === status)
+                return (
+                  <div key={status} className="flex flex-col flex-shrink-0 w-80 bg-accent/20 rounded-xl border border-border/50 p-4 h-full max-h-full">
+                    <div className="flex items-center justify-between mb-4 px-1">
+                      <div className="flex items-center gap-2">
+                        <div className={cn(
+                          "h-2 w-2 rounded-full",
+                          status === 'todo' ? "bg-blue-500" :
+                          status === 'in_progress' ? "bg-amber-500" :
+                          "bg-emerald-500"
+                        )} />
+                        <h3 className="font-semibold capitalize text-sm">
+                          {status.replace('_', ' ')}
+                        </h3>
+                        <span className="text-[10px] font-bold text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded-full">
+                          {columnTasks.length}
+                        </span>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setEditingTask({ status } as Task)
+                          setTaskDialogOpen(true)
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    
+                    <div className="flex flex-col gap-3 overflow-y-auto min-h-0 pr-1 pb-2 scrollbar-thin">
+                      {columnTasks.map(task => (
+                        <div 
+                          key={task.id} 
+                          className="bg-card hover:bg-accent/40 border border-border/50 rounded-xl p-4 shadow-sm flex flex-col gap-3 group cursor-pointer hover:border-primary/30 transition-all duration-200" 
+                          onClick={() => { setEditingTask(task); setTaskDialogOpen(true); }}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <span className="text-sm font-medium leading-tight group-hover:text-primary transition-colors">
+                              {task.title}
+                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); handleDelete(task) }}
+                              className="opacity-0 group-hover:opacity-100 shrink-0 text-muted-foreground hover:text-destructive transition-all p-1 hover:bg-destructive/10 rounded"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                          
+                          {task.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                              {task.description}
+                            </p>
+                          )}
+                          
+                          <div className="flex items-center justify-between mt-auto pt-2 border-t border-border/10">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary" className={cn('text-[10px] h-5 px-2 capitalize font-medium', PRIORITY_COLORS[task.priority])}>
+                                {task.priority}
+                              </Badge>
+                            </div>
+                            {task.due_date && (
+                              <div className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium">
+                                <span className="opacity-50">Due</span>
+                                {new Date(task.due_date).toLocaleDateString()}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {columnTasks.length === 0 && (
+                        <div className="flex flex-col items-center justify-center py-12 px-4 border-2 border-dashed border-muted-foreground/10 rounded-xl text-center">
+                          <p className="text-xs text-muted-foreground/40 font-medium italic">
+                            No tasks in this stage
+                          </p>
+                        </div>
+                      )}
+
+                      <button 
+                        className="w-full py-2.5 rounded-xl border border-dashed border-border/50 text-muted-foreground/60 hover:text-foreground hover:bg-accent/50 hover:border-primary/30 transition-all text-xs font-medium flex items-center justify-center gap-2 mt-1"
+                        onClick={() => {
+                          setEditingTask({ status } as Task)
+                          setTaskDialogOpen(true)
+                        }}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Add New Task
+                      </button>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
+
+          <TaskDialog
+            open={taskDialogOpen}
+            onOpenChange={setTaskDialogOpen}
+            task={editingTask}
+            onSave={handleSaveTask}
+            onDelete={handleDelete}
+          />
+          <KanbanSettingsDialog
+            open={kanbanSettingsOpen}
+            onOpenChange={setKanbanSettingsOpen}
+          />
         </>
       )}
     </section>

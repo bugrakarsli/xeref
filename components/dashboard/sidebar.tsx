@@ -46,6 +46,7 @@ import {
   Code2,
   Pin,
   FolderOpen,
+  List,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -122,10 +123,13 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
 }
 
 function UserAvatar({ name }: { name: string }) {
-  const initial = name.charAt(0).toUpperCase()
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  const initials = parts.length >= 2
+    ? (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
+    : name.charAt(0).toUpperCase()
   return (
     <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-      {initial}
+      {initials}
     </div>
   )
 }
@@ -782,15 +786,13 @@ export function Sidebar({
 
                 {/* Recents section */}
                 <div className="mt-auto pt-2 flex flex-col-reverse min-h-0">
-                  <button
-                    onClick={() => setChatsOpen((o) => !o)}
-                    aria-expanded={chatsOpen}
+                  <div
                     className={cn(
-                      'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0 rounded-lg',
+                      'group flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0 rounded-lg',
                       focusRing
                     )}
                   >
-                    <span className="flex items-center gap-1">
+                    <button onClick={() => setChatsOpen((o) => !o)} className="flex items-center gap-1 flex-1 outline-none text-left">
                       Recents
                       <ChevronRight
                         className={cn(
@@ -798,8 +800,20 @@ export function Sidebar({
                           chatsOpen && '-rotate-90'
                         )}
                       />
-                    </span>
-                  </button>
+                    </button>
+                    {chatsOpen && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          window.dispatchEvent(new CustomEvent('xeref_show_chat_list'))
+                        }}
+                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/50 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                        aria-label="Chat history"
+                      >
+                        <List className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
                   {chatsOpen && (
                     <div
                       className="mb-1 flex flex-col gap-0.5 min-h-0"
@@ -867,7 +881,12 @@ export function Sidebar({
             <div className="mb-2">
               <div className="group relative">
                 <button
-                  onClick={() => onViewChange('tasks')}
+                  onClick={() => {
+                    onViewChange('tasks')
+                    setTimeout(() => {
+                      window.dispatchEvent(new CustomEvent('xeref_open_task_dialog'))
+                    }, 0)
+                  }}
                   className={cn(
                     'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',

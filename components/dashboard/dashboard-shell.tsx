@@ -56,7 +56,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     if (window.innerWidth < 768) setCollapsed(true)
   }
 
-  const [showAgentPanel, setShowAgentPanel] = useState(true)
+  const [showAgentPanel, setShowAgentPanel] = useState(false)
   const [agentPanelMinimized, setAgentPanelMinimized] = useState(false)
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
@@ -97,7 +97,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     }
 
     // Load agent panel states
-    const savedPanelOpen = localStorage.getItem('xeref_agent_panel_open') !== 'false'
+    const savedPanelOpen = localStorage.getItem('xeref_agent_panel_open') === 'true'
     const savedPanelMinimized = localStorage.getItem('xeref_agent_panel_minimized') === 'true'
     setShowAgentPanel(savedPanelOpen)
     setAgentPanelMinimized(savedPanelMinimized)

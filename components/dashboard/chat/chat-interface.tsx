@@ -144,6 +144,7 @@ export function ChatInterface({
 
 
   const isLoading = status === 'streaming' || status === 'submitted'
+  const isThinking = status === 'submitted'
 
   async function handleFileSelect(files: FileList) {
     const toUpload = Array.from(files)
@@ -335,7 +336,7 @@ export function ChatInterface({
                 : 'Pick XerefClaw or Xeref Agents to start, or go to Home to activate a custom agent.'}
             </p>
           </div>
-          <ChatInput ref={chatInputRef} {...sharedInputProps} tall />
+          <ChatInput ref={chatInputRef} {...sharedInputProps} noBorder />
         </div>
       </div>
     )
@@ -358,6 +359,58 @@ export function ChatInterface({
               onRetry={message.role === 'assistant' ? () => handleRetry(i) : undefined}
             />
           ))}
+          {/* Rainbow Thinking Indicator */}
+          {isThinking && (
+            <>
+              <style>{`
+                @keyframes rainbow-wave-main {
+                  0%   { background-position: 0% 50%; }
+                  100% { background-position: 300% 50%; }
+                }
+                @keyframes rainbow-dot-main {
+                  0%   { background-position: 0% 50%; }
+                  100% { background-position: 300% 50%; }
+                }
+                .rainbow-thinking-main {
+                  background: linear-gradient(
+                    90deg,
+                    #ff6b6b, #ff9f43, #ffd32a,
+                    #0be881, #17c0eb, #a29bfe,
+                    #fd79a8, #ff6b6b, #ff9f43, #ffd32a
+                  );
+                  background-size: 300% auto;
+                  -webkit-background-clip: text;
+                  background-clip: text;
+                  -webkit-text-fill-color: transparent;
+                  animation: rainbow-wave-main 8s linear infinite;
+                }
+                .rainbow-dot-main {
+                  background: linear-gradient(
+                    90deg,
+                    #ff6b6b, #ff9f43, #ffd32a,
+                    #0be881, #17c0eb, #a29bfe,
+                    #fd79a8, #ff6b6b
+                  );
+                  background-size: 300% auto;
+                  animation: rainbow-dot-main 8s linear infinite;
+                }
+                @keyframes bounce-1 { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-4px); } }
+                @keyframes bounce-2 { 0%, 80%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+                @keyframes bounce-3 { 0%, 80%, 100% { transform: translateY(0); } 60% { transform: translateY(-4px); } }
+                .thinking-dot-1 { animation: bounce-1 1.2s ease-in-out infinite; }
+                .thinking-dot-2 { animation: bounce-2 1.2s ease-in-out infinite; }
+                .thinking-dot-3 { animation: bounce-3 1.2s ease-in-out infinite; }
+              `}</style>
+              <div className="flex items-center gap-2 px-4 py-3 ml-2">
+                <span className="text-xs font-semibold tracking-wide rainbow-thinking-main">Thinking</span>
+                <div className="flex items-end space-x-0.5">
+                  <span className="w-1 h-1 rounded-full rainbow-dot-main thinking-dot-1" />
+                  <span className="w-1 h-1 rounded-full rainbow-dot-main thinking-dot-2" />
+                  <span className="w-1 h-1 rounded-full rainbow-dot-main thinking-dot-3" />
+                </div>
+              </div>
+            </>
+          )}
           <div ref={bottomRef} />
         </div>
       </div>

@@ -656,16 +656,51 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                     ))}
                     </>
                 )}
-                {/* Typing Indicator */}
+                {/* Thinking Indicator */}
                 {isTypingIndicatorVisible && (
-                    <div className="flex items-center gap-2 mt-4 ml-2">
-                        <span className={`text-xs font-medium text-purple-600 dark:text-purple-400`}>Xeref.ai is typing</span>
-                        <div className="flex items-end space-x-0.5">
-                            <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce-delay-1" />
-                            <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce-delay-2" />
-                            <span className="w-1 h-1 bg-gray-500 rounded-full animate-bounce-delay-3" />
+                    <>
+                        <style>{`
+                            @keyframes rainbow-wave {
+                                0%   { background-position: 0% 50%; }
+                                100% { background-position: 300% 50%; }
+                            }
+                            @keyframes rainbow-dot {
+                                0%   { background-position: 0% 50%; }
+                                100% { background-position: 300% 50%; }
+                            }
+                            .rainbow-thinking {
+                                background: linear-gradient(
+                                    90deg,
+                                    #ff6b6b, #ff9f43, #ffd32a,
+                                    #0be881, #17c0eb, #a29bfe,
+                                    #fd79a8, #ff6b6b, #ff9f43, #ffd32a
+                                );
+                                background-size: 300% auto;
+                                -webkit-background-clip: text;
+                                background-clip: text;
+                                -webkit-text-fill-color: transparent;
+                                animation: rainbow-wave 8s linear infinite;
+                            }
+                            .rainbow-dot {
+                                background: linear-gradient(
+                                    90deg,
+                                    #ff6b6b, #ff9f43, #ffd32a,
+                                    #0be881, #17c0eb, #a29bfe,
+                                    #fd79a8, #ff6b6b
+                                );
+                                background-size: 300% auto;
+                                animation: rainbow-dot 8s linear infinite;
+                            }
+                        `}</style>
+                        <div className="flex items-center gap-2 mt-4 ml-2">
+                            <span className="text-xs font-semibold tracking-wide rainbow-thinking">Thinking</span>
+                            <div className="flex items-end space-x-0.5">
+                                <span className="w-1 h-1 rounded-full rainbow-dot animate-bounce-delay-1" />
+                                <span className="w-1 h-1 rounded-full rainbow-dot animate-bounce-delay-2" />
+                                <span className="w-1 h-1 rounded-full rainbow-dot animate-bounce-delay-3" />
+                            </div>
                         </div>
-                    </div>
+                    </>
                 )}
                 {/* Streaming Indicator */}
                 {isStreamingIndicatorVisible && (

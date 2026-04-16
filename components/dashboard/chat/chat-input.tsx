@@ -60,6 +60,7 @@ interface ChatInputProps {
   webSearchEnabled: boolean
   onWebSearchToggle: () => void
   tall?: boolean
+  noBorder?: boolean
 }
 
 export interface ChatInputHandle {
@@ -83,6 +84,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onRemoveAttachment,
   webSearchEnabled,
   onWebSearchToggle,
+  noBorder = false,
 }: ChatInputProps, ref) {
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -171,7 +173,10 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const hasExtras = attachments.length > 0 || webSearchEnabled
 
   return (
-    <form onSubmit={onSubmit} className="w-full px-4 py-3 border-t bg-background/80 backdrop-blur-sm">
+    <form onSubmit={onSubmit} className={cn(
+      "w-full px-4 py-3 bg-background/80 backdrop-blur-sm",
+      !noBorder && "border-t"
+    )}>
       {/* Hidden file input */}
       <input
         ref={fileInputRef}
@@ -183,7 +188,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
         onChange={handleFileInputChange}
       />
 
-      <div className="w-full">
+      <div className="w-full max-w-2xl mx-auto">
         <div className="relative flex flex-col rounded-2xl border bg-card focus-within:border-primary/50 transition-colors">
           <textarea
             ref={textareaRef}
