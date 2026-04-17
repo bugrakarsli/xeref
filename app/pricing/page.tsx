@@ -214,11 +214,6 @@ export default function PricingPage() {
           </div>
 
           <div className="text-center mt-10 space-y-4">
-            <Button variant="outline" asChild>
-              <a href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" rel="noopener noreferrer">
-                Learn More
-              </a>
-            </Button>
             <p className="text-sm text-muted-foreground">
               Questions?{' '}
               <Link href="/faq" className="underline underline-offset-2 hover:text-foreground">

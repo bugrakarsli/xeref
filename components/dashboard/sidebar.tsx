@@ -30,7 +30,6 @@ import {
   BrainCircuit,
   PanelLeft,
   ChevronDown,
-  ChevronUp,
   ChevronRight,
   LogOut,
   Dot,
@@ -974,16 +973,12 @@ export function Sidebar({
                   aria-expanded={advancedOpen}
                   aria-controls="advanced-nav-section"
                   className={cn(
-                    'flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
+                    'flex items-center gap-1.5 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
                     focusRing
                   )}
                 >
                   Advanced
-                  {advancedOpen ? (
-                    <ChevronUp className="h-3 w-3" />
-                  ) : (
-                    <ChevronDown className="h-3 w-3" />
-                  )}
+                  <ChevronDown className={cn('h-3 w-3 transition-transform duration-200', !advancedOpen && '-rotate-90')} />
                 </button>
               )}
               {advancedOpen && (

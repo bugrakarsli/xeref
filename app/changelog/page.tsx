@@ -3,6 +3,7 @@ import { ArrowLeft } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/mobile-nav';
 import { changelogEntries } from '@/lib/changelog-entries';
 
@@ -22,13 +23,6 @@ export default function ChangelogPage() {
           <XerefLogo className="h-8 w-8 mr-2" />
           xeref.ai
         </Link>
-        <Link
-          className="ml-4 flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-          href="/"
-        >
-          <ArrowLeft className="h-3 w-3" />
-          Back
-        </Link>
         <nav className="absolute left-1/2 -translate-x-1/2 hidden sm:flex gap-4 sm:gap-6 items-center">
           <Link className="text-sm font-medium hover:underline underline-offset-4" href="/builder">
             XerefClaw
@@ -41,6 +35,13 @@ export default function ChangelogPage() {
           </Link>
         </nav>
         <div className="ml-auto flex gap-2 items-center">
+          <Link
+            className="hidden sm:flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            href="/"
+          >
+            <ArrowLeft className="h-3 w-3" />
+            Back
+          </Link>
           <div className="hidden sm:block">
             <StartBuildingButton size="sm" />
           </div>
@@ -94,6 +95,14 @@ export default function ChangelogPage() {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="text-center mt-16 space-y-3">
+            <p className="text-sm text-muted-foreground">AI Automations by Bugra Karsli</p>
+            <Button variant="outline" asChild>
+              <a href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" rel="noopener noreferrer">
+                Learn More
+              </a>
+            </Button>
           </div>
         </div>
       </main>

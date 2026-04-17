@@ -52,7 +52,7 @@ async function checkAnonRateLimit(userId: string): Promise<boolean> {
 import { createTask, getUserTasks, updateTask } from '@/app/actions/tasks'
 import { saveMemory, getUserMemories } from '@/app/actions/memories'
 import { renameProject } from '@/app/actions/projects'
-import { isMemoryWorkflowEnabled } from '@/app/actions/workflows'
+import { isMemoryWorkflowEnabled, runChatWorkflows } from '@/app/actions/workflows'
 import {
   DEFAULT_MODEL,
   createOpenRouterForPlan,
@@ -152,6 +152,11 @@ export async function POST(req: Request) {
       system: systemPrompt,
       messages: modelMessages,
       stopWhen: stepCountIs(5),
+      onFinish: async () => {
+        runChatWorkflows(lastUserMessage).catch((err) => {
+          console.error('[Chat] workflow hook failed', err)
+        })
+      },
       tools: {
         create_task: tool({
           description:
@@ -235,10 +240,10 @@ export async function POST(req: Request) {
 
         save_memory: tool({
           description:
-            "Save something to long-term memory. Use when the user says 'remember', 'save this', 'note this', 'don't forget'.",
+            "Save information to the user's long-term memory. Call this whenever the user says 'remember', 'save this', 'note this', 'keep this', 'don't forget', 'save to memory', or any similar intent. If the user does not specify exact content, extract and summarize the most important information from the current conversation and save that. Never ask for clarification — always call this tool immediately with the best content you can derive.",
           inputSchema: z.object({
-            content: z.string(),
-            tags: z.array(z.string()).optional(),
+            content: z.string().describe('The information to save. If not explicitly stated, summarize the key points from the conversation.'),
+            tags: z.array(z.string()).optional().describe('Short topic tags, e.g. ["architecture", "preferences"]'),
           }),
           execute: async ({ content, tags }: { content: string; tags?: string[] }) => {
             if (!memoryEnabled) {

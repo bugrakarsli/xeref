@@ -289,6 +289,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     userName={userName || userEmail.split('@')[0]}
                     userPlan={userPlan}
                     selectedChatId={selectedChatId}
+                    onNewChat={handleNewChat}
                   />
                 )
               case 'settings':

@@ -16,9 +16,10 @@ interface ChatsViewProps {
   userName: string
   userPlan?: 'free' | 'pro' | 'ultra'
   selectedChatId?: string | null
+  onNewChat?: () => void
 }
 
-export function ChatsView({ projects, initialChats, userName, userPlan = 'free', selectedChatId }: ChatsViewProps) {
+export function ChatsView({ projects, initialChats, userName, userPlan = 'free', selectedChatId, onNewChat }: ChatsViewProps) {
   const [showingList, setShowingList] = useState(false)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [activeChat, setActiveChat] = useState<Chat | null>(initialChats[0] ?? null)
@@ -188,7 +189,7 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
         /* Normal chat view — simplified header + interface */
         <>
           <ChatHeader
-            onNewChat={handleNewChat}
+            onNewChat={onNewChat ?? handleNewChat}
             agentName={agentName}
           />
           <ChatInterface

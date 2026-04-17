@@ -6,6 +6,25 @@ import type { Project, Chat, Task } from '@/lib/types'
 import { getUserTasks } from '@/app/actions/tasks'
 import { getTaskCompletionHeatmap, getTaskVelocity, type HeatmapDay, type VelocityWeek } from '@/app/actions/stats'
 
+// ── Brand tokens ──────────────────────────────────────────────────────────────
+const T = {
+  accent: '#5DD9C1',
+  accentDim: '#4CB8A6',
+  accentLight: '#8CF0C8',
+  cardBg: '#222222',
+  cardBorder: '#333333',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#999999',
+  emptyCell: '#2A2A2A',
+} as const
+
+const CARD = {
+  style: { background: T.cardBg, border: `1px solid ${T.cardBorder}`, fontFamily: 'Inter, sans-serif' } as React.CSSProperties,
+  className: 'rounded-xl p-5',
+}
+
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface StatsViewProps {
   projects?: Project[]
   chats?: Chat[]
@@ -28,21 +47,22 @@ function buildActivityData(chats: Chat[], projects: Project[]): DayActivity[] {
     const dateStr = d.toISOString().split('T')[0]
     const shortLabel = `${d.getMonth() + 1}/${d.getDate()}`
     const isToday = i === 13
-
     const chatCount = chats.filter((c) => c.created_at.startsWith(dateStr)).length
     const projectCount = projects.filter((p) => p.created_at.startsWith(dateStr)).length
-
     return { dateStr, shortLabel, isToday, chatCount, projectCount, total: chatCount + projectCount }
   })
 }
 
+// ── Activity Bar Chart ────────────────────────────────────────────────────────
+
 function ActivityChart({ days }: { days: DayActivity[] }) {
+  const [hovered, setHovered] = useState<string | null>(null)
   const maxCount = Math.max(...days.map((d) => d.total), 1)
   const CHART_H = 96
   const BAR_W = 24
   const GAP = 6
-  const TOTAL_W = days.length * (BAR_W + GAP) - GAP
   const LEFT_PAD = 28
+  const TOTAL_W = days.length * (BAR_W + GAP) - GAP
 
   return (
     <div className="w-full overflow-x-auto">
@@ -51,29 +71,19 @@ function ActivityChart({ days }: { days: DayActivity[] }) {
         className="w-full"
         style={{ minWidth: '340px', maxHeight: '160px' }}
       >
-        {/* Y-axis guide lines + labels */}
+        <defs>
+          <filter id="glow-bar" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="rgba(93,217,193,0.45)" />
+          </filter>
+        </defs>
+
+        {/* Y-axis guides */}
         {[0, Math.ceil(maxCount / 2), maxCount].map((val, i) => {
           const y = CHART_H - Math.round((val / maxCount) * CHART_H)
           return (
             <g key={i}>
-              <line
-                x1={LEFT_PAD}
-                y1={y}
-                x2={TOTAL_W + LEFT_PAD + 8}
-                y2={y}
-                stroke="hsl(var(--border))"
-                strokeWidth={0.5}
-                strokeDasharray={i === 0 ? '0' : '3,3'}
-              />
-              <text
-                x={LEFT_PAD - 4}
-                y={y + 4}
-                textAnchor="end"
-                fontSize={8}
-                fill="hsl(var(--muted-foreground))"
-              >
-                {val}
-              </text>
+              <line x1={LEFT_PAD} y1={y} x2={TOTAL_W + LEFT_PAD + 8} y2={y} stroke={T.cardBorder} strokeWidth={0.5} strokeDasharray={i === 0 ? '0' : '3,3'} />
+              <text x={LEFT_PAD - 4} y={y + 4} textAnchor="end" fontSize={8} fill={T.textSecondary}>{val}</text>
             </g>
           )
         })}
@@ -85,61 +95,35 @@ function ActivityChart({ days }: { days: DayActivity[] }) {
             const totalH = day.total > 0 ? Math.max(Math.round((day.total / maxCount) * CHART_H), 3) : 0
             const chatH = day.total > 0 ? Math.round((day.chatCount / day.total) * totalH) : 0
             const projectH = totalH - chatH
+            const isHovered = hovered === day.dateStr
+            const filter = isHovered ? 'url(#glow-bar)' : undefined
 
             return (
-              <g key={day.dateStr}>
+              <g
+                key={day.dateStr}
+                onMouseEnter={() => setHovered(day.dateStr)}
+                onMouseLeave={() => setHovered(null)}
+                style={{ cursor: day.total > 0 ? 'pointer' : 'default' }}
+                filter={filter}
+              >
                 {totalH > 0 ? (
                   <>
-                    {/* Project segment (bottom, dimmer) */}
                     {projectH > 0 && (
-                      <rect
-                        x={x}
-                        y={CHART_H - totalH}
-                        width={BAR_W}
-                        height={projectH}
-                        rx={2}
-                        fill="hsl(var(--primary))"
-                        opacity={0.35}
-                      />
+                      <rect x={x} y={CHART_H - totalH} width={BAR_W} height={projectH} rx={2} fill={T.accentDim} />
                     )}
-                    {/* Chat segment (top) */}
                     {chatH > 0 && (
-                      <rect
-                        x={x}
-                        y={CHART_H - totalH + projectH}
-                        width={BAR_W}
-                        height={chatH}
-                        rx={chatH === totalH ? 2 : 0}
-                        fill="hsl(var(--primary))"
-                        opacity={day.isToday ? 1 : 0.75}
-                      />
+                      <rect x={x} y={CHART_H - totalH + projectH} width={BAR_W} height={chatH} rx={chatH === totalH ? 2 : 0} fill={T.accentLight} />
                     )}
                   </>
                 ) : (
-                  <rect x={x} y={CHART_H - 2} width={BAR_W} height={2} rx={1} fill="hsl(var(--border))" />
+                  <rect x={x} y={CHART_H - 2} width={BAR_W} height={2} rx={1} fill={T.cardBorder} />
                 )}
 
-                {/* Date label */}
-                <text
-                  x={x + BAR_W / 2}
-                  y={CHART_H + 14}
-                  textAnchor="middle"
-                  fontSize={8}
-                  fill={day.isToday ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}
-                  fontWeight={day.isToday ? '600' : '400'}
-                >
+                <text x={x + BAR_W / 2} y={CHART_H + 14} textAnchor="middle" fontSize={8} fill={day.isToday ? T.accent : T.textSecondary} fontWeight={day.isToday ? '600' : '400'}>
                   {day.shortLabel}
                 </text>
                 {day.isToday && (
-                  <text
-                    x={x + BAR_W / 2}
-                    y={CHART_H + 26}
-                    textAnchor="middle"
-                    fontSize={7}
-                    fill="hsl(var(--primary))"
-                  >
-                    today
-                  </text>
+                  <text x={x + BAR_W / 2} y={CHART_H + 26} textAnchor="middle" fontSize={7} fill={T.accent}>today</text>
                 )}
               </g>
             )
@@ -150,14 +134,14 @@ function ActivityChart({ days }: { days: DayActivity[] }) {
   )
 }
 
-// ── Activity Heatmap (52-week GitHub-style) ──────────────────────────────────
+// ── Heatmap ───────────────────────────────────────────────────────────────────
 
 const HEAT_COLORS = [
-  'hsl(var(--muted))',
-  'hsl(var(--primary) / 0.25)',
-  'hsl(var(--primary) / 0.50)',
-  'hsl(var(--primary) / 0.75)',
-  'hsl(var(--primary))',
+  T.emptyCell,
+  `rgba(93,217,193,0.30)`,
+  `rgba(93,217,193,0.55)`,
+  `rgba(93,217,193,0.80)`,
+  T.accent,
 ]
 
 function heatColor(count: number): string {
@@ -175,41 +159,22 @@ function ActivityHeatmap({ days }: { days: HeatmapDay[] }) {
   const WEEKS = 53
   const DAY_LABELS = ['', 'Mon', '', 'Wed', '', 'Fri', '']
 
-  // Pad so first cell aligns to its weekday column
   const firstDay = days[0] ? new Date(days[0].date).getUTCDay() : 0
-  const offset = firstDay === 0 ? 6 : firstDay - 1 // Mon=0
-  const cells: ({ date: string; count: number } | null)[] = [
-    ...Array(offset).fill(null),
-    ...days,
-  ]
+  const offset = firstDay === 0 ? 6 : firstDay - 1
+  const cells: ({ date: string; count: number } | null)[] = [...Array(offset).fill(null), ...days]
 
   return (
     <div className="overflow-x-auto">
-      <svg
-        viewBox={`0 0 ${WEEKS * STEP + 28} ${7 * STEP + 20}`}
-        style={{ minWidth: '560px', maxHeight: '120px' }}
-        className="w-full"
-      >
-        {/* Day labels */}
-        {DAY_LABELS.map((label, i) => label ? (
-          <text key={i} x={0} y={i * STEP + CELL} fontSize={7} fill="hsl(var(--muted-foreground))">{label}</text>
-        ) : null)}
-
-        {/* Cells */}
+      <svg viewBox={`0 0 ${WEEKS * STEP + 28} ${7 * STEP + 20}`} style={{ minWidth: '560px', maxHeight: '120px' }} className="w-full">
+        {DAY_LABELS.map((label, i) =>
+          label ? <text key={i} x={0} y={i * STEP + CELL} fontSize={7} fill={T.textSecondary}>{label}</text> : null
+        )}
         {cells.map((cell, idx) => {
           const col = Math.floor(idx / 7)
           const row = idx % 7
           if (!cell) return null
           return (
-            <rect
-              key={cell.date}
-              x={col * STEP + 28}
-              y={row * STEP}
-              width={CELL}
-              height={CELL}
-              rx={2}
-              fill={heatColor(cell.count)}
-            >
+            <rect key={cell.date} x={col * STEP + 28} y={row * STEP} width={CELL} height={CELL} rx={2} fill={heatColor(cell.count)}>
               <title>{cell.date}: {cell.count} task{cell.count !== 1 ? 's' : ''} completed</title>
             </rect>
           )
@@ -217,19 +182,20 @@ function ActivityHeatmap({ days }: { days: HeatmapDay[] }) {
       </svg>
 
       <div className="flex items-center gap-1.5 mt-1">
-        <span className="text-[10px] text-muted-foreground">Less</span>
+        <span style={{ color: T.textSecondary, fontSize: '10px' }}>Less</span>
         {HEAT_COLORS.map((c, i) => (
           <span key={i} className="h-2.5 w-2.5 rounded-sm inline-block" style={{ background: c }} />
         ))}
-        <span className="text-[10px] text-muted-foreground">More</span>
+        <span style={{ color: T.textSecondary, fontSize: '10px' }}>More</span>
       </div>
     </div>
   )
 }
 
-// ── Velocity Chart (12-week bar chart) ───────────────────────────────────────
+// ── Velocity Chart ────────────────────────────────────────────────────────────
 
 function VelocityChart({ weeks }: { weeks: VelocityWeek[] }) {
+  const [hovered, setHovered] = useState<string | null>(null)
   const maxCount = Math.max(...weeks.map((w) => w.count), 1)
   const CHART_H = 80
   const BAR_W = 22
@@ -239,39 +205,47 @@ function VelocityChart({ weeks }: { weeks: VelocityWeek[] }) {
 
   return (
     <div className="overflow-x-auto">
-      <svg
-        viewBox={`0 0 ${TOTAL_W + LEFT_PAD + 8} ${CHART_H + 28}`}
-        style={{ minWidth: '360px', maxHeight: '130px' }}
-        className="w-full"
-      >
-        {/* Y guides */}
+      <svg viewBox={`0 0 ${TOTAL_W + LEFT_PAD + 8} ${CHART_H + 28}`} style={{ minWidth: '360px', maxHeight: '130px' }} className="w-full">
+        <defs>
+          <filter id="glow-vel" x="-50%" y="-50%" width="200%" height="200%">
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="rgba(93,217,193,0.45)" />
+          </filter>
+        </defs>
+
         {[0, Math.ceil(maxCount / 2), maxCount].map((val, i) => {
           const y = CHART_H - Math.round((val / maxCount) * CHART_H)
           return (
             <g key={i}>
-              <line x1={LEFT_PAD} y1={y} x2={TOTAL_W + LEFT_PAD + 8} y2={y} stroke="hsl(var(--border))" strokeWidth={0.5} strokeDasharray={i === 0 ? '0' : '3,3'} />
-              <text x={LEFT_PAD - 4} y={y + 4} textAnchor="end" fontSize={8} fill="hsl(var(--muted-foreground))">{val}</text>
+              <line x1={LEFT_PAD} y1={y} x2={TOTAL_W + LEFT_PAD + 8} y2={y} stroke={T.cardBorder} strokeWidth={0.5} strokeDasharray={i === 0 ? '0' : '3,3'} />
+              <text x={LEFT_PAD - 4} y={y + 4} textAnchor="end" fontSize={8} fill={T.textSecondary}>{val}</text>
             </g>
           )
         })}
 
-        {/* Bars */}
         <g transform={`translate(${LEFT_PAD}, 0)`}>
           {weeks.map((week, i) => {
             const x = i * (BAR_W + GAP)
             const h = week.count > 0 ? Math.max(Math.round((week.count / maxCount) * CHART_H), 3) : 0
             const isLatest = i === weeks.length - 1
+            const isHovered = hovered === week.weekLabel
+
             return (
-              <g key={week.weekLabel}>
+              <g
+                key={week.weekLabel}
+                onMouseEnter={() => setHovered(week.weekLabel)}
+                onMouseLeave={() => setHovered(null)}
+                style={{ cursor: week.count > 0 ? 'pointer' : 'default' }}
+                filter={isHovered ? 'url(#glow-vel)' : undefined}
+              >
                 {h > 0 ? (
-                  <rect x={x} y={CHART_H - h} width={BAR_W} height={h} rx={3} fill="hsl(var(--primary))" opacity={isLatest ? 1 : 0.6} />
+                  <rect x={x} y={CHART_H - h} width={BAR_W} height={h} rx={3} fill={T.accent} opacity={isLatest ? 1 : 0.65} />
                 ) : (
-                  <rect x={x} y={CHART_H - 2} width={BAR_W} height={2} rx={1} fill="hsl(var(--border))" />
+                  <rect x={x} y={CHART_H - 2} width={BAR_W} height={2} rx={1} fill={T.cardBorder} />
                 )}
                 {week.count > 0 && (
-                  <text x={x + BAR_W / 2} y={CHART_H - h - 3} textAnchor="middle" fontSize={7} fill="hsl(var(--muted-foreground))">{week.count}</text>
+                  <text x={x + BAR_W / 2} y={CHART_H - h - 3} textAnchor="middle" fontSize={7} fill={T.textSecondary}>{week.count}</text>
                 )}
-                <text x={x + BAR_W / 2} y={CHART_H + 12} textAnchor="middle" fontSize={7} fill={isLatest ? 'hsl(var(--primary))' : 'hsl(var(--muted-foreground))'}>{week.weekLabel}</text>
+                <text x={x + BAR_W / 2} y={CHART_H + 12} textAnchor="middle" fontSize={7} fill={isLatest ? T.accent : T.textSecondary}>{week.weekLabel}</text>
               </g>
             )
           })}
@@ -280,6 +254,8 @@ function VelocityChart({ weeks }: { weeks: VelocityWeek[] }) {
     </div>
   )
 }
+
+// ── Main view ─────────────────────────────────────────────────────────────────
 
 export function StatsView({ projects = [], chats = [] }: StatsViewProps) {
   const [tasks, setTasks] = useState<Task[]>([])
@@ -296,96 +272,98 @@ export function StatsView({ projects = [], chats = [] }: StatsViewProps) {
 
   const completedTasks = tasks.filter((t) => t.status === 'done').length
 
-  const stats = [
-    { label: 'Agents Created', value: projects.length, icon: Bot, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-    { label: 'Prompts Generated', value: projects.filter((p) => p.prompt).length, icon: Zap, color: 'text-cyan-500', bg: 'bg-cyan-500/10' },
-    { label: 'Tasks Completed', value: completedTasks, icon: CheckSquare, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-    { label: 'Chat Sessions', value: chats.length, icon: MessageSquare, color: 'text-amber-500', bg: 'bg-amber-500/10' },
+  const statCards = [
+    { label: 'Agents Created',    value: projects.length,                            icon: Bot,          accent: '#60A5FA' },
+    { label: 'Prompts Generated', value: projects.filter((p) => p.prompt).length,   icon: Zap,          accent: T.accent },
+    { label: 'Tasks Completed',   value: completedTasks,                             icon: CheckSquare,  accent: '#34D399' },
+    { label: 'Chat Sessions',     value: chats.length,                               icon: MessageSquare, accent: '#FBBF24' },
   ]
 
   return (
-    <section aria-label="Stats" className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold tracking-tight">Stats</h1>
-        <p className="text-sm text-muted-foreground mt-1">
+    <section
+      aria-label="Stats"
+      className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto gap-6"
+      style={{ fontFamily: 'Inter, sans-serif' }}
+    >
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight" style={{ color: T.textPrimary }}>Stats</h1>
+        <p className="text-sm mt-1" style={{ color: T.textSecondary }}>
           Track your agent usage, prompt generation, and productivity over time.
         </p>
       </div>
 
       {/* Stat cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        {stats.map(({ label, value, icon: Icon, color, bg }) => (
-          <div key={label} className="flex flex-col gap-3 rounded-xl border bg-card p-5">
-            <div className={`w-9 h-9 ${bg} rounded-lg flex items-center justify-center`}>
-              <Icon className={`h-5 w-5 ${color}`} />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {statCards.map(({ label, value, icon: Icon, accent }) => (
+          <div key={label} {...CARD} style={{ ...CARD.style }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center mb-3" style={{ background: `${accent}18` }}>
+              <Icon className="h-5 w-5" style={{ color: accent }} />
             </div>
-            <div>
-              <p className="text-3xl font-bold">{value}</p>
-              <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-              <p className="text-[11px] text-muted-foreground/60 mt-0.5">All time</p>
-            </div>
+            <p className="text-3xl font-bold" style={{ color: T.textPrimary }}>{value}</p>
+            <p className="text-xs mt-0.5" style={{ color: T.textSecondary }}>{label}</p>
+            <p className="text-[11px] mt-0.5" style={{ color: `${T.textSecondary}80` }}>All time</p>
           </div>
         ))}
       </div>
 
       {/* Activity chart */}
-      <div className="rounded-xl border bg-card p-6">
+      <div {...CARD} style={{ ...CARD.style, padding: '24px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Activity — last 14 days</h2>
+            <BarChart2 className="h-4 w-4" style={{ color: T.textSecondary }} />
+            <h2 className="text-sm font-semibold" style={{ color: T.textPrimary }}>Activity — last 14 days</h2>
           </div>
-          <span className="text-xs text-muted-foreground">{totalActivity} events</span>
+          <span className="text-xs" style={{ color: T.textSecondary }}>{totalActivity} events</span>
         </div>
 
         <ActivityChart days={activityDays} />
 
-        <div className="flex items-center gap-4 mt-3 pt-3 border-t">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-2 w-3 rounded-sm inline-block bg-primary opacity-75" />
+        <div className="flex items-center gap-4 mt-3 pt-3" style={{ borderTop: `1px solid ${T.cardBorder}` }}>
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: T.textSecondary }}>
+            <span className="h-2 w-3 rounded-sm inline-block" style={{ background: T.accentLight }} />
             Chats
           </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span className="h-2 w-3 rounded-sm inline-block bg-primary opacity-35" />
+          <div className="flex items-center gap-1.5 text-xs" style={{ color: T.textSecondary }}>
+            <span className="h-2 w-3 rounded-sm inline-block" style={{ background: T.accentDim }} />
             Agents
           </div>
-          <p className="text-xs text-muted-foreground ml-auto">
+          <p className="text-xs ml-auto" style={{ color: T.textSecondary }}>
             {totalActivity === 0 ? 'Start chatting to see activity here.' : 'Based on created chats and agents.'}
           </p>
         </div>
       </div>
 
       {/* Task completion heatmap */}
-      <div className="rounded-xl border bg-card p-6">
+      <div {...CARD} style={{ ...CARD.style, padding: '24px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <CheckSquare className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Task completions — last 52 weeks</h2>
+            <CheckSquare className="h-4 w-4" style={{ color: T.textSecondary }} />
+            <h2 className="text-sm font-semibold" style={{ color: T.textPrimary }}>Task completions — last 52 weeks</h2>
           </div>
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs" style={{ color: T.textSecondary }}>
             {heatmapDays.reduce((s, d) => s + d.count, 0)} total
           </span>
         </div>
         {heatmapDays.length > 0 ? (
           <ActivityHeatmap days={heatmapDays} />
         ) : (
-          <p className="text-xs text-muted-foreground py-4 text-center">Complete tasks to see your heatmap.</p>
+          <p className="text-xs py-4 text-center" style={{ color: T.textSecondary }}>Complete tasks to see your heatmap.</p>
         )}
       </div>
 
-      {/* Velocity chart */}
-      <div className="rounded-xl border bg-card p-6">
+      {/* Weekly velocity */}
+      <div {...CARD} style={{ ...CARD.style, padding: '24px' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
-            <BarChart2 className="h-4 w-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold">Weekly velocity — last 12 weeks</h2>
+            <BarChart2 className="h-4 w-4" style={{ color: T.textSecondary }} />
+            <h2 className="text-sm font-semibold" style={{ color: T.textPrimary }}>Weekly velocity — last 12 weeks</h2>
           </div>
-          <span className="text-xs text-muted-foreground">tasks completed / week</span>
+          <span className="text-xs" style={{ color: T.textSecondary }}>tasks completed / week</span>
         </div>
         {velocityWeeks.some((w) => w.count > 0) ? (
           <VelocityChart weeks={velocityWeeks} />
         ) : (
-          <p className="text-xs text-muted-foreground py-4 text-center">Complete tasks to see velocity.</p>
+          <p className="text-xs py-4 text-center" style={{ color: T.textSecondary }}>Complete tasks to see velocity.</p>
         )}
       </div>
     </section>

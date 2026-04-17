@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { revalidatePath } from 'next/cache'
 import type { Workflow } from '@/lib/types'
 
@@ -30,7 +31,7 @@ export async function getUserWorkflows(): Promise<Workflow[]> {
 
 export async function updateWorkflow(
   id: string,
-  updates: Partial<Pick<Workflow, 'name' | 'enabled'>>
+  updates: Partial<Pick<Workflow, 'name' | 'enabled' | 'trigger' | 'action' | 'cron_expression'>>
 ): Promise<Workflow> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -115,6 +116,154 @@ export async function deleteWorkflow(id: string): Promise<void> {
 
   if (error) throw error
   revalidatePath('/')
+}
+
+export interface WorkflowExecution {
+  id: string
+  created_at: string
+  metadata: {
+    workflow_id: string
+    trigger: string
+    action: string
+    result: string
+    payload?: Record<string, unknown>
+  }
+}
+
+export async function getWorkflowExecutions(limit = 50): Promise<WorkflowExecution[]> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data, error } = await supabase
+    .from('usage_events')
+    .select('id, created_at, metadata')
+    .eq('user_id', user.id)
+    .eq('event_type', 'workflow_run')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+
+  if (error) throw error
+  return (data ?? []) as WorkflowExecution[]
+}
+
+export async function runWorkflow(id: string, payload?: { userMessage?: string }): Promise<{ result: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: workflow, error: fetchErr } = await supabase
+    .from('workflows')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchErr || !workflow) throw new Error('Workflow not found')
+
+  const result = 'Triggered manually'
+  const now = new Date().toISOString()
+
+  await supabase.from('usage_events').insert({
+    user_id: user.id,
+    event_type: 'workflow_run',
+    metadata: {
+      workflow_id: id,
+      trigger: workflow.trigger,
+      action: workflow.action,
+      result,
+      ...(payload?.userMessage ? { payload: { userMessage: payload.userMessage } } : {}),
+    },
+  })
+
+  await supabase
+    .from('workflows')
+    .update({ last_run_at: now, last_run_result: result })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  revalidatePath('/')
+  return { result }
+}
+
+export async function deleteExecution(id: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY
+  if (!url || !key) throw new Error('Supabase admin not configured')
+
+  const admin = createAdminClient(url, key)
+  const { error } = await admin
+    .from('usage_events')
+    .delete()
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+}
+
+export async function updateExecutionResult(id: string, result: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { data: existing, error: fetchErr } = await supabase
+    .from('usage_events')
+    .select('metadata')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (fetchErr || !existing) throw new Error('Execution not found')
+
+  const { error } = await supabase
+    .from('usage_events')
+    .update({ metadata: { ...existing.metadata, result } })
+    .eq('id', id)
+    .eq('user_id', user.id)
+
+  if (error) throw error
+}
+
+/** Fire all enabled chat_message_sent workflows for the current user */
+export async function runChatWorkflows(userMessage: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+
+  const { data: workflows } = await supabase
+    .from('workflows')
+    .select('id, trigger, action')
+    .eq('user_id', user.id)
+    .eq('trigger', 'chat_message_sent')
+    .eq('enabled', true)
+
+  if (!workflows || workflows.length === 0) return
+
+  const now = new Date().toISOString()
+
+  for (const workflow of workflows) {
+    await supabase.from('usage_events').insert({
+      user_id: user.id,
+      event_type: 'workflow_run',
+      metadata: {
+        workflow_id: workflow.id,
+        trigger: workflow.trigger,
+        action: workflow.action,
+        result: 'Success',
+        payload: { userMessage },
+      },
+    })
+
+    await supabase
+      .from('workflows')
+      .update({ last_run_at: now, last_run_result: 'Success' })
+      .eq('id', workflow.id)
+      .eq('user_id', user.id)
+  }
 }
 
 /** Check if the memory-save workflow is enabled for the current user */
