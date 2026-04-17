@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { GitFork, Brain, ToggleLeft, ToggleRight, Plus, Trash2, X, Link, Clock, Pencil, Activity, CheckCircle2, XCircle, ChevronRight, Play, MoreHorizontal } from 'lucide-react'
+import { GitFork, Brain, ToggleLeft, ToggleRight, Plus, Trash2, X, Link, Clock, Pencil, Activity, CheckCircle2, XCircle, ChevronRight, Play } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -112,7 +112,15 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   // Run Now modal
   const [runModalWorkflow, setRunModalWorkflow] = useState<Workflow | null>(null)
   const [runMessage, setRunMessage] = useState('')
+  const [runMessageError, setRunMessageError] = useState(false)
   const [isRunning, setIsRunning] = useState(false)
+
+  // Two-stage delete confirmation
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null)
+
+  // Cron validation
+  const [cronError, setCronError] = useState(false)
+  const [editCronError, setEditCronError] = useState(false)
 
   // Log editing
   const [editingLogId, setEditingLogId] = useState<string | null>(null)
@@ -180,7 +188,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   async function handleRunNow() {
     if (!runModalWorkflow) return
     const needsMessage = runModalWorkflow.trigger === 'chat_message_sent'
-    if (needsMessage && !runMessage.trim()) return
+    if (needsMessage && !runMessage.trim()) { setRunMessageError(true); return }
     setIsRunning(true)
     try {
       await runWorkflow(runModalWorkflow.id, needsMessage ? { userMessage: runMessage.trim() } : undefined)
@@ -258,6 +266,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     e.preventDefault()
     const name = newName.trim()
     if (!name) return
+    if (needsCronInput(newTrigger) && cronExpr.trim().split(/\s+/).length !== 5) { setCronError(true); return }
     startTransition(async () => {
       try {
         const workflow = await createWorkflow(name, newTrigger, newAction, {
@@ -281,6 +290,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     if (!editingId) return
     const name = editName.trim()
     if (!name) return
+    if (needsCronInput(editTrigger) && editCronExpr.trim().split(/\s+/).length !== 5) { setEditCronError(true); return }
     startTransition(async () => {
       try {
         const updated = await updateWorkflow(editingId, {
@@ -300,7 +310,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
 
   return (
     <section aria-label="Workflows" className="flex flex-col flex-1 p-6 md:p-8 max-w-5xl w-full mx-auto">
-      <div className="mb-6 flex items-start justify-between gap-4">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-4 gap-y-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Workflows</h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -332,8 +342,9 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-medium">Workflow name</label>
+            <label htmlFor="new-workflow-name" className="text-xs text-muted-foreground font-medium">Workflow name</label>
             <Input
+              id="new-workflow-name"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder="Workflow name…"
@@ -342,10 +353,10 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-medium">When to run</label>
+            <label htmlFor="new-workflow-trigger" className="text-xs text-muted-foreground font-medium">When to run</label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="justify-start w-full truncate">
+                <Button id="new-workflow-trigger" type="button" variant="outline" size="sm" className="justify-start w-full truncate">
                   {TRIGGER_LABELS[newTrigger]}
                 </Button>
               </DropdownMenuTrigger>
@@ -363,29 +374,40 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
             </DropdownMenu>
           </div>
 
-          {needsCronInput(newTrigger) && (
-            <div className="flex flex-col gap-1">
-              <label className="text-xs text-muted-foreground font-medium">Cron expression</label>
-              <Input
-                value={cronExpr}
-                onChange={(e) => setCronExpr(e.target.value)}
-                placeholder="0 9 * * *"
-                className="font-mono text-sm"
-              />
-              {parseCronToHuman(cronExpr) !== cronExpr && (
-                <p className="text-xs text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {parseCronToHuman(cronExpr)}
-                </p>
-              )}
-            </div>
-          )}
+          {needsCronInput(newTrigger) && (() => {
+            const cronHuman = parseCronToHuman(cronExpr)
+            return (
+              <div className="flex flex-col gap-1">
+                <label htmlFor="new-workflow-cron" className="text-xs text-muted-foreground font-medium">Cron expression</label>
+                <Input
+                  id="new-workflow-cron"
+                  value={cronExpr}
+                  onChange={(e) => { setCronExpr(e.target.value); setCronError(false) }}
+                  placeholder="0 9 * * *"
+                  className="font-mono text-sm"
+                  aria-invalid={cronError}
+                  aria-describedby={cronError ? 'new-cron-error' : undefined}
+                />
+                {cronError && (
+                  <p id="new-cron-error" role="alert" className="text-xs text-destructive">
+                    Enter a valid 5-field cron expression (e.g. 0 9 * * 1)
+                  </p>
+                )}
+                {!cronError && cronHuman !== cronExpr && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="h-3 w-3" />
+                    {cronHuman}
+                  </p>
+                )}
+              </div>
+            )
+          })()}
 
           <div className="flex flex-col gap-1">
-            <label className="text-xs text-muted-foreground font-medium">What to do</label>
+            <label htmlFor="new-workflow-action" className="text-xs text-muted-foreground font-medium">What to do</label>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" size="sm" className="justify-start w-full truncate">
+                <Button id="new-workflow-action" type="button" variant="outline" size="sm" className="justify-start w-full truncate">
                   {ACTION_LABELS[newAction]}
                 </Button>
               </DropdownMenuTrigger>
@@ -395,7 +417,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                   return (
                     <DropdownMenuItem
                       key={o.value}
-                      onClick={() => !disabled && setNewAction(o.value)}
+                      onClick={() => setNewAction(o.value)}
                       disabled={disabled}
                       className={cn(
                         'cursor-pointer',
@@ -416,7 +438,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
               Cancel
             </Button>
             <Button type="submit" size="sm" disabled={!newName.trim() || isPending}>
-              Create
+              {isPending ? 'Creating…' : 'Create'}
             </Button>
           </div>
         </form>
@@ -427,6 +449,8 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
         <button
           type="button"
           onClick={toggleLogs}
+          aria-expanded={showLogs}
+          aria-controls="execution-logs-panel"
           className={cn(
             'group w-full text-left rounded-xl border bg-card p-5 transition-colors hover:border-primary/40 hover:bg-primary/5',
             showLogs && 'rounded-b-none border-b-0 border-primary/40 bg-primary/5'
@@ -455,7 +479,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
 
         {/* Execution logs panel */}
         {showLogs && (
-          <div className="rounded-b-xl border border-t-0 border-primary/40 bg-card/50 divide-y divide-border">
+          <div id="execution-logs-panel" className="rounded-b-xl border border-t-0 border-primary/40 bg-card/50 divide-y divide-border">
             <div className="px-5 py-3 flex items-center justify-between">
               <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest">Recent Executions</p>
               <button
@@ -471,7 +495,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
             </div>
 
             {logsLoading ? (
-              <div className="px-5 py-8 text-center text-sm text-muted-foreground">Loading…</div>
+              <div role="status" aria-live="polite" className="px-5 py-8 text-center text-sm text-muted-foreground">Loading…</div>
             ) : executions.length === 0 ? (
               <div className="px-5 py-8 text-center">
                 <Activity className="h-5 w-5 text-muted-foreground mx-auto mb-2" />
@@ -479,7 +503,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                 <p className="text-xs text-muted-foreground/60 mt-1">Runs will appear here each time a workflow fires.</p>
               </div>
             ) : (
-              <div className="divide-y divide-border max-h-80 overflow-y-auto">
+              <div className="relative divide-y divide-border max-h-80 overflow-y-auto [mask-image:linear-gradient(to_bottom,black_calc(100%-2rem),transparent_100%)]">
                 {executions.map((ex) => {
                   const wf = workflows.find((w) => w.id === ex.metadata?.workflow_id)
                   const failed = ex.metadata?.result?.toLowerCase().startsWith('fail')
@@ -548,12 +572,12 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                             setEditingLogId(ex.id)
                             setEditLogText(ex.metadata?.result ?? '')
                           }}
-                          className="opacity-0 group-hover/log:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                          className="opacity-0 group-hover/log:opacity-100 focus:opacity-100 transition-opacity h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
-                          <MoreHorizontal className="h-3.5 w-3.5 rotate-90" />
+                          <Pencil className="h-3.5 w-3.5" />
                         </button>
                         <span className="text-[10px] text-muted-foreground/60 font-mono whitespace-nowrap">
-                          {new Date(ex.created_at).toLocaleString()}
+                          {new Date(ex.created_at).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })}
                         </span>
                       </div>
                     </div>
@@ -567,7 +591,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
 
       {/* Workflow list */}
       {loading ? (
-        <div className="flex items-center justify-center flex-1 py-12 text-sm text-muted-foreground">
+        <div role="status" aria-live="polite" className="flex items-center justify-center flex-1 py-12 text-sm text-muted-foreground">
           Loading workflows…
         </div>
       ) : workflows.length === 0 ? (
@@ -575,8 +599,12 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
           <GitFork className="h-6 w-6 text-muted-foreground" />
           <p className="text-sm font-medium">No workflows yet</p>
           <p className="text-xs text-muted-foreground max-w-xs">
-            Click "Create Workflow" to automate your first agent pipeline.
+            Create your first automation to run actions triggered by agent activity.
           </p>
+          <Button size="sm" className="gap-2 mt-1" onClick={() => setShowForm(true)}>
+            <Plus className="h-4 w-4" />
+            Create Workflow
+          </Button>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -626,7 +654,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                   )}
                   {workflow.last_run_at && (
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5">
-                      Last run: {new Date(workflow.last_run_at).toLocaleString()}
+                      Last run: {new Date(workflow.last_run_at).toLocaleString('en-GB', { dateStyle: 'short', timeStyle: 'short' })}
                       {workflow.last_run_result && ` — ${workflow.last_run_result}`}
                     </p>
                   )}
@@ -638,7 +666,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                     onClick={() => openRunModal(workflow)}
                     disabled={isPending}
                     aria-label="Run workflow"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-emerald-400"
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 transition-opacity h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-emerald-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Play className="h-4 w-4" />
                   </button>
@@ -647,16 +675,17 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                     type="button"
                     onClick={() => openEdit(workflow)}
                     aria-label="Edit workflow"
-                    className="opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground"
+                    className="opacity-0 group-hover:opacity-100 focus:opacity-100 group-focus-within:opacity-100 transition-opacity h-7 w-7 flex items-center justify-center rounded text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <Pencil className="h-4 w-4" />
                   </button>
 
                   <button
+                    type="button"
                     onClick={() => handleToggle(workflow)}
                     disabled={isPending}
                     aria-label={workflow.enabled ? 'Disable workflow' : 'Enable workflow'}
-                    className="transition-colors"
+                    className="transition-colors rounded focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none"
                   >
                     {workflow.enabled ? (
                       <ToggleRight className="h-8 w-8 text-primary" />
@@ -686,8 +715,9 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">Workflow name</label>
+                    <label htmlFor="edit-workflow-name" className="text-xs text-muted-foreground font-medium">Workflow name</label>
                     <Input
+                      id="edit-workflow-name"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder="Workflow name…"
@@ -696,10 +726,10 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">When to run</label>
+                    <label htmlFor="edit-workflow-trigger" className="text-xs text-muted-foreground font-medium">When to run</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="outline" size="sm" className="justify-start w-full truncate">
+                        <Button id="edit-workflow-trigger" type="button" variant="outline" size="sm" className="justify-start w-full truncate">
                           {TRIGGER_LABELS[editTrigger] ?? editTrigger}
                         </Button>
                       </DropdownMenuTrigger>
@@ -717,29 +747,40 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                     </DropdownMenu>
                   </div>
 
-                  {needsCronInput(editTrigger) && (
-                    <div className="flex flex-col gap-1">
-                      <label className="text-xs text-muted-foreground font-medium">Cron expression</label>
-                      <Input
-                        value={editCronExpr}
-                        onChange={(e) => setEditCronExpr(e.target.value)}
-                        placeholder="0 9 * * *"
-                        className="font-mono text-sm"
-                      />
-                      {parseCronToHuman(editCronExpr) !== editCronExpr && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {parseCronToHuman(editCronExpr)}
-                        </p>
-                      )}
-                    </div>
-                  )}
+                  {needsCronInput(editTrigger) && (() => {
+                    const editCronHuman = parseCronToHuman(editCronExpr)
+                    return (
+                      <div className="flex flex-col gap-1">
+                        <label htmlFor="edit-workflow-cron" className="text-xs text-muted-foreground font-medium">Cron expression</label>
+                        <Input
+                          id="edit-workflow-cron"
+                          value={editCronExpr}
+                          onChange={(e) => { setEditCronExpr(e.target.value); setEditCronError(false) }}
+                          placeholder="0 9 * * *"
+                          className="font-mono text-sm"
+                          aria-invalid={editCronError}
+                          aria-describedby={editCronError ? 'edit-cron-error' : undefined}
+                        />
+                        {editCronError && (
+                          <p id="edit-cron-error" role="alert" className="text-xs text-destructive">
+                            Enter a valid 5-field cron expression (e.g. 0 9 * * 1)
+                          </p>
+                        )}
+                        {!editCronError && editCronHuman !== editCronExpr && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {editCronHuman}
+                          </p>
+                        )}
+                      </div>
+                    )
+                  })()}
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs text-muted-foreground font-medium">What to do</label>
+                    <label htmlFor="edit-workflow-action" className="text-xs text-muted-foreground font-medium">What to do</label>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="outline" size="sm" className="justify-start w-full truncate">
+                        <Button id="edit-workflow-action" type="button" variant="outline" size="sm" className="justify-start w-full truncate">
                           {ACTION_LABELS[editAction] ?? editAction}
                         </Button>
                       </DropdownMenuTrigger>
@@ -749,7 +790,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                           return (
                             <DropdownMenuItem
                               key={o.value}
-                              onClick={() => !disabled && setEditAction(o.value)}
+                              onClick={() => setEditAction(o.value)}
                               disabled={disabled}
                               className={cn(
                                 'cursor-pointer',
@@ -766,17 +807,31 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      disabled={isPending}
-                      onClick={() => { handleDelete(workflow); setEditingId(null) }}
-                      className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                      Delete
-                    </Button>
+                    {confirmingDeleteId === workflow.id ? (
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => { handleDelete(workflow); setEditingId(null); setConfirmingDeleteId(null) }}
+                        className="gap-1.5"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Click again to confirm
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => setConfirmingDeleteId(workflow.id)}
+                        className="gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Delete
+                      </Button>
+                    )}
                     <div className="flex gap-2">
                       <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(null)}>
                         Cancel
@@ -793,24 +848,32 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
         </div>
       )}
       {/* Run Now Modal */}
-      <Dialog open={!!runModalWorkflow} onOpenChange={(open) => { if (!open) { setRunModalWorkflow(null); setRunMessage('') } }}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog open={!!runModalWorkflow} onOpenChange={(open) => { if (!open) { setRunModalWorkflow(null); setRunMessage(''); setRunMessageError(false) } }}>
+        <DialogContent aria-label="Run workflow now" className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Run &ldquo;{runModalWorkflow?.name}&rdquo; Now</DialogTitle>
           </DialogHeader>
           <div className="flex flex-col gap-3 py-2">
             {runModalWorkflow?.trigger === 'chat_message_sent' && (
               <>
-                <label className="text-sm font-medium">User Message</label>
+                <label htmlFor="run-message" className="text-sm font-medium">User Message</label>
                 <textarea
+                  id="run-message"
                   value={runMessage}
-                  onChange={(e) => setRunMessage(e.target.value)}
+                  onChange={(e) => { setRunMessage(e.target.value); setRunMessageError(false) }}
                   placeholder="Type the message that should trigger this workflow…"
                   rows={4}
                   autoFocus
+                  required
+                  aria-required="true"
+                  aria-invalid={runMessageError}
+                  aria-describedby={runMessageError ? 'run-message-error' : undefined}
                   className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                 />
-                <p className="text-xs text-muted-foreground">Required. This emulates the chat message trigger.</p>
+                {runMessageError && (
+                  <p id="run-message-error" role="alert" className="text-xs text-destructive">A message is required to trigger this workflow.</p>
+                )}
+                {!runMessageError && <p className="text-xs text-muted-foreground">Required. This emulates the chat message trigger.</p>}
               </>
             )}
             {runModalWorkflow?.trigger !== 'chat_message_sent' && (
