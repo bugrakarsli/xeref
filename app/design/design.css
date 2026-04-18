@@ -1,0 +1,59 @@
+/* Design feature: new Tailwind utility classes for design-specific tokens */
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-soft: var(--surface-soft);
+  --color-surface-muted: var(--surface-muted);
+  --color-border-strong: var(--border-strong);
+  --color-text: var(--text);
+  --color-faint: var(--faint);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+}
+
+/* Scoped overrides for conflicting shadcn tokens (--accent, --muted, --border).
+   Must be applied inside .design-scope, which the design layout wraps all content in.
+   The html.dark specificity ensures these beat the .dark block in globals.css. */
+html.dark .design-scope {
+  /* Override shadcn's --accent (dark bg) with design's orange accent */
+  --accent: #d97757;
+  --accent-hover: #c96545;
+  --accent-soft: oklch(0.28 0.06 35);
+
+  /* Override shadcn's --muted (dark bg) with design's grey text color */
+  --muted: oklch(0.60 0 0);
+
+  /* Override shadcn's --border (very dark) with a slightly more visible divider */
+  --border: oklch(0.28 0.03 260);
+
+  /* New design tokens not in shadcn */
+  --bg: oklch(0.12 0.02 260);
+  --surface: oklch(0.18 0.03 260);
+  --surface-soft: oklch(0.21 0.03 260);
+  --surface-muted: oklch(0.24 0.03 260);
+  --border-strong: oklch(0.34 0.04 260);
+  --text: oklch(0.985 0 0);
+  --faint: oklch(0.50 0 0);
+  --shadow: 0 10px 24px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.2);
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --radius-sm: 10px;
+}
+
+/* Skip link for accessibility (design page uses this) */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 16px;
+  background: oklch(0.985 0 0);
+  color: oklch(0.12 0 0);
+  padding: 10px 14px;
+  border-radius: 10px;
+  z-index: 100;
+  font-size: 0.875rem;
+}
+.skip-link:focus {
+  top: 16px;
+}
