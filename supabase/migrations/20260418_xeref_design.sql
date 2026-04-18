@@ -2,6 +2,10 @@
 -- Run in Supabase SQL editor or via: supabase db push
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
+-- ============================================================
+-- PASS 1: Create all tables (no cross-referencing policies yet)
+-- ============================================================
+
 -- 1. Organizations
 CREATE TABLE IF NOT EXISTS organizations (
   id         UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -12,10 +16,8 @@ CREATE TABLE IF NOT EXISTS organizations (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ALTER TABLE organizations ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "org members can read their org" ON organizations FOR SELECT
-  USING (id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid()));
 
--- 2. Org members
+-- 2. Org members (references organizations — must exist first)
 CREATE TABLE IF NOT EXISTS org_members (
   id                 UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   org_id             UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -27,9 +29,6 @@ CREATE TABLE IF NOT EXISTS org_members (
   UNIQUE (org_id, user_id)
 );
 ALTER TABLE org_members ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "members can read own membership" ON org_members FOR SELECT USING (user_id = auth.uid());
-CREATE POLICY "admins manage members" ON org_members FOR ALL
-  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid() AND role IN ('owner','admin')));
 
 -- 3. Design systems
 CREATE TABLE IF NOT EXISTS design_systems (
@@ -47,10 +46,6 @@ CREATE TABLE IF NOT EXISTS design_systems (
 );
 CREATE INDEX IF NOT EXISTS idx_design_systems_org ON design_systems(org_id);
 ALTER TABLE design_systems ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "org members read design systems" ON design_systems FOR SELECT
-  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid()));
-CREATE POLICY "admins manage design systems" ON design_systems FOR ALL
-  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid() AND role IN ('owner','admin')));
 
 -- 4. Project templates
 CREATE TABLE IF NOT EXISTS project_templates (
@@ -67,12 +62,8 @@ CREATE TABLE IF NOT EXISTS project_templates (
 );
 CREATE INDEX IF NOT EXISTS idx_templates_org ON project_templates(org_id);
 ALTER TABLE project_templates ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "org members read templates" ON project_templates FOR SELECT
-  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid()));
-CREATE POLICY "admins manage templates" ON project_templates FOR ALL
-  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid() AND role IN ('owner','admin')));
 
--- 5. Design projects (renamed from 'projects' to avoid collision with existing xeref projects table)
+-- 5. Design projects
 CREATE TABLE IF NOT EXISTS design_projects (
   id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   org_id            UUID NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
@@ -94,19 +85,54 @@ CREATE INDEX IF NOT EXISTS idx_design_projects_org    ON design_projects(org_id)
 CREATE INDEX IF NOT EXISTS idx_design_projects_owner  ON design_projects(owner_id);
 CREATE INDEX IF NOT EXISTS idx_design_projects_status ON design_projects(status);
 ALTER TABLE design_projects ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "users read own design projects" ON design_projects FOR SELECT USING (owner_id=auth.uid());
-CREATE POLICY "org members read org-visible design projects" ON design_projects FOR SELECT
-  USING (visibility='org' AND org_id IN (SELECT org_id FROM org_members WHERE user_id=auth.uid()));
-CREATE POLICY "users insert own design projects" ON design_projects FOR INSERT WITH CHECK (owner_id=auth.uid());
-CREATE POLICY "users update own design projects" ON design_projects FOR UPDATE USING (owner_id=auth.uid());
-CREATE POLICY "users delete own design projects" ON design_projects FOR DELETE USING (owner_id=auth.uid());
 
--- 6. Auto-update trigger (create only if it doesn't exist)
+-- ============================================================
+-- PASS 2: RLS policies (all tables now exist, safe to cross-reference)
+-- ============================================================
+
+-- organizations policies
+CREATE POLICY "org members can read their org" ON organizations FOR SELECT
+  USING (id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid()));
+
+-- org_members policies
+CREATE POLICY "members can read own membership" ON org_members FOR SELECT
+  USING (user_id = auth.uid());
+CREATE POLICY "admins manage members" ON org_members FOR ALL
+  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid() AND role IN ('owner','admin')));
+
+-- design_systems policies
+CREATE POLICY "org members read design systems" ON design_systems FOR SELECT
+  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid()));
+CREATE POLICY "admins manage design systems" ON design_systems FOR ALL
+  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid() AND role IN ('owner','admin')));
+
+-- project_templates policies
+CREATE POLICY "org members read templates" ON project_templates FOR SELECT
+  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid()));
+CREATE POLICY "admins manage templates" ON project_templates FOR ALL
+  USING (org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid() AND role IN ('owner','admin')));
+
+-- design_projects policies
+CREATE POLICY "users read own design projects" ON design_projects FOR SELECT
+  USING (owner_id = auth.uid());
+CREATE POLICY "org members read org-visible design projects" ON design_projects FOR SELECT
+  USING (visibility = 'org' AND org_id IN (SELECT org_id FROM org_members WHERE user_id = auth.uid()));
+CREATE POLICY "users insert own design projects" ON design_projects FOR INSERT
+  WITH CHECK (owner_id = auth.uid());
+CREATE POLICY "users update own design projects" ON design_projects FOR UPDATE
+  USING (owner_id = auth.uid());
+CREATE POLICY "users delete own design projects" ON design_projects FOR DELETE
+  USING (owner_id = auth.uid());
+
+-- ============================================================
+-- PASS 3: Triggers
+-- ============================================================
+
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
 BEGIN NEW.updated_at = NOW(); RETURN NEW; END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trg_organizations_updated BEFORE UPDATE ON organizations FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_design_systems_updated BEFORE UPDATE ON design_systems FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_templates_updated BEFORE UPDATE ON project_templates FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-CREATE TRIGGER trg_design_projects_updated BEFORE UPDATE ON design_projects FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_organizations_updated    BEFORE UPDATE ON organizations    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_design_systems_updated   BEFORE UPDATE ON design_systems   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_templates_updated        BEFORE UPDATE ON project_templates FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+CREATE TRIGGER trg_design_projects_updated  BEFORE UPDATE ON design_projects  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
