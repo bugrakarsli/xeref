@@ -3,7 +3,7 @@ import "./design.css";
 
 export const metadata: Metadata = {
   title: "Xeref Design",
-  description: "Create branded designs, prototypes, and slide decks — powered by XerefAI.",
+  description: "Create branded designs, prototypes, and slide decks — powered by Bugra Karsli.",
 };
 
 export default function DesignLayout({ children }: { children: React.ReactNode }) {

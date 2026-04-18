@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ChatHeader } from './chat/chat-header'
 import { ChatInterface } from './chat/chat-interface'
 import { ChatList } from './chat/chat-list'
-import { createChat, getChatMessages, updateChatTitle } from '@/app/actions/chats'
+import { getChatMessages, updateChatTitle } from '@/app/actions/chats'
 import { toast } from 'sonner'
 import type { Project, Chat, Message } from '@/lib/types'
 import type { AgentSelection } from './chat/chat-input'
@@ -17,9 +17,10 @@ interface ChatsViewProps {
   userPlan?: 'free' | 'pro' | 'ultra'
   selectedChatId?: string | null
   onNewChat?: () => void
+  onChatCreated?: (chat: Chat) => void
 }
 
-export function ChatsView({ projects, initialChats, userName, userPlan = 'free', selectedChatId, onNewChat }: ChatsViewProps) {
+export function ChatsView({ projects, initialChats, userName, userPlan = 'free', selectedChatId, onNewChat, onChatCreated }: ChatsViewProps) {
   const [showingList, setShowingList] = useState(false)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [activeChat, setActiveChat] = useState<Chat | null>(initialChats[0] ?? null)
@@ -56,11 +57,11 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
     } catch {}
   }
 
-  // Auto-load messages for the most recent chat on mount
+  // Auto-load messages for the most recent chat on mount (skip in new-chat mode)
   useEffect(() => {
-    const first = initialChats[0]
-    if (first) {
-      getChatMessages(first.id).then(setChatMessages).catch(() => {})
+    if (selectedChatId !== null) {
+      const first = initialChats[0]
+      if (first) getChatMessages(first.id).then(setChatMessages).catch(() => {})
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -80,8 +81,13 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
     }
   }, [initialChats, activeChat])
 
-  // Navigate to a specific chat when selectedChatId changes (sidebar click)
+  // Navigate to a specific chat when selectedChatId changes (sidebar click or new-chat mode)
   useEffect(() => {
+    if (selectedChatId === null) {
+      setActiveChat(null)
+      setChatMessages([])
+      return
+    }
     if (!selectedChatId) return
     const chat = chats.find((c) => c.id === selectedChatId)
     if (chat) {
@@ -108,42 +114,31 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
   function handleChatCreated(chat: Chat) {
     setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
     setActiveChat(chat)
+    onChatCreated?.(chat)
   }
 
   async function handleNewChat() {
-    if (chatMessages.length === 0) {
+    // Already in new-chat mode
+    if (!activeChat && chatMessages.length === 0) {
       setShowingList(false)
       window.dispatchEvent(new CustomEvent('xeref_focus_chat_input'))
       return
     }
 
-    // Save title of current chat from its first message
-    if (activeChat && chatMessages.length > 0) {
+    // Auto-title the current chat from its first message (if still "New Chat")
+    if (activeChat && activeChat.title === 'New Chat' && chatMessages.length > 0) {
       const firstUserMsg = chatMessages.find((m) => m.role === 'user')
-      if (firstUserMsg && activeChat.title === 'New Chat') {
+      if (firstUserMsg) {
         const title = (firstUserMsg.content.match(/^.+?[.?!\n]/)?.[0] ?? firstUserMsg.content).slice(0, 80).trim()
-        try {
-          await updateChatTitle(activeChat.id, title)
-          setChats((prev) =>
-            prev.map((c) => (c.id === activeChat.id ? { ...c, title } : c))
-          )
-        } catch {
-          // non-critical
-        }
+        updateChatTitle(activeChat.id, title).catch(() => {})
+        setChats((prev) => prev.map((c) => (c.id === activeChat.id ? { ...c, title } : c)))
       }
     }
 
-    // Create a new chat
-    try {
-      const projectId = selectedAgent?.type === 'project' ? selectedAgent.project.id : null
-      const newChat = await createChat(projectId, 'New Chat')
-      setChats((prev) => [newChat, ...prev])
-      setActiveChat(newChat)
-      setChatMessages([])
-      setShowingList(false)
-    } catch {
-      toast.error('Failed to create new chat.')
-    }
+    // Enter new-chat mode (lazy: no DB call until first message)
+    setActiveChat(null)
+    setChatMessages([])
+    setShowingList(false)
   }
 
   async function handleSelectChat(chat: Chat) {

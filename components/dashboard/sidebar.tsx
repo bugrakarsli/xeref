@@ -752,16 +752,23 @@ export function Sidebar({
                       />
                     </button>
                     {chatsOpen && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onShowChatList ? onShowChatList() : window.dispatchEvent(new CustomEvent('xeref_show_chat_list'))
-                        }}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/50 rounded p-0.5 text-muted-foreground hover:text-foreground"
-                        aria-label="Chat history"
-                      >
-                        <List className="h-3.5 w-3.5" />
-                      </button>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onShowChatList ? onShowChatList() : window.dispatchEvent(new CustomEvent('xeref_show_chat_list'))
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/50 rounded p-0.5 text-muted-foreground hover:text-foreground"
+                            aria-label="Chat history"
+                          >
+                            <List className="h-3.5 w-3.5" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="right">
+                          <kbd className="text-[10px] opacity-80">Ctrl+K</kbd>
+                        </TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                   {chatsOpen && (
