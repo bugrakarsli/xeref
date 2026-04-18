@@ -138,3 +138,41 @@ export interface ProjectGoal {
   completed: boolean;
   created_at: string;
 }
+
+// ── Artifact entities ─────────────────────────────────────────────────────────
+// 'code' ViewKey currently maps to the Artifacts view.
+// A future dedicated code-editor view can be added as a new ViewKey (e.g. 'code-editor') without conflict.
+
+export type ArtifactType = 'code' | 'document' | 'image' | 'data' | 'prompt' | 'workflow'
+
+export type ArtifactStatus = 'draft' | 'published' | 'error' | 'processing'
+
+export type ArtifactCapability = 'ai-powered' | 'mcp-enabled' | 'storage-enabled'
+
+export type ArtifactFilterType = ArtifactType | 'all'
+
+export interface ArtifactVersion {
+  version: number;
+  content: string;
+  createdAt: string;
+  label?: string;
+  language?: string;
+}
+
+export interface Artifact {
+  id: string;
+  title: string;
+  description: string;
+  type: ArtifactType;
+  status: ArtifactStatus;
+  capabilities: ArtifactCapability[];
+  versions: ArtifactVersion[];
+  currentVersion: number; // 0-based index into versions[]
+  published: boolean;
+  shareUrl?: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  imageUrl?: string;
+  language?: string;
+}

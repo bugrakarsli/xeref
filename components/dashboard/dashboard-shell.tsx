@@ -20,6 +20,7 @@ import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
 import { CustomizeView } from './customize-view'
+import { ArtifactsView } from './artifacts-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
@@ -314,7 +315,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'agents':
                 return <AgentTeamView />
               case 'code':
-                return <ComingSoonView viewName="Workspaces" />
+                return <ArtifactsView />
               case 'customize':
                 return (
                   <CustomizeView

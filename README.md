@@ -1,6 +1,6 @@
-# xeref-claw
+# xeref
 
-**xeref-claw** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. Users configure custom agents via the CLAWS methodology, chat with them directly in-app, manage projects and tasks, and deploy to channels.
+**xeref** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. Users configure custom agents via the CLAWS methodology, chat with them directly in-app, manage projects and tasks, and deploy to channels.
 
 ## Quick Start
 
@@ -28,6 +28,7 @@ CREEM_WEBHOOK_SECRET=            # Creem dashboard → Webhooks
 ## Database Setup
 
 Run `supabase/schema.sql` in the Supabase SQL Editor. This creates:
+
 - `profiles` — user plan and metadata (auto-populated by trigger on `auth.users`)
 - `projects` — saved agent configurations with generated prompts
 - `chats` / `messages` — chat history per project
@@ -44,22 +45,23 @@ npm run lint      # ESLint
 ```
 
 Adding shadcn components:
+
 ```bash
 npx shadcn@latest add <component-name>
 ```
 
 ## Key Routes
 
-| Route | Description |
-|---|---|
-| `/` | Dashboard (redirects to `/login` if unauthenticated) |
-| `/builder` | XerefClaw agent builder — browse CLAWS features, generate prompts |
-| `/login` | Magic link + Google OAuth |
-| `/pricing` | Plans: Basic (free) · Pro ($17/mo) · Ultra ($77/mo) |
-| `/docs` | Documentation page |
-| `/changelog` | Release history |
-| `/faq` | Frequently asked questions |
-| `/checkout/success` | Post-payment confirmation |
+| Route               | Description                                                       |
+| ------------------- | ----------------------------------------------------------------- |
+| `/`                 | Dashboard (redirects to `/login` if unauthenticated)              |
+| `/builder`          | XerefClaw agent builder — browse CLAWS features, generate prompts |
+| `/login`            | Magic link + Google OAuth                                         |
+| `/pricing`          | Plans: Basic (free) · Pro ($17/mo) · Ultra ($77/mo)               |
+| `/docs`             | Documentation page                                                |
+| `/changelog`        | Release history                                                   |
+| `/faq`              | Frequently asked questions                                        |
+| `/checkout/success` | Post-payment confirmation                                         |
 
 ## Architecture Overview
 
@@ -102,22 +104,22 @@ lib/
 
 `POST /api/chat` streams responses via OpenRouter. Model selection:
 
-| Model ID | Resolves to |
-|---|---|
-| `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5` (default) |
-| `claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6` |
-| `claude-opus-4-6` | `anthropic/claude-opus-4-6` |
-| `opus-plan` | Opus 4.6 if message contains planning keywords, else Sonnet 4.6 |
-| `best` | `openrouter/auto` |
+| Model ID                    | Resolves to                                                     |
+| --------------------------- | --------------------------------------------------------------- |
+| `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5` (default)                          |
+| `claude-sonnet-4-6`         | `anthropic/claude-sonnet-4-6`                                   |
+| `claude-opus-4-6`           | `anthropic/claude-opus-4-6`                                     |
+| `opus-plan`                 | Opus 4.6 if message contains planning keywords, else Sonnet 4.6 |
+| `best`                      | `openrouter/auto`                                               |
 
 If a `projectId` is provided, the project's generated CLAWS prompt is used as the system prompt.
 
 ## Plans
 
-| Plan | Price | Key limits |
-|---|---|---|
-| Basic | Free | Rate-limited API, no cloud save |
-| Pro | $17/mo or $170/yr | Projects, tasks, memory, 2 deploy channels, 3 workflows |
+| Plan  | Price             | Key limits                                                |
+| ----- | ----------------- | --------------------------------------------------------- |
+| Basic | Free              | Rate-limited API, no cloud save                           |
+| Pro   | $17/mo or $170/yr | Projects, tasks, memory, 2 deploy channels, 3 workflows   |
 | Ultra | $77/mo or $770/yr | Unlimited channels, workflows, memory, OCR document brain |
 
 Payments are handled by **Creem** (`app/actions/checkout.ts` + `app/api/webhooks/creem/route.ts`). The webhook updates `profiles.plan` in Supabase.
@@ -128,7 +130,7 @@ Payments are handled by **Creem** (`app/actions/checkout.ts` + `app/api/webhooks
 
 1. Navigate to `/builder`.
 2. Use the category filter to browse CLAWS sections.
-3. Select 3–5 features (e.g., *Slack Connector*, *Long-term Memory*, *Task Planner*).
+3. Select 3–5 features (e.g., _Slack Connector_, _Long-term Memory_, _Task Planner_).
 4. Click **Generate Prompt** — the prompt should appear in the Basket panel, copy-ready.
 5. Verify the prompt groups features in CLAWS order and includes full descriptions.
 

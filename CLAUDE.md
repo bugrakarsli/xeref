@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This App Is
 
-**xeref-claw** is the web app for xeref.ai — an AI agent builder and productivity dashboard. Users browse 48+ features organized by the CLAWS methodology, select what they want, save named project configurations, chat with agents directly in-app, manage tasks/workflows, and upgrade via Creem payments.
+**xeref** is the web app for xeref.ai — an AI agent builder and productivity dashboard. Users browse 48+ features organized by the CLAWS methodology, select what they want, save named project configurations, chat with agents directly in-app, manage tasks/workflows, and upgrade via Creem payments.
 
 ## Commands
 
@@ -15,6 +15,7 @@ npm run lint      # ESLint
 ```
 
 Adding shadcn components:
+
 ```bash
 npx shadcn@latest add <component-name>
 ```
@@ -22,6 +23,7 @@ npx shadcn@latest add <component-name>
 ## Environment Variables
 
 Required in `.env.local`:
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=                 # From Supabase dashboard → Settings → API
 NEXT_PUBLIC_SUPABASE_ANON_KEY=            # From Supabase dashboard → Settings → API
@@ -100,6 +102,7 @@ CREEM_WEBHOOK_SECRET=                     # Creem dashboard → Webhooks
 ### Database Schema (Supabase)
 
 Run `supabase/schema.sql` in the Supabase SQL Editor:
+
 - `profiles` — `plan ('free'|'pro'|'ultra')`, user metadata; auto-created via trigger on `auth.users`
 - `projects` — `selected_feature_ids text[]`, `prompt text`, per-user agent configurations
 - `chats` — chat sessions linked to a project (optional)
@@ -124,22 +127,22 @@ All routing logic lives in `lib/ai/openrouter-config.ts` (server-only).
 
 **Plan entitlements:**
 
-| Plan | Allowed models |
-|---|---|
-| `free` (Basic) | `xeref-free` only |
-| `pro` | `xeref-free`, `claude-haiku-4-5-20251001`, `claude-sonnet-4-6` |
-| `ultra` | All models |
+| Plan           | Allowed models                                                 |
+| -------------- | -------------------------------------------------------------- |
+| `free` (Basic) | `xeref-free` only                                              |
+| `pro`          | `xeref-free`, `claude-haiku-4-5-20251001`, `claude-sonnet-4-6` |
+| `ultra`        | All models                                                     |
 
 **Model resolution:**
 
-| `model` field | Resolves to | Plan |
-|---|---|---|
-| `xeref-free` (default) | `openrouter/free` | Basic |
-| `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5` | Pro |
-| `claude-sonnet-4-6` | `anthropic/claude-sonnet-4-6` | Pro |
-| `best` | `openrouter/auto` | Ultra |
-| `claude-opus-4-6` | `anthropic/claude-opus-4-6` | Ultra |
-| `opus-plan` | Opus if message matches planning keywords, else Sonnet | Ultra |
+| `model` field               | Resolves to                                            | Plan  |
+| --------------------------- | ------------------------------------------------------ | ----- |
+| `xeref-free` (default)      | `openrouter/free`                                      | Basic |
+| `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5`                           | Pro   |
+| `claude-sonnet-4-6`         | `anthropic/claude-sonnet-4-6`                          | Pro   |
+| `best`                      | `openrouter/auto`                                      | Ultra |
+| `claude-opus-4-6`           | `anthropic/claude-opus-4-6`                            | Ultra |
+| `opus-plan`                 | Opus if message matches planning keywords, else Sonnet | Ultra |
 
 **Per-plan API keys:** `OPENROUTER_API_KEY_BASIC` / `_PRO` / `_ULTRA` — the correct key is selected server-side based on the authenticated user's plan. Keys are never exposed to the client.
 
@@ -167,8 +170,10 @@ Features are organized by category ID: `connect` | `listen` | `archive` | `wire`
 ### Dynamic Icon Loading
 
 Lucide icons are referenced by string names in feature data and loaded at runtime:
+
 ```ts
-const IconComponent = (LucideIcons as any)[feature.icon] || LucideIcons.HelpCircle
+const IconComponent =
+  (LucideIcons as any)[feature.icon] || LucideIcons.HelpCircle;
 ```
 
 When adding features to `features.ts`, use valid Lucide icon names.
@@ -194,6 +199,7 @@ Dark mode is forced globally in `layout.tsx` via `className="dark"` on `<html>`.
 ## Branding Assets
 
 Assets in `public/`:
+
 - `xeref.svg` — used in `XerefLogo` component and as favicon (`icons` in `layout.tsx`)
 - `xeref-ai-og-image.jpg` — wired in `layout.tsx` OG + Twitter metadata
 
