@@ -414,8 +414,8 @@ export function ChatInterface({
           <div ref={bottomRef} />
         </div>
       </div>
+      <ScrollToBottomButton scrollContainerRef={scrollContainerRef} />
       <div className="relative">
-        <ScrollToBottomButton scrollContainerRef={scrollContainerRef} />
         <ChatInput ref={chatInputRef} {...sharedInputProps} />
       </div>
     </div>

@@ -99,6 +99,7 @@ export interface Workflow {
   user_id: string;
   name: string;
   trigger: string;
+  trigger_description: string | null;
   action: string;
   enabled: boolean;
   cron_expression: string | null;

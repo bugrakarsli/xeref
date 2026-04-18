@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import type { Project, Chat, ViewKey, SidebarTab } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
 import { Button } from '@/components/ui/button'
@@ -46,6 +46,7 @@ import {
   Pin,
   FolderOpen,
   List,
+  Paintbrush,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -458,7 +459,9 @@ export function Sidebar({
   const [selectedChatForProject, setSelectedChatForProject] = useState<Chat | null>(null)
   const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
   const pathname = usePathname()
+  const router = useRouter()
   const isBuilderActive = pathname === '/builder'
+  const isDesignActive = pathname === '/design'
 
   // Load pinned chats from localStorage on mount and persist changes
   useEffect(() => {
@@ -603,6 +606,7 @@ export function Sidebar({
                 <NavItem icon={<FolderOpen className="h-4 w-4" />} label="Projects" active={activeView === 'home'} collapsed={collapsed} onClick={() => onViewChange('home')} />
                 <NavItem icon={<Settings className="h-4 w-4" />} label="Customize" active={activeView === 'customize'} collapsed={collapsed} onClick={() => onViewChange('customize')} />
                 <NavItem icon={<Code2 className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => onViewChange('code')} />
+                <NavItem icon={<Paintbrush className="h-4 w-4" />} label="Design" active={isDesignActive} collapsed={collapsed} onClick={() => router.push('/design')} />
               </div>
             )}
 
@@ -667,6 +671,20 @@ export function Sidebar({
                 >
                   <Code2 className="h-4 w-4" />
                   Artifacts
+                </button>
+
+                {/* Design Link */}
+                <button
+                  onClick={() => router.push('/design')}
+                  className={cn(
+                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                    'hover:bg-accent hover:text-accent-foreground',
+                    focusRing,
+                    isDesignActive && 'bg-accent text-accent-foreground'
+                  )}
+                >
+                  <Paintbrush className="h-4 w-4" />
+                  Design
                 </button>
               </div>
             )}

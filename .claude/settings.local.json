@@ -52,7 +52,8 @@
       "Bash(npx tsc:*)",
       "Bash(git remote *)",
       "Bash(npm ls *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(npm *)"
     ]
   }
 }

@@ -9,6 +9,7 @@ const DEFAULT_WORKFLOWS = [
   {
     name: 'Save Memories from Chat',
     trigger: 'chat_message_sent',
+    trigger_description: 'Whenever the user message explicitly requests to remember something.',
     action: 'save_memory',
     enabled: true,
   },
@@ -31,7 +32,7 @@ export async function getUserWorkflows(): Promise<Workflow[]> {
 
 export async function updateWorkflow(
   id: string,
-  updates: Partial<Pick<Workflow, 'name' | 'enabled' | 'trigger' | 'action' | 'cron_expression'>>
+  updates: Partial<Pick<Workflow, 'name' | 'enabled' | 'trigger' | 'trigger_description' | 'action' | 'cron_expression'>>
 ): Promise<Workflow> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -74,7 +75,7 @@ export async function createWorkflow(
   name: string,
   trigger: string,
   action: string,
-  opts?: { cron_expression?: string }
+  opts?: { cron_expression?: string; trigger_description?: string }
 ): Promise<Workflow> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -90,6 +91,7 @@ export async function createWorkflow(
       user_id: user.id,
       name,
       trigger,
+      trigger_description: opts?.trigger_description ?? null,
       action,
       enabled: true,
       cron_expression: opts?.cron_expression ?? null,
@@ -228,6 +230,16 @@ export async function updateExecutionResult(id: string, result: string): Promise
   if (error) throw error
 }
 
+const MEMORY_KEYWORDS = [
+  'remember', 'save to memory', 'note this', "don't forget", 'keep in mind',
+  'save this', 'add to memory', 'store this', 'keep this', 'make a note',
+]
+
+function messageRequestsMemory(message: string): boolean {
+  const lower = message.toLowerCase()
+  return MEMORY_KEYWORDS.some((kw) => lower.includes(kw))
+}
+
 /** Fire all enabled chat_message_sent workflows for the current user */
 export async function runChatWorkflows(userMessage: string): Promise<void> {
   const supabase = await createClient()
@@ -236,7 +248,7 @@ export async function runChatWorkflows(userMessage: string): Promise<void> {
 
   const { data: workflows } = await supabase
     .from('workflows')
-    .select('id, trigger, action')
+    .select('id, trigger, trigger_description, action')
     .eq('user_id', user.id)
     .eq('trigger', 'chat_message_sent')
     .eq('enabled', true)
@@ -246,6 +258,12 @@ export async function runChatWorkflows(userMessage: string): Promise<void> {
   const now = new Date().toISOString()
 
   for (const workflow of workflows) {
+    // If a trigger_description is set and the action is save_memory, only fire
+    // when the user message explicitly requests it.
+    if (workflow.action === 'save_memory' && workflow.trigger_description && !messageRequestsMemory(userMessage)) {
+      continue
+    }
+
     await supabase.from('usage_events').insert({
       user_id: user.id,
       event_type: 'workflow_run',
