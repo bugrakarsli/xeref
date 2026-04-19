@@ -1,6 +1,6 @@
-# xeref-claw
+# xeref
 
-**xeref-claw** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. Users configure custom agents via the CLAWS methodology, chat with them directly in-app, manage projects and tasks, and deploy to channels.
+**xeref** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. Users configure custom agents via the CLAWS methodology, chat with them directly in-app, manage projects and tasks, and deploy to channels.
 
 ## Quick Start
 
