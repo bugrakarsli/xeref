@@ -10,9 +10,28 @@ export function GitHubRepoButton({ sessionId }: { sessionId: string }) {
   const [selected, setSelected] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   useEffect(() => {
     if (!open) return;
-    fetch('/api/github/repos').then(r => r.ok ? r.json() : []).then(setRepos).catch(() => setRepos([]));
+    fetch('/api/github/repos')
+      .then(r => r.json())
+      .then(data => {
+        if (data.error === 'unauthorized') {
+          setError('unauthorized');
+          setRepos([]);
+        } else if (data.error) {
+          setError(data.error);
+          setRepos([]);
+        } else {
+          setError(null);
+          setRepos(data);
+        }
+      })
+      .catch(() => {
+        setError('Failed to fetch repositories');
+        setRepos([]);
+      });
   }, [open]);
 
   useEffect(() => {
@@ -44,17 +63,30 @@ export function GitHubRepoButton({ sessionId }: { sessionId: string }) {
       </button>
       {open && (
         <div className="absolute bottom-full mb-2 left-0 z-50 w-72 max-h-72 overflow-y-auto rounded-md border border-black/10 dark:border-white/10 bg-[var(--color-surface)] shadow-lg">
-          {repos.length === 0 && <div className="p-3 text-xs opacity-60">No repositories found.</div>}
-          {repos.map(r => (
-            <button
-              key={r.full_name}
-              onClick={() => pick(r.full_name)}
-              className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-black/5 dark:hover:bg-white/5 text-left"
-            >
-              <span className="truncate">{r.full_name}</span>
-              {selected === r.full_name && <Check size={12} />}
-            </button>
-          ))}
+          {error === 'unauthorized' ? (
+            <div className="p-4 flex flex-col gap-2 items-center text-center">
+              <p className="text-xs opacity-70">Connect your GitHub account to select a repository.</p>
+              <a 
+                href="/api/github/login"
+                className="w-full py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium hover:bg-primary/90 transition-colors"
+              >
+                Connect to GitHub
+              </a>
+            </div>
+          ) : repos.length === 0 ? (
+            <div className="p-3 text-xs opacity-60">{error || 'No repositories found.'}</div>
+          ) : (
+            repos.map(r => (
+              <button
+                key={r.full_name}
+                onClick={() => pick(r.full_name)}
+                className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-black/5 dark:hover:bg-white/5 text-left"
+              >
+                <span className="truncate">{r.full_name}</span>
+                {selected === r.full_name && <Check size={12} />}
+              </button>
+            ))
+          )}
         </div>
       )}
     </div>
