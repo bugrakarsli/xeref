@@ -9,8 +9,9 @@ export async function GET() {
     return NextResponse.json({ error: 'GITHUB_APP_CLIENT_ID not configured' }, { status: 500 });
   }
 
-  // scope=repo allows us to list repositories the user has access to
-  const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=repo`;
+  // Removing explicit redirect_uri to let GitHub use the one configured in the App settings.
+  // This avoids mismatch errors like "redirect_uri is not associated with this application".
+  const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
   
   return NextResponse.redirect(githubUrl);
 }
