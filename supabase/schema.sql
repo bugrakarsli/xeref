@@ -286,6 +286,7 @@ alter table public.workflows add column if not exists cron_expression text;
 alter table public.workflows add column if not exists webhook_secret text;
 alter table public.workflows add column if not exists last_run_at timestamptz;
 alter table public.workflows add column if not exists last_run_result text;
+alter table public.workflows add column if not exists trigger_description text;
 create unique index if not exists idx_workflows_webhook_secret on public.workflows(webhook_secret) where webhook_secret is not null;
 
 -- ── Daily task target columns on profiles ─────────────────────────────────────

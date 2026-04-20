@@ -1,8 +1,45 @@
 export const changelogEntries = [
   {
-    version: 'v1.9',
+    version: 'v2.0',
     date: 'April 18, 2026',
     badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          '/design route — full design system management with sidebar, panels, and modals for creating, editing, and previewing design systems',
+          'Artifact management system — browse, preview, and inspect saved artifacts with split-pane detail view, version history, and capability badges',
+          '/artifacts/my page — dedicated artifact library with list and detail views',
+          'Global search popup — Cmd/Ctrl+K command palette for fast navigation across projects, chats, and views',
+          'Chat-based workflow triggers — automation workflows can now be launched directly from the chat interface',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Zustand design store (store/design-store.ts) for client-side design system state management',
+          'New API routes: /api/design-systems, /api/projects, /api/templates for design feature backend',
+          'New hooks: use-design-systems, use-projects, use-templates (SWR-based data fetching)',
+          'types/design.ts — DesignProject type (renamed from Project to avoid collision with existing type)',
+          'components/design/ directory — scoped UI primitives (badge, button, input) to avoid conflicts with shadcn/ui',
+          'Supabase migration 20260418_xeref_design.sql — adds design_projects, organizations, org_members tables with RLS',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Database migration ordering — split into 3 passes (tables → policies → triggers) to fix RLS policy referencing org_members before the table existed',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'v1.9',
+    date: 'April 18, 2026',
+    badge: null,
     sections: [
       {
         type: 'Improved',

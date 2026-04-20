@@ -71,17 +71,21 @@ export async function disconnectCalendar(): Promise<void> {
     .eq('id', user.id)
 }
 
-async function refreshAccessToken(refreshToken: string): Promise<GoogleToken | null> {
-  const clientId = process.env.GOOGLE_CALENDAR_CLIENT_ID
-  const clientSecret = process.env.GOOGLE_CALENDAR_CLIENT_SECRET
-  if (!clientId || !clientSecret) return null
+async function refreshAccessToken(
+  refreshToken: string,
+  clientId?: string | null,
+  clientSecret?: string | null,
+): Promise<GoogleToken | null> {
+  const id = clientId ?? process.env.GOOGLE_CALENDAR_CLIENT_ID
+  const secret = clientSecret ?? process.env.GOOGLE_CALENDAR_CLIENT_SECRET
+  if (!id || !secret) return null
 
   const res = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: clientId,
-      client_secret: clientSecret,
+      client_id: id,
+      client_secret: secret,
       refresh_token: refreshToken,
       grant_type: 'refresh_token',
     }),
@@ -98,18 +102,20 @@ export async function getCalendarEvents(): Promise<CalendarEvent[]> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('google_calendar_token')
+    .select('google_calendar_token, google_oauth_client_id, google_oauth_client_secret')
     .eq('id', user.id)
     .single()
 
   if (!profile?.google_calendar_token) return []
 
   let token = profile.google_calendar_token as GoogleToken
+  const userClientId = (profile as { google_oauth_client_id?: string | null } | null)?.google_oauth_client_id ?? null
+  const userClientSecret = (profile as { google_oauth_client_secret?: string | null } | null)?.google_oauth_client_secret ?? null
 
   // Refresh if expired
   const isExpired = token.expiry_date && token.expiry_date < Date.now() + 60_000
   if (isExpired && token.refresh_token) {
-    const refreshed = await refreshAccessToken(token.refresh_token)
+    const refreshed = await refreshAccessToken(token.refresh_token, userClientId, userClientSecret)
     if (refreshed) {
       token = {
         ...token,

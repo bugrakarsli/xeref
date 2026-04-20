@@ -49,7 +49,15 @@
       "Bash(GH_TOKEN=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 gh secret set REGISTRY_USERNAME --body \"bugrakarsli\" --repo bugrakarsli/xeref-server)",
       "Bash(GH_TOKEN=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 gh secret set REGISTRY_PASSWORD --repo bugrakarsli/xeref-server)",
       "Bash(GH_TOKEN=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 gh secret:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(git remote *)",
+      "Bash(npm ls *)",
+      "Bash(git *)",
+      "Bash(npm *)",
+      "Bash(grep -r \"clerk\" --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" -l)",
+      "Bash(ls middleware.ts middleware.js)",
+      "Bash(grep -r \"clerk\" package.json)",
+      "Bash(grep -r \"@clerk\" package.json)"
     ]
   }
 }

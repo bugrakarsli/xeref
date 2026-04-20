@@ -1,12 +1,31 @@
 import Link from 'next/link'
+import { Search } from 'lucide-react'
 import { latestVersion } from '@/lib/changelog-entries'
 
-export function RhsSidebar() {
+interface RhsSidebarProps {
+  onOpenSearch?: () => void
+}
+
+export function RhsSidebar({ onOpenSearch }: RhsSidebarProps) {
   return (
     <aside
       aria-label="Right sidebar"
       className="hidden lg:flex flex-col w-14 border-l bg-card shrink-0"
     >
+      {/* Search button */}
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={onOpenSearch}
+          title="Search"
+          className="group relative flex items-center justify-center h-8 w-8 rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <Search className="h-4 w-4" />
+          <span className="pointer-events-none absolute right-full mr-2 whitespace-nowrap rounded bg-popover px-2 py-1 text-xs text-popover-foreground shadow opacity-0 group-hover:opacity-100 transition-opacity">
+            Search
+          </span>
+        </button>
+      </div>
+
       {/* Spacer */}
       <div className="flex-1" />
 

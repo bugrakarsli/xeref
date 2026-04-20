@@ -6,7 +6,6 @@ import type { User } from '@supabase/supabase-js'
 import type { Project, Chat, ViewKey, SidebarTab } from '@/lib/types'
 import type { UserPlan } from '@/app/actions/profile'
 import { createClient } from '@/lib/supabase/client'
-import { createChat } from '@/app/actions/chats'
 import { cn } from '@/lib/utils'
 import { Sidebar } from './sidebar'
 import { HomeView } from './home-view'
@@ -21,8 +20,10 @@ import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
 import { CustomizeView } from './customize-view'
+import { ArtifactsView } from './artifacts-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
+import { SearchPopup } from './search-popup'
 import { WhatsNewToast } from './whats-new-toast'
 import { OnboardingModal } from './onboarding-modal'
 
@@ -62,29 +63,27 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
   const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const userName = user.user_metadata?.full_name ?? user.user_metadata?.name ?? ''
   const userEmail = user.email ?? ''
 
-  async function handleNewChat() {
-    const currentChat = chats.find((c) => c.id === selectedChatId)
-    if (currentChat?.title === 'New Chat' && activeView === 'chat') {
+  function handleNewChat() {
+    if (activeView === 'chat' && selectedChatId === null) {
       window.dispatchEvent(new CustomEvent('xeref_focus_chat_input'))
       return
     }
+    setSelectedChatId(null)
+    setActiveView('chat')
+    setActiveTab('chat')
+    localStorage.setItem('xeref_active_view', 'chat')
+    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'chat' }))
+    if (window.innerWidth < 768) setCollapsed(true)
+  }
 
-    try {
-      const newChat = await createChat(null, 'New Chat')
-      setChats((prev) => [newChat, ...prev])
-      setSelectedChatId(newChat.id)
-      setActiveView('chat')
-      setActiveTab('chat')
-      localStorage.setItem('xeref_active_view', 'chat')
-      window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'chat' }))
-      if (window.innerWidth < 768) setCollapsed(true)
-    } catch (error) {
-      console.error('Failed to create chat:', error)
-    }
+  function handleChatCreated(chat: Chat) {
+    setChats((prev) => [chat, ...prev.filter((c) => c.id !== chat.id)])
+    setSelectedChatId(chat.id)
   }
 
   useEffect(() => {
@@ -132,6 +131,16 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               return next
             })
             break
+        }
+      }
+
+      // F to open search (unless in an input/textarea or using modifier keys)
+      if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const tag = (e.target as HTMLElement).tagName
+        const isEditable = (e.target as HTMLElement).isContentEditable
+        if (tag !== 'INPUT' && tag !== 'TEXTAREA' && !isEditable) {
+          e.preventDefault()
+          setSearchOpen(prev => !prev)
         }
       }
 
@@ -290,6 +299,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     userPlan={userPlan}
                     selectedChatId={selectedChatId}
                     onNewChat={handleNewChat}
+                    onChatCreated={handleChatCreated}
                   />
                 )
               case 'settings':
@@ -305,7 +315,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'agents':
                 return <AgentTeamView />
               case 'code':
-                return <ComingSoonView viewName="Workspaces" />
+                return <ArtifactsView />
               case 'customize':
                 return (
                   <CustomizeView
@@ -347,8 +357,27 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         )}
         
         {/* Legacy RhsSidebar if needed or fallback when agent is closed */}
-        {isChatView && !showAgentPanel && <RhsSidebar />}
+        {isChatView && !showAgentPanel && <RhsSidebar onOpenSearch={() => setSearchOpen(true)} />}
       </div>
+
+      {searchOpen && (
+        <SearchPopup
+          onClose={() => setSearchOpen(false)}
+          chats={chats}
+          projects={projects}
+          onChatSelect={(id) => {
+            setSelectedChatId(id)
+            setActiveView('chat')
+            localStorage.setItem('xeref_active_view', 'chat')
+            window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'chat' }))
+          }}
+          onViewChange={(view) => {
+            setActiveView(view)
+            localStorage.setItem('xeref_active_view', view)
+            window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))
+          }}
+        />
+      )}
 
       <WhatsNewToast />
     </div>

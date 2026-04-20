@@ -27,15 +27,17 @@ export function ScrollToBottomButton({ scrollContainerRef }: ScrollToBottomButto
   if (!visible) return null;
 
   return (
-    <button
-      onClick={() => {
-        const el = scrollContainerRef.current;
-        if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
-      }}
-      aria-label="Scroll to bottom"
-      className="absolute bottom-4 left-1/2 -translate-x-1/2 flex h-9 w-9 items-center justify-center rounded-full border border-white/10 bg-neutral-800 text-white shadow-lg transition-colors hover:bg-neutral-700 z-10"
-    >
-      <ChevronDown className="h-4 w-4" />
-    </button>
+    <div className="flex justify-center py-2">
+      <button
+        onClick={() => {
+          const el = scrollContainerRef.current;
+          if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+        }}
+        aria-label="Scroll to bottom"
+        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-neutral-800 text-white shadow-lg transition-colors hover:bg-neutral-700"
+      >
+        <ChevronDown className="h-4 w-4" />
+      </button>
+    </div>
   );
 }

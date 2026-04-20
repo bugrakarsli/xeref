@@ -94,6 +94,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   const [showForm, setShowForm] = useState(false)
   const [newName, setNewName] = useState('')
   const [newTrigger, setNewTrigger] = useState(TRIGGER_OPTIONS[0].value)
+  const [newTriggerDescription, setNewTriggerDescription] = useState('')
   const [newAction, setNewAction] = useState(ACTION_OPTIONS[0].value)
   const [cronExpr, setCronExpr] = useState('0 9 * * *')
 
@@ -106,6 +107,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [editTrigger, setEditTrigger] = useState('')
+  const [editTriggerDescription, setEditTriggerDescription] = useState('')
   const [editAction, setEditAction] = useState('')
   const [editCronExpr, setEditCronExpr] = useState('0 9 * * *')
 
@@ -244,6 +246,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     setEditingId(workflow.id)
     setEditName(workflow.name)
     setEditTrigger(workflow.trigger)
+    setEditTriggerDescription(workflow.trigger_description ?? '')
     setEditAction(workflow.action)
     setEditCronExpr(workflow.cron_expression ?? '0 9 * * *')
   }
@@ -265,22 +268,25 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault()
     const name = newName.trim()
+    const triggerDescription = newTriggerDescription.trim()
     if (!name) return
     if (needsCronInput(newTrigger) && cronExpr.trim().split(/\s+/).length !== 5) { setCronError(true); return }
     startTransition(async () => {
       try {
         const workflow = await createWorkflow(name, newTrigger, newAction, {
           cron_expression: needsCronInput(newTrigger) ? cronExpr : undefined,
+          trigger_description: triggerDescription || undefined,
         })
         setWorkflows((prev) => [...prev, workflow])
         setNewName('')
         setNewTrigger(TRIGGER_OPTIONS[0].value)
+        setNewTriggerDescription('')
         setNewAction(ACTION_OPTIONS[0].value)
         setCronExpr('0 9 * * *')
         setShowForm(false)
         toast.success('Workflow created')
-      } catch {
-        toast.error('Failed to create workflow')
+      } catch (err) {
+        toast.error(`Failed to create workflow: ${err instanceof Error ? err.message : String(err)}`)
       }
     })
   }
@@ -289,6 +295,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     e.preventDefault()
     if (!editingId) return
     const name = editName.trim()
+    const triggerDescription = editTriggerDescription.trim()
     if (!name) return
     if (needsCronInput(editTrigger) && editCronExpr.trim().split(/\s+/).length !== 5) { setEditCronError(true); return }
     startTransition(async () => {
@@ -296,6 +303,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
         const updated = await updateWorkflow(editingId, {
           name,
           trigger: editTrigger,
+          trigger_description: triggerDescription || null,
           action: editAction,
           cron_expression: needsCronInput(editTrigger) ? editCronExpr : null,
         })
@@ -372,6 +380,14 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
+            <textarea
+              id="new-workflow-trigger-description"
+              value={newTriggerDescription}
+              onChange={(e) => setNewTriggerDescription(e.target.value)}
+              placeholder="Describe exactly when this should run… *"
+              rows={2}
+              className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+            />
           </div>
 
           {needsCronInput(newTrigger) && (() => {
@@ -638,6 +654,9 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                     {' → '}
                     <span className="text-foreground/60">{ACTION_LABELS[workflow.action] ?? workflow.action}</span>
                   </p>
+                  {workflow.trigger_description && (
+                    <p className="text-[11px] text-muted-foreground/60 mt-0.5 italic">{workflow.trigger_description}</p>
+                  )}
                   {workflow.trigger === 'webhook' && workflow.webhook_secret && (
                     <button
                       type="button"
@@ -745,6 +764,14 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    <textarea
+                      id="edit-workflow-trigger-description"
+                      value={editTriggerDescription}
+                      onChange={(e) => setEditTriggerDescription(e.target.value)}
+                      placeholder="Describe exactly when this should run… *"
+                      rows={2}
+                      className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
+                    />
                   </div>
 
                   {needsCronInput(editTrigger) && (() => {
