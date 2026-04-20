@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -35,31 +35,21 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const [guestLoading, setGuestLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
-  // Track dialog open state in a ref so the onAuthStateChange closure sees updates
-  const openRef = useRef(false)
-  useEffect(() => { openRef.current = open }, [open])
-
   useEffect(() => {
     const supabase = createClient()
     supabase.auth.getUser().then(({ data }) => {
       setIsAuthenticated(!!data.user)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session?.user)
-      if (event === 'SIGNED_IN' && session?.user && openRef.current) {
-        setOpen(false)
-        router.push('/')
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT') {
+        setIsAuthenticated(!!session?.user)
       }
     })
     return () => subscription.unsubscribe()
-  }, [router])
+  }, [])
 
   const handleClick = () => {
-    if (isAuthenticated) {
-      router.push('/')
-    } else {
-      setOpen(true)
-    }
+    setOpen(true)
   }
 
   const handleMagicLink = async (e: React.FormEvent) => {
@@ -112,6 +102,20 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const resetForm = () => {
     setEmail('')
     setSent(false)
+  }
+
+  if (isAuthenticated === true) {
+    return (
+      <Button
+        size={size}
+        asChild
+        className={`bg-white text-black hover:bg-white/90${size === 'lg' ? ' h-12 px-8' : ''}`}
+      >
+        <Link href="/">
+          Dashboard {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
+        </Link>
+      </Button>
+    )
   }
 
   return (

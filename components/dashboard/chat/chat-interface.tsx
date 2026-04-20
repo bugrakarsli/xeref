@@ -57,7 +57,12 @@ export function ChatInterface({
   const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [webSearchEnabled, setWebSearchEnabled] = useState(false)
+  const [greeting, setGreeting] = useState('')
   const activeChatIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    setGreeting(`${getGreeting()}${userName ? `, ${userName.split(' ')[0]}` : ''}`)
+  }, [userName])
 
   // Restore persisted model on mount.
   // If a previously-saved model is no longer on the user's plan, fall back to xeref-free.
@@ -317,7 +322,6 @@ export function ChatInterface({
   }
 
   if (messages.length === 0) {
-    const greeting = `${getGreeting()}${userName ? `, ${userName.split(' ')[0]}` : ''}`
     return (
       <div className="flex flex-col flex-1 min-h-0 items-center justify-center py-6">
         <div className="flex flex-col items-center gap-6 w-full">
