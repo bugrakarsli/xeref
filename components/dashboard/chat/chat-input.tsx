@@ -61,6 +61,7 @@ interface ChatInputProps {
   onWebSearchToggle: () => void
   tall?: boolean
   noBorder?: boolean
+  leadingToolbar?: React.ReactNode
 }
 
 export interface ChatInputHandle {
@@ -85,6 +86,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   webSearchEnabled,
   onWebSearchToggle,
   noBorder = false,
+  leadingToolbar,
 }: ChatInputProps, ref) {
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -257,6 +259,8 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
           <div className="flex items-center justify-between px-3 pb-2.5 gap-2">
             {/* Left: Plus button + Agent selector */}
             <div className="flex items-center gap-1">
+              {leadingToolbar}
+              
               {/* Plus button */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

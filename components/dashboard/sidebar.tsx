@@ -47,6 +47,7 @@ import {
   FolderOpen,
   List,
   Paintbrush,
+  Box,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -605,7 +606,7 @@ export function Sidebar({
                 <NavItem icon={<MessageSquare className="h-4 w-4" />} label="New Chat" active={activeView === 'chat'} collapsed={collapsed} onClick={() => onNewChat?.()} />
                 <NavItem icon={<FolderOpen className="h-4 w-4" />} label="Projects" active={activeView === 'home'} collapsed={collapsed} onClick={() => onViewChange('home')} />
                 <NavItem icon={<Settings className="h-4 w-4" />} label="Customize" active={activeView === 'customize'} collapsed={collapsed} onClick={() => onViewChange('customize')} />
-                <NavItem icon={<Code2 className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => onViewChange('code')} />
+                <NavItem icon={<Box className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => onViewChange('code')} />
                 <NavItem icon={<Paintbrush className="h-4 w-4" />} label="Design" active={isDesignActive} collapsed={collapsed} onClick={() => router.push('/design')} />
               </div>
             )}
@@ -669,7 +670,7 @@ export function Sidebar({
                     activeView === 'code' && 'bg-accent text-accent-foreground'
                   )}
                 >
-                  <Code2 className="h-4 w-4" />
+                  <Box className="h-4 w-4" />
                   Artifacts
                 </button>
 
@@ -973,7 +974,7 @@ export function Sidebar({
             <div>
               <div className="group relative">
                 <button
-                  onClick={() => onViewChange('code')}
+                  onClick={() => onViewChange('code_session')}
                   className={cn(
                     'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',
@@ -992,6 +993,7 @@ export function Sidebar({
             {/* Routines */}
             <div>
               <button
+                onClick={() => onViewChange('code_routines')}
                 className={cn(
                   'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
                   focusRing
@@ -1005,6 +1007,7 @@ export function Sidebar({
             {/* Customize */}
             <div>
               <button
+                onClick={() => onViewChange('customize')}
                 className={cn(
                   'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
                   focusRing

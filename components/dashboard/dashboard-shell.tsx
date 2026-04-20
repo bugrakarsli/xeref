@@ -21,6 +21,8 @@ import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
 import { CustomizeView } from './customize-view'
 import { ArtifactsView } from './artifacts-view'
+import { CodeSessionView } from './code-session-view'
+import { CodeRoutinesView } from './code-routines-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
@@ -152,11 +154,16 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         if (activeTab === 'chat') {
           handleNewChat()
         } else if (activeTab === 'tasks') {
-          handleTabChange('tasks')
-          setActiveView('tasks')
+          if (activeView !== 'tasks') {
+            handleTabChange('tasks')
+            setActiveView('tasks')
+          }
+          window.dispatchEvent(new CustomEvent('xeref_open_task_dialog'))
         } else if (activeTab === 'code') {
-          handleTabChange('code')
-          setActiveView('code')
+          if (activeTab !== 'code') handleTabChange('code')
+          setActiveView('code_session')
+          localStorage.setItem('xeref_active_view', 'code_session')
+          window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
         }
       }
     }
@@ -316,6 +323,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 return <AgentTeamView />
               case 'code':
                 return <ArtifactsView />
+              case 'code_session':
+                return <CodeSessionView sessionId={null} />
+              case 'code_routines':
+                return <CodeRoutinesView />
               case 'customize':
                 return (
                   <CustomizeView
