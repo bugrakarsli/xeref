@@ -56,18 +56,30 @@ export async function seedDefaultWorkflows(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
 
-  // Only seed if the user has no workflows yet
   const { data: existing } = await supabase
     .from('workflows')
-    .select('id')
+    .select('id, name, trigger_description')
     .eq('user_id', user.id)
-    .limit(1)
 
-  if (existing && existing.length > 0) return
+  if (!existing || existing.length === 0) {
+    await supabase.from('workflows').insert(
+      DEFAULT_WORKFLOWS.map((w) => ({ ...w, user_id: user.id }))
+    )
+    revalidatePath('/')
+    return
+  }
 
-  await supabase.from('workflows').insert(
-    DEFAULT_WORKFLOWS.map((w) => ({ ...w, user_id: user.id }))
-  )
+  // Backfill trigger_description on existing default workflows that are missing it
+  for (const def of DEFAULT_WORKFLOWS) {
+    const match = existing.find((w) => w.name === def.name && !w.trigger_description)
+    if (match) {
+      await supabase
+        .from('workflows')
+        .update({ trigger_description: def.trigger_description })
+        .eq('id', match.id)
+        .eq('user_id', user.id)
+    }
+  }
   revalidatePath('/')
 }
 

@@ -269,13 +269,13 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     e.preventDefault()
     const name = newName.trim()
     const triggerDescription = newTriggerDescription.trim()
-    if (!name || !triggerDescription) return
+    if (!name) return
     if (needsCronInput(newTrigger) && cronExpr.trim().split(/\s+/).length !== 5) { setCronError(true); return }
     startTransition(async () => {
       try {
         const workflow = await createWorkflow(name, newTrigger, newAction, {
           cron_expression: needsCronInput(newTrigger) ? cronExpr : undefined,
-          trigger_description: triggerDescription,
+          trigger_description: triggerDescription || undefined,
         })
         setWorkflows((prev) => [...prev, workflow])
         setNewName('')
@@ -285,8 +285,8 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
         setCronExpr('0 9 * * *')
         setShowForm(false)
         toast.success('Workflow created')
-      } catch {
-        toast.error('Failed to create workflow')
+      } catch (err) {
+        toast.error(`Failed to create workflow: ${err instanceof Error ? err.message : String(err)}`)
       }
     })
   }
@@ -296,14 +296,14 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
     if (!editingId) return
     const name = editName.trim()
     const triggerDescription = editTriggerDescription.trim()
-    if (!name || !triggerDescription) return
+    if (!name) return
     if (needsCronInput(editTrigger) && editCronExpr.trim().split(/\s+/).length !== 5) { setEditCronError(true); return }
     startTransition(async () => {
       try {
         const updated = await updateWorkflow(editingId, {
           name,
           trigger: editTrigger,
-          trigger_description: triggerDescription,
+          trigger_description: triggerDescription || null,
           action: editAction,
           cron_expression: needsCronInput(editTrigger) ? editCronExpr : null,
         })
@@ -384,10 +384,8 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
               id="new-workflow-trigger-description"
               value={newTriggerDescription}
               onChange={(e) => setNewTriggerDescription(e.target.value)}
-              placeholder="Describe exactly when this should run… (required)"
+              placeholder="Describe exactly when this should run… *"
               rows={2}
-              required
-              aria-required="true"
               className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
             />
           </div>
@@ -455,7 +453,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
             <Button type="button" variant="ghost" size="sm" onClick={() => setShowForm(false)}>
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={!newName.trim() || !newTriggerDescription.trim() || isPending}>
+            <Button type="submit" size="sm" disabled={!newName.trim() || isPending}>
               {isPending ? 'Creating…' : 'Create'}
             </Button>
           </div>
@@ -770,10 +768,8 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                       id="edit-workflow-trigger-description"
                       value={editTriggerDescription}
                       onChange={(e) => setEditTriggerDescription(e.target.value)}
-                      placeholder="Describe exactly when this should run… (required)"
+                      placeholder="Describe exactly when this should run… *"
                       rows={2}
-                      required
-                      aria-required="true"
                       className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring resize-none"
                     />
                   </div>
@@ -867,7 +863,7 @@ export function WorkflowsView({ projectCount }: WorkflowsViewProps) {
                       <Button type="button" variant="ghost" size="sm" onClick={() => setEditingId(null)}>
                         Cancel
                       </Button>
-                      <Button type="submit" size="sm" disabled={!editName.trim() || !editTriggerDescription.trim() || isPending}>
+                      <Button type="submit" size="sm" disabled={!editName.trim() || isPending}>
                         {isPending ? 'Saving…' : 'Save Workflow'}
                       </Button>
                     </div>

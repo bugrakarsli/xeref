@@ -304,6 +304,8 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
     agent: SYSTEM_AGENTS[0],
   })
   const [showingList, setShowingList] = useState(false)
+  const [greeting, setGreeting] = useState('')
+  useEffect(() => { setGreeting(getGreeting()) }, [])
 
   async function handleNewChat() {
     if (activeChat && chatMessages.length > 0) {
@@ -367,7 +369,7 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
       {/* Greeting */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold tracking-tight">
-          {getGreeting()},{' '}
+          {greeting && <>{greeting}, </>}
           <span className="text-primary">{displayName}</span>.
         </h1>
         <p className="text-muted-foreground text-sm mt-1">

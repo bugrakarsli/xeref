@@ -25,7 +25,8 @@ const GOALS = [
 ]
 
 const MODELS = [
-  { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5', description: 'Fast & free', plan: 'Free' },
+  { value: 'xeref-free', label: 'Xeref Free', description: 'Default · OpenRouter free tier', plan: 'Basic' },
+  { value: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5', description: 'Fast & efficient', plan: 'Pro' },
   { value: 'claude-sonnet-4-6', label: 'Sonnet 4.6', description: 'Best balance', plan: 'Pro' },
   { value: 'claude-opus-4-6', label: 'Opus 4.6', description: 'Most powerful', plan: 'Ultra' },
 ]
@@ -40,7 +41,7 @@ export function OnboardingModal({ userName, onComplete }: OnboardingModalProps) 
   const [displayName, setDisplayName] = useState(userName ?? '')
   const [role, setRole] = useState('')
   const [primaryGoal, setPrimaryGoal] = useState('')
-  const [preferredModel, setPreferredModel] = useState('claude-haiku-4-5-20251001')
+  const [preferredModel, setPreferredModel] = useState('xeref-free')
   const [isPending, startTransition] = useTransition()
 
   const steps = [

@@ -47,7 +47,7 @@ export async function getProfile(): Promise<UserProfile | null> {
   return {
     ...data,
     plan: (data.plan ?? 'free') as UserPlan,
-    onboarding_completed: data.onboarding_completed ?? false,
+    onboarding_completed: data.onboarding_completed ?? true,
   } as UserProfile
 }
 
