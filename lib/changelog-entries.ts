@@ -1,8 +1,44 @@
 export const changelogEntries = [
   {
+    version: 'v2.1',
+    date: 'April 22, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'MCP server v1 — POST /api/mcp bearer-token-authenticated endpoint exposing list/create/update/delete for projects, tasks, and notes, plus suggest_next_task',
+          'getMcpToken / regenerateMcpToken / saveTelegramBotToken server actions',
+          'Settings view: MCP token card with show/hide, copy, and regenerate controls',
+          'Deploy view — new DeployView with Telegram bot setup wizard; accessible via Deploy nav item under the tasks tab',
+          'POST /api/bots/telegram/register — validates bot token and calls Telegram setWebhook',
+          'POST /api/bots/telegram/[userId] — receives Telegram updates and routes them through the chat API',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Added \'deploy\' to ViewKey in lib/types.ts',
+          'Supabase migration: mcp_token (unique) and telegram_bot_token columns added to profiles table',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Creem checkout action: removed hardcoded redirect URI that caused OAuth mismatch in local dev',
+          'Login page simplified — stripped redundant layout wrappers',
+          'Local environment permissions configured',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.0',
     date: 'April 18, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',
