@@ -1,8 +1,12 @@
+'use client'
+
 import Link from 'next/link'
+import { useState, useEffect, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Zap } from 'lucide-react'
+import { Zap, Eye, EyeOff, RefreshCw, Copy, Check } from 'lucide-react'
 import type { UserPlan } from '@/app/actions/profile'
+import { getMcpToken, regenerateMcpToken } from '@/app/actions/profile'
 
 const PLAN_CONFIG: Record<UserPlan, { label: string; features: string[] }> = {
   free: {
@@ -44,6 +48,31 @@ interface SettingsViewProps {
 
 export function SettingsView({ userEmail, userName, userPlan = 'free' }: SettingsViewProps) {
   const plan = PLAN_CONFIG[userPlan]
+  const [mcpToken, setMcpToken] = useState<string | null>(null)
+  const [showToken, setShowToken] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    getMcpToken().then(setMcpToken).catch(() => null)
+  }, [])
+
+  function handleRegenerate() {
+    startTransition(async () => {
+      const token = await regenerateMcpToken()
+      setMcpToken(token)
+      setShowToken(true)
+    })
+  }
+
+  function handleCopy() {
+    if (!mcpToken) return
+    navigator.clipboard.writeText(mcpToken)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const maskedToken = mcpToken ? `${mcpToken.slice(0, 10)}${'•'.repeat(30)}` : null
 
   return (
     <section aria-label="Settings" className="flex flex-col flex-1 p-6 md:p-8 max-w-2xl w-full mx-auto">
@@ -100,6 +129,40 @@ export function SettingsView({ userEmail, userName, userPlan = 'free' }: Setting
                 <Zap className="h-4 w-4" />
                 Upgrade to Ultra
               </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* MCP Token card */}
+        <div className="rounded-xl border bg-card p-5">
+          <h2 className="text-sm font-semibold mb-1">MCP Server Token</h2>
+          <p className="text-xs text-muted-foreground mb-4">
+            Use this bearer token to call the Xeref MCP endpoint from external agents.{' '}
+            <code className="bg-muted px-1 py-0.5 rounded text-[11px]">POST /api/mcp</code>
+          </p>
+
+          {mcpToken ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <code className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs font-mono truncate">
+                  {showToken ? mcpToken : maskedToken}
+                </code>
+                <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={() => setShowToken((v) => !v)} aria-label="Toggle visibility">
+                  {showToken ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </Button>
+                <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleCopy} aria-label="Copy token">
+                  {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <Button size="sm" variant="outline" className="gap-2 w-fit" onClick={handleRegenerate} disabled={isPending}>
+                <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+                Regenerate
+              </Button>
+            </div>
+          ) : (
+            <Button size="sm" className="gap-2" onClick={handleRegenerate} disabled={isPending}>
+              <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+              Generate Token
             </Button>
           )}
         </div>

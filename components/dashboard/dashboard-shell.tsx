@@ -24,6 +24,7 @@ import { ArtifactsView } from './artifacts-view'
 import { ProjectsView } from './projects-view'
 import { CodeSessionView } from './code-session-view'
 import { CodeRoutinesView } from './code-routines-view'
+import { DeployView } from './deploy-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
@@ -340,6 +341,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 )
               case 'projects':
                 return <ProjectsView />
+              case 'deploy':
+                return <DeployView />
             }
           })()}
         </main>

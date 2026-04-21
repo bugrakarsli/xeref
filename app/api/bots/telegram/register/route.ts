@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+
+export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await req.json().catch(() => ({}))
+  const { token } = body as { token?: string }
+
+  if (!token || typeof token !== 'string' || !token.includes(':')) {
+    return NextResponse.json({ error: 'Invalid bot token format' }, { status: 400 })
+  }
+
+  // Verify token with Telegram and set webhook
+  const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/bots/telegram/${user.id}`
+
+  const tgRes = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url: webhookUrl }),
+  })
+
+  const tgJson = await tgRes.json()
+  if (!tgJson.ok) {
+    return NextResponse.json({ error: tgJson.description ?? 'Telegram rejected the token' }, { status: 400 })
+  }
+
+  // Store token in profile
+  const { error } = await supabase
+    .from('profiles')
+    .update({ telegram_bot_token: token })
+    .eq('id', user.id)
+
+  if (error) return NextResponse.json({ error: 'Failed to save token' }, { status: 500 })
+
+  return NextResponse.json({ ok: true, webhook: webhookUrl })
+}

@@ -49,6 +49,7 @@ import {
   Paintbrush,
   Box,
   Layers,
+  Send,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -931,6 +932,17 @@ export function Sidebar({
                 active={activeView === 'projects'}
                 collapsed={collapsed}
                 onClick={() => onViewChange('projects')}
+              />
+            </div>
+
+            {/* Deploy nav item */}
+            <div className="mt-1">
+              <NavItem
+                icon={<Send className="h-4 w-4" />}
+                label="Deploy"
+                active={activeView === 'deploy'}
+                collapsed={collapsed}
+                onClick={() => onViewChange('deploy')}
               />
             </div>
 
