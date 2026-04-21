@@ -42,8 +42,8 @@ export default function ChangelogPage() {
             <ArrowLeft className="h-3 w-3" />
             Back
           </Link>
-          <div className="hidden sm:block">
-            <StartBuildingButton size="sm" />
+          <div className="hidden sm:flex gap-2 items-center">
+            <StartBuildingButton size="sm" showLoginButton />
           </div>
           <MobileNav />
         </div>

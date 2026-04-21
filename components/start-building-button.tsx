@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,10 +20,10 @@ import Link from 'next/link'
 interface Props {
   size?: 'sm' | 'lg' | 'default'
   showArrow?: boolean
+  showLoginButton?: boolean
 }
 
-export function StartBuildingButton({ size = 'default', showArrow = false }: Props) {
-  const router = useRouter()
+export function StartBuildingButton({ size = 'default', showArrow = false, showLoginButton = false }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [open, setOpen] = useState(false)
 
@@ -32,7 +31,6 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [guestLoading, setGuestLoading] = useState(false)
   const [sent, setSent] = useState(false)
 
   useEffect(() => {
@@ -72,18 +70,6 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
     }
   }
 
-  const handleGuestSignIn = async () => {
-    setGuestLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInAnonymously()
-    setGuestLoading(false)
-    if (error) {
-      toast.error(error.message)
-    } else {
-      router.push('/')
-    }
-  }
-
   const handleGoogle = async () => {
     setGoogleLoading(true)
     const supabase = createClient()
@@ -120,6 +106,17 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
 
   return (
     <>
+      {showLoginButton && (
+        <Button
+          size={size}
+          variant="ghost"
+          onClick={handleClick}
+          className="text-muted-foreground hover:text-foreground"
+        >
+          Log In
+        </Button>
+      )}
+
       <Button
         size={size}
         onClick={handleClick}
@@ -203,21 +200,6 @@ export function StartBuildingButton({ size = 'default', showArrow = false }: Pro
             </div>
           )}
 
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex-1 border-t" />
-            <span>or</span>
-            <div className="flex-1 border-t" />
-          </div>
-
-          <Button
-            variant="ghost"
-            className="w-full text-muted-foreground text-xs"
-            onClick={handleGuestSignIn}
-            disabled={guestLoading}
-          >
-            {guestLoading && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
-            Continue as guest
-          </Button>
 
           <p className="text-center text-xs text-muted-foreground pt-1">
             By signing in, you agree to our{' '}

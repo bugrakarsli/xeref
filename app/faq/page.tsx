@@ -59,8 +59,8 @@ export default function FAQPage() {
           </Link>
         </nav>
         <div className="ml-auto flex gap-2 items-center">
-          <div className="hidden sm:block">
-            <StartBuildingButton size="sm" />
+          <div className="hidden sm:flex gap-2 items-center">
+            <StartBuildingButton size="sm" showLoginButton />
           </div>
           <MobileNav />
         </div>
