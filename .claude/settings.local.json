@@ -60,7 +60,14 @@
       "Bash(grep -r \"@clerk\" package.json)",
       "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
       "Bash(xargs ls *)",
-      "Bash(awk '{print $NF}')"
+      "Bash(awk '{print $NF}')",
+      "Bash(ls supabase/migrations/)",
+      "Bash(ls supabase/)",
+      "PowerShell(Stop-Process *)",
+      "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
+      "Bash(curl -s -X POST http://localhost:3000/api/mcp -H 'Content-Type: application/json' -H 'Authorization: Bearer xmcp_c3fe6015f4b9a84e9ead329d7c514479d744d0d67af60c52' -d '{\"method\":\"initialize\",\"params\":{}}')",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST http://localhost:3000/api/mcp -H 'Content-Type: application/json' -H 'Authorization: Bearer xmcp_c3fe6015f4b9a84e9ead329d7c514479d744d0d67af60c52' -d '{\"method\":\"tools/list\",\"params\":{}}')"
     ]
   }
 }

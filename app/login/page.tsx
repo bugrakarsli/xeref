@@ -332,94 +332,11 @@ export default function LoginPage() {
           </div>
         </section>
 
-        {/* ── Roadmap ── */}
-        <section className="w-full py-12 md:py-20 lg:py-28 bg-muted/50">
-          <div className="container mx-auto px-4 md:px-6 lg:px-8">
-            <div className="mb-12">
-              <Badge variant="secondary" className="mb-3">Roadmap</Badge>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">What&apos;s being built</h2>
-            </div>
-            <div className="grid gap-6 md:grid-cols-2">
-              {[
-                {
-                  phase: '1',
-                  color: 'bg-blue-500/10 text-blue-500',
-                  title: 'Core Platform',
-                  timeline: '4–8 weeks',
-                  items: [
-                    { text: 'Classroom section + semantic search', status: 'todo' as const },
-                    { text: 'UserContext onboarding form', status: 'done' as const },
-                    { text: 'Projects CRUD + AI goal decomposition', status: 'done' as const },
-                    { text: 'Tasks & Notes CRUD + Daily Targets', status: 'done' as const },
-                    { text: 'Xeref MCP Server v1 (all CRUD tools)', status: 'todo' as const },
-                    { text: 'Streaming responses in Chat', status: 'done' as const },
-                  ],
-                },
-                {
-                  phase: '2',
-                  color: 'bg-cyan-500/10 text-cyan-500',
-                  title: 'Memory & Community',
-                  timeline: '8–16 weeks',
-                  items: [
-                    { text: 'Gemini Embedding 2 auto-embedding (Edge Functions)', status: 'todo' as const },
-                    { text: 'Pinecone user namespaces + Memory dashboard', status: 'todo' as const },
-                    { text: 'YouTube Chat with timestamped sources', status: 'todo' as const },
-                    { text: 'Saved posts, bookmarks, community search', status: 'todo' as const },
-                    { text: 'Calendar + Google Calendar sync', status: 'done' as const },
-                    { text: 'Image uploads in Chat (Gemini Vision)', status: 'done' as const },
-                  ],
-                },
-                {
-                  phase: '3',
-                  color: 'bg-amber-500/10 text-amber-500',
-                  title: 'Deploy & Automate',
-                  timeline: '16–24 weeks',
-                  items: [
-                    { text: 'Telegram bot wizard (priority channel)', status: 'todo' as const },
-                    { text: 'Discord, WhatsApp, web widget', status: 'todo' as const },
-                    { text: 'Workflows: cron + webhook triggers', status: 'done' as const },
-                    { text: 'AI News Feed + daily digest', status: 'todo' as const },
-                    { text: 'OCR Document Brain (18 file types)', status: 'todo' as const },
-                    { text: 'Stats: heatmap, velocity charts', status: 'done' as const },
-                  ],
-                },
-              ].map(({ phase, color, title, timeline, items }) => (
-                <div key={phase} className="border rounded-xl p-6 bg-background shadow-sm">
-                  <div className="flex items-center gap-3 mb-5">
-                    <div className={`w-8 h-8 ${color} rounded-full flex items-center justify-center text-xs font-bold`}>
-                      {phase}
-                    </div>
-                    <div>
-                      <div className="text-base font-semibold">{title}</div>
-                      <div className="text-xs text-muted-foreground">{timeline}</div>
-                    </div>
-                  </div>
-                  <ul className="flex flex-col gap-2">
-                    {items.map(({ text, status }) => (
-                      <li key={text} className="flex items-center gap-2 text-xs">
-                        <span className={`inline-flex h-1.5 w-1.5 rounded-full shrink-0 ${
-                          status === 'done' ? 'bg-green-500' : 'bg-border'
-                        }`} />
-                        <span className={`flex-1 ${
-                          status === 'done' ? 'line-through text-muted-foreground/60' : 'text-muted-foreground'
-                        }`}>{text}</span>
-                        {status === 'done' && (
-                          <span className="text-[10px] font-medium text-green-500 shrink-0">DONE</span>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
-
       </main>
 
       {/* ── Footer ── */}
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
-        <p>© 2026 Xeref LLC. All rights reserved.</p>
+        <p>© 2026 Xeref. All rights reserved.</p>
         <nav className="sm:ml-auto flex flex-wrap gap-4 sm:gap-6 justify-center">
           <Link className="hover:underline underline-offset-4" href="/faq">FAQ</Link>
           <Link className="hover:underline underline-offset-4" href="/about">About</Link>

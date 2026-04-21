@@ -3,10 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
-const CREEM_API_BASE =
-  process.env.NODE_ENV === 'production'
-    ? 'https://api.creem.io/v1'
-    : 'https://test-api.creem.io/v1'
+const CREEM_API_BASE = 'https://api.creem.io/v1'
 
 const PRODUCT_IDS = {
   pro_monthly: process.env.NEXT_PUBLIC_CREEM_PRO_MONTHLY_ID!,
