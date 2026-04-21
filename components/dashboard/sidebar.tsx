@@ -48,6 +48,7 @@ import {
   List,
   Paintbrush,
   Box,
+  Layers,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -920,6 +921,17 @@ export function Sidebar({
                   )}
                 </div>
               )}
+            </div>
+
+            {/* Projects view nav item */}
+            <div className="mt-2">
+              <NavItem
+                icon={<Layers className="h-4 w-4" />}
+                label="All Projects"
+                active={activeView === 'projects'}
+                collapsed={collapsed}
+                onClick={() => onViewChange('projects')}
+              />
             </div>
 
             {/* Advanced section */}

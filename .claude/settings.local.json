@@ -57,7 +57,10 @@
       "Bash(grep -r \"clerk\" --include=\"*.ts\" --include=\"*.tsx\" --include=\"*.js\" -l)",
       "Bash(ls middleware.ts middleware.js)",
       "Bash(grep -r \"clerk\" package.json)",
-      "Bash(grep -r \"@clerk\" package.json)"
+      "Bash(grep -r \"@clerk\" package.json)",
+      "Bash(grep -E \"\\\\.\\(tsx?|jsx?\\)$\")",
+      "Bash(xargs ls *)",
+      "Bash(awk '{print $NF}')"
     ]
   }
 }

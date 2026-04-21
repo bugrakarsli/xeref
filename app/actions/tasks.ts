@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import type { Task, DailyTarget } from '@/lib/types'
+import { runWorkflowsForEvent } from './workflows'
 
 export async function createTask(
   title: string,
@@ -31,6 +32,7 @@ export async function createTask(
     .single()
 
   if (error) throw error
+  await runWorkflowsForEvent('task_created', user.id).catch(() => null)
   revalidatePath('/')
   return data as Task
 }
@@ -67,6 +69,9 @@ export async function updateTask(
     .single()
 
   if (error) throw error
+  if (updates.status === 'done') {
+    await runWorkflowsForEvent('task_completed', user.id).catch(() => null)
+  }
   revalidatePath('/')
   return data as Task
 }

@@ -15,7 +15,15 @@ import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { createTask, getUserTasks, updateTask, deleteTask, getDailyTarget, setDailyGoal, incrementDailyCompleted } from '@/app/actions/tasks'
 import { getUserNotes, createNote, updateNote, deleteNote } from '@/app/actions/notes'
-import type { Task, Note, DailyTarget } from '@/lib/types'
+import { getUserProjects } from '@/app/actions/projects'
+import type { Task, Note, DailyTarget, Project } from '@/lib/types'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { TaskDialog } from './task-dialog'
 import { KanbanSettingsDialog } from './kanban-settings-dialog'
 import {
@@ -264,6 +272,9 @@ export function TasksView({ projectCount }: TasksViewProps) {
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<StatusFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [projectFilter, setProjectFilter] = useState<string>('all')
+  const [projects, setProjects] = useState<Project[]>([])
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
   const [kanbanSettingsOpen, setKanbanSettingsOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
@@ -280,6 +291,10 @@ export function TasksView({ projectCount }: TasksViewProps) {
     getDailyTarget()
       .then(setDailyTarget)
       .catch(() => null)
+
+    getUserProjects()
+      .then(setProjects)
+      .catch(() => null)
   }, [])
 
   useEffect(() => {
@@ -291,7 +306,10 @@ export function TasksView({ projectCount }: TasksViewProps) {
     return () => window.removeEventListener('xeref_open_task_dialog', handleOpenDialog)
   }, [])
 
-  const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.status === filter)
+  const filtered = tasks
+    .filter((t) => filter === 'all' || t.status === filter)
+    .filter((t) => !searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter((t) => projectFilter === 'all' || t.project_id === projectFilter)
 
   async function handleSaveTask(data: Partial<Task>) {
     startTransition(async () => {
@@ -452,6 +470,31 @@ export function TasksView({ projectCount }: TasksViewProps) {
               </Button>
             </div>
           </div>
+
+          {/* Search + project filter */}
+          {viewMode === 'list' && (
+            <div className="flex gap-2 mb-4">
+              <Input
+                placeholder="Search tasks…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-8 text-sm"
+              />
+              {projects.length > 0 && (
+                <Select value={projectFilter} onValueChange={setProjectFilter}>
+                  <SelectTrigger className="h-8 w-44 text-sm shrink-0">
+                    <SelectValue placeholder="All projects" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All projects</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </div>
+          )}
 
           {/* Status filter tabs */}
           {viewMode === 'list' ? (

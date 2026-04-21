@@ -296,6 +296,44 @@ export async function runChatWorkflows(userMessage: string): Promise<void> {
   }
 }
 
+/** Fire all enabled workflows for a task lifecycle event */
+export async function runWorkflowsForEvent(
+  trigger: 'task_created' | 'task_completed',
+  userId: string
+): Promise<void> {
+  const supabase = await createClient()
+
+  const { data: workflows } = await supabase
+    .from('workflows')
+    .select('id, trigger, action')
+    .eq('user_id', userId)
+    .eq('trigger', trigger)
+    .eq('enabled', true)
+
+  if (!workflows || workflows.length === 0) return
+
+  const now = new Date().toISOString()
+
+  for (const workflow of workflows) {
+    await supabase.from('usage_events').insert({
+      user_id: userId,
+      event_type: 'workflow_run',
+      metadata: {
+        workflow_id: workflow.id,
+        trigger: workflow.trigger,
+        action: workflow.action,
+        result: 'Success',
+      },
+    })
+
+    await supabase
+      .from('workflows')
+      .update({ last_run_at: now, last_run_result: 'Success' })
+      .eq('id', workflow.id)
+      .eq('user_id', userId)
+  }
+}
+
 /** Check if the memory-save workflow is enabled for the current user */
 export async function isMemoryWorkflowEnabled(): Promise<boolean> {
   const supabase = await createClient()

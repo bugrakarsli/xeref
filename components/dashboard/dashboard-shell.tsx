@@ -21,6 +21,7 @@ import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
 import { CustomizeView } from './customize-view'
 import { ArtifactsView } from './artifacts-view'
+import { ProjectsView } from './projects-view'
 import { CodeSessionView } from './code-session-view'
 import { CodeRoutinesView } from './code-routines-view'
 import { AgentPanel } from './AgentPanel'
@@ -337,6 +338,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                     }}
                   />
                 )
+              case 'projects':
+                return <ProjectsView />
             }
           })()}
         </main>

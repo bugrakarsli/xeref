@@ -349,10 +349,9 @@ export default function LoginPage() {
                   items: [
                     { text: 'Classroom section + semantic search', status: 'todo' as const },
                     { text: 'UserContext onboarding form', status: 'done' as const },
-                    { text: 'Projects CRUD + AI goal decomposition', status: 'partial' as const },
-                    { text: 'Tasks & Notes CRUD + Daily Targets', status: 'partial' as const },
+                    { text: 'Projects CRUD + AI goal decomposition', status: 'done' as const },
+                    { text: 'Tasks & Notes CRUD + Daily Targets', status: 'done' as const },
                     { text: 'Xeref MCP Server v1 (all CRUD tools)', status: 'todo' as const },
-                    { text: 'Guest mode (Supabase anon + rate limit)', status: 'partial' as const },
                     { text: 'Streaming responses in Chat', status: 'done' as const },
                   ],
                 },
@@ -378,10 +377,10 @@ export default function LoginPage() {
                   items: [
                     { text: 'Telegram bot wizard (priority channel)', status: 'todo' as const },
                     { text: 'Discord, WhatsApp, web widget', status: 'todo' as const },
-                    { text: 'Workflows: cron + webhook triggers', status: 'partial' as const },
+                    { text: 'Workflows: cron + webhook triggers', status: 'done' as const },
                     { text: 'AI News Feed + daily digest', status: 'todo' as const },
                     { text: 'OCR Document Brain (18 file types)', status: 'todo' as const },
-                    { text: 'Stats: heatmap, velocity charts', status: 'partial' as const },
+                    { text: 'Stats: heatmap, velocity charts', status: 'done' as const },
                   ],
                 },
               ].map(({ phase, color, title, timeline, items }) => (
@@ -399,16 +398,13 @@ export default function LoginPage() {
                     {items.map(({ text, status }) => (
                       <li key={text} className="flex items-center gap-2 text-xs">
                         <span className={`inline-flex h-1.5 w-1.5 rounded-full shrink-0 ${
-                          status === 'done' ? 'bg-green-500' : status === 'partial' ? 'bg-amber-500' : 'bg-border'
+                          status === 'done' ? 'bg-green-500' : 'bg-border'
                         }`} />
                         <span className={`flex-1 ${
                           status === 'done' ? 'line-through text-muted-foreground/60' : 'text-muted-foreground'
                         }`}>{text}</span>
                         {status === 'done' && (
                           <span className="text-[10px] font-medium text-green-500 shrink-0">DONE</span>
-                        )}
-                        {status === 'partial' && (
-                          <span className="text-[10px] font-medium text-amber-500 shrink-0">IN PROGRESS</span>
                         )}
                       </li>
                     ))}
