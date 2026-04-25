@@ -3,6 +3,7 @@ import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
 import { MobileNav } from '@/components/mobile-nav';
+import { SiteFooter } from '@/components/site-footer';
 
 const faqs = [
   {
@@ -98,7 +99,7 @@ export default function FAQPage() {
             <p className="text-sm text-muted-foreground">
               Reach out at{' '}
               <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
-                hello@xeref.ai
+                support@xeref.ai
               </a>{' '}
               or open an issue on{' '}
               <a
@@ -115,17 +116,7 @@ export default function FAQPage() {
         </div>
       </main>
 
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
-        <p>© 2026 XerefAI. All rights reserved.</p>
-        <nav className="sm:ml-auto flex flex-wrap gap-4 sm:gap-6 justify-center">
-          <Link className="hover:underline underline-offset-4" href="/docs">Docs</Link>
-          <Link className="hover:underline underline-offset-4" href="/pricing">Pricing</Link>
-          <Link className="hover:underline underline-offset-4" href="/changelog">Changelog</Link>
-          <Link className="hover:underline underline-offset-4" href="/faq">FAQ</Link>
-          <Link className="hover:underline underline-offset-4" href="/terms">Terms of Service</Link>
-          <Link className="hover:underline underline-offset-4" href="/privacy">Privacy</Link>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

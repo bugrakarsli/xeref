@@ -21,11 +21,23 @@ interface Props {
   size?: 'sm' | 'lg' | 'default'
   showArrow?: boolean
   showLoginButton?: boolean
+  controlledOpen?: boolean
+  onControlledOpenChange?: (open: boolean) => void
 }
 
-export function StartBuildingButton({ size = 'default', showArrow = false, showLoginButton = false }: Props) {
+export function StartBuildingButton({ size = 'default', showArrow = false, showLoginButton = false, controlledOpen, onControlledOpenChange }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+
+  const isControlled = controlledOpen !== undefined
+  const open = isControlled ? controlledOpen : internalOpen
+  const setOpen = (v: boolean) => {
+    if (isControlled) {
+      onControlledOpenChange?.(v)
+    } else {
+      setInternalOpen(v)
+    }
+  }
 
   // Auth form state
   const [email, setEmail] = useState('')

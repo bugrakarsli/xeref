@@ -3,11 +3,26 @@ import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
 import { MobileNav } from '@/components/mobile-nav';
+import { SiteFooter } from '@/components/site-footer';
 
 const sections = [
   {
-    id: 'getting-started',
-    title: 'Getting Started',
+    id: 'overview',
+    title: 'Platform Overview',
+    content: [
+      {
+        heading: 'What is xeref.ai?',
+        body: 'xeref.ai is an AI agent builder and productivity platform. It has two layers: XerefClaw — a visual builder for designing and generating custom AI agents — and the Dashboard, a productivity environment where you manage tasks, chat with AI, run workflows, and connect your agents to real channels like Telegram.',
+      },
+      {
+        heading: 'How the layers connect',
+        body: 'XerefClaw generates the system prompt that defines your agent\'s personality and capabilities. That prompt is saved as a project and used by the Dashboard\'s AI Chat as the agent\'s system context. Everything you build in XerefClaw powers the agents you run in the Dashboard.',
+      },
+    ],
+  },
+  {
+    id: 'xerefclaw',
+    title: 'XerefClaw — Agent Builder',
     content: [
       {
         heading: '1. Open XerefClaw',
@@ -15,15 +30,15 @@ const sections = [
       },
       {
         heading: '2. Select Your Features',
-        body: 'Browse 48+ features organized across the CLAWS categories. Click any card to add it to your basket. Use the search bar or category filter to narrow down options.',
+        body: 'Browse 48+ capabilities organized across the CLAWS categories. Click any card to add it to your basket. Use the search bar or category filter to narrow down options.',
       },
       {
         heading: '3. Generate Your Prompt',
-        body: 'Once you\'ve selected your features, open the basket and click "Generate Prompt". The output is a ready-to-paste system prompt for Antigravity IDE.',
+        body: 'Once you\'ve selected your features, open the basket and click "Generate Prompt". The output is a structured system prompt ready to paste into Antigravity IDE or save to your xeref.ai project.',
       },
       {
-        heading: '4. Save Your Configuration (optional)',
-        body: 'Sign in with Google or a magic link to save named project configurations. Access them from any device.',
+        heading: '4. Save Your Configuration',
+        body: 'Sign in with Google or a magic link to save named agent projects. Saved projects appear in your Dashboard under Agents and can be used as the context for AI Chat sessions.',
       },
     ],
   },
@@ -58,12 +73,90 @@ const sections = [
     ],
   },
   {
+    id: 'dashboard',
+    title: 'The Dashboard',
+    content: [
+      {
+        heading: 'Home',
+        body: 'Your command center: saved agents, daily targets, and a snapshot of active tasks. Set up to 3 daily goals each morning — they surface here and inform AI task prioritization throughout the day.',
+      },
+      {
+        heading: 'Tasks',
+        body: 'A unified task list with AI-powered prioritization. Type a goal and xeref generates a full project plan with phases and tasks. Ask "what should I work on next?" to get a reasoned top-3 based on priorities, deadlines, and daily targets.',
+      },
+      {
+        heading: 'AI Chat',
+        body: 'Chat with any of your saved agents. The conversation uses the agent\'s generated system prompt as context, so each chat session is specialized to a specific agent you built in XerefClaw. Model access depends on your plan (see Pricing).',
+      },
+      {
+        heading: 'Calendar',
+        body: 'View deadlines, focus blocks, and scheduled events. Syncs with Google Calendar. Tasks with due dates appear on the calendar automatically.',
+      },
+      {
+        heading: 'Workflows',
+        body: 'Cron-triggered automations. Define a schedule and a prompt — xeref runs the agent on your schedule and delivers output to your configured channel (Telegram, email, etc.).',
+      },
+      {
+        heading: 'Stats',
+        body: 'Productivity trends, task completion rates, and AI usage metrics over time.',
+      },
+      {
+        heading: 'Agents',
+        body: 'All saved agent projects from XerefClaw. Start a chat from any agent, deploy it to a channel, or edit its configuration.',
+      },
+    ],
+  },
+  {
+    id: 'mcp',
+    title: 'MCP Server',
+    content: [
+      {
+        heading: 'What is the MCP backend?',
+        body: 'Every piece of data in xeref.ai — projects, tasks, notes, memory, daily targets — is exposed as an MCP (Model Context Protocol) tool. Your Claude or Antigravity agent can connect to this server and read, write, and reason over your workspace directly.',
+      },
+      {
+        heading: 'Connecting your agent',
+        body: 'Find your personal MCP endpoint in Dashboard → Settings. Add it as an MCP server in Antigravity or Claude Code. Your agent then has live access to your task list, project context, and memory — the same data you manage in the Dashboard.',
+      },
+      {
+        heading: 'Available tools',
+        body: 'list_projects, create_task, update_task, search_memory, set_daily_targets, suggest_next_task, create_project_with_plan, list_routines, and more. Full tool reference is in the API tab of your Dashboard settings.',
+      },
+    ],
+  },
+  {
+    id: 'plans',
+    title: 'Plans & Model Access',
+    content: [
+      {
+        heading: 'Basic (Free)',
+        body: 'Access to XerefClaw, Dashboard home, tasks, and AI Chat with the xeref base model. No credit card required.',
+      },
+      {
+        heading: 'Pro — $17/mo or $170/yr',
+        body: 'Everything in Basic, plus Claude Haiku and Claude Sonnet model access in AI Chat, higher workflow run limits, and priority support.',
+      },
+      {
+        heading: 'Ultra — $77/mo or $770/yr',
+        body: 'Everything in Pro, plus all available models, unlimited workflow runs, and full memory/embedding storage.',
+      },
+      {
+        heading: 'Upgrading',
+        body: 'Go to Dashboard → Settings → Billing, or visit the Pricing page. Upgrades take effect immediately via Creem.',
+      },
+    ],
+  },
+  {
     id: 'faq-link',
     title: 'More Questions?',
     content: [
       {
         heading: 'Check the FAQ',
         body: 'Visit the FAQ page for answers to common questions about the platform, data privacy, and feature compatibility.',
+      },
+      {
+        heading: 'Contact support',
+        body: 'Email support@xeref.ai — we typically respond within 24 hours.',
       },
     ],
   },
@@ -102,7 +195,7 @@ export default function DocsPage() {
             <Badge variant="secondary">Documentation</Badge>
             <h1 className="text-4xl font-extrabold tracking-tight">How xeref.ai works</h1>
             <p className="text-muted-foreground text-lg">
-              Everything you need to configure, generate, and deploy your custom AI agent.
+              From building your first agent to running it in production — everything in one place.
             </p>
           </div>
 
@@ -138,17 +231,7 @@ export default function DocsPage() {
         </div>
       </main>
 
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t font-mono text-xs text-muted-foreground">
-        <p>© 2026 XerefAI. All rights reserved.</p>
-        <nav className="sm:ml-auto flex flex-wrap gap-4 sm:gap-6 justify-center">
-          <Link className="hover:underline underline-offset-4" href="/docs">Docs</Link>
-          <Link className="hover:underline underline-offset-4" href="/pricing">Pricing</Link>
-          <Link className="hover:underline underline-offset-4" href="/changelog">Changelog</Link>
-          <Link className="hover:underline underline-offset-4" href="/faq">FAQ</Link>
-          <Link className="hover:underline underline-offset-4" href="/terms">Terms of Service</Link>
-          <Link className="hover:underline underline-offset-4" href="/privacy">Privacy</Link>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import type { User } from '@supabase/supabase-js';
+import { StartBuildingButton } from '@/components/start-building-button';
 
 
 export default function BuilderPage() {
@@ -21,6 +22,7 @@ export default function BuilderPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFeatureIds, setSelectedFeatureIds] = useState<Set<string>>(new Set());
   const [user, setUser] = useState<User | null>(null);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   // Resolve auth state once on mount
   useEffect(() => {
@@ -162,7 +164,16 @@ export default function BuilderPage() {
          onRemoveFeature={removeFeature}
          onClearAll={clearAll}
          isAuthenticated={!!user}
+         onSignInClick={() => setAuthDialogOpen(true)}
        />
+
+       {/* Hidden auth dialog trigger — controlled by Basket's sign-in button */}
+       <div className="hidden">
+         <StartBuildingButton
+           controlledOpen={authDialogOpen}
+           onControlledOpenChange={setAuthDialogOpen}
+         />
+       </div>
     </div>
   );
 }

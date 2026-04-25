@@ -13,16 +13,16 @@ import { Trash2, Copy, Check, Terminal, ShoppingBasket, Save, Loader2 } from 'lu
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { saveProject } from '@/app/actions/projects';
-import Link from 'next/link';
 
 interface BasketProps {
   selectedFeatures: Feature[];
   onRemoveFeature: (feature: Feature) => void;
   onClearAll: () => void;
   isAuthenticated: boolean;
+  onSignInClick?: () => void;
 }
 
-export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthenticated }: BasketProps) {
+export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthenticated, onSignInClick }: BasketProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showPromptModal, setShowPromptModal] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -137,8 +137,8 @@ export function Basket({ selectedFeatures, onRemoveFeature, onClearAll, isAuthen
                </Button>
              )}
              {!isAuthenticated && (
-               <Button variant="ghost" size="sm" asChild className="w-full text-xs text-muted-foreground">
-                 <Link href="/login">Sign in to save projects</Link>
+               <Button variant="ghost" size="sm" className="w-full text-xs text-muted-foreground" onClick={onSignInClick}>
+                 Sign in to save projects
                </Button>
              )}
              <Button className="flex-1 bg-cyan-400 text-black hover:bg-cyan-400/90" onClick={handleGenerate}>Generate Prompt</Button>
