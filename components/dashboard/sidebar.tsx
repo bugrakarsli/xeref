@@ -50,6 +50,8 @@ import {
   Box,
   Layers,
   Send,
+  Brain,
+  BookOpen,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -700,6 +702,14 @@ export function Sidebar({
               onClick={() => onViewChange('inbox')}
             />
 
+            <NavItem
+              icon={<BookOpen className="h-4 w-4" />}
+              label="Classroom"
+              active={activeView === 'classroom'}
+              collapsed={collapsed}
+              onClick={() => onViewChange('classroom')}
+            />
+
             {/* ── Pinned Chats + Recents section ── */}
             {!collapsed && (
               <div className="flex flex-col flex-1 mt-2 min-h-0">
@@ -943,6 +953,17 @@ export function Sidebar({
                 active={activeView === 'deploy'}
                 collapsed={collapsed}
                 onClick={() => onViewChange('deploy')}
+              />
+            </div>
+
+            {/* Memory nav item */}
+            <div className="mt-1">
+              <NavItem
+                icon={<Brain className="h-4 w-4" />}
+                label="Memory"
+                active={activeView === 'memory'}
+                collapsed={collapsed}
+                onClick={() => onViewChange('memory')}
               />
             </div>
 

@@ -1,6 +1,6 @@
 
 export type SidebarTab = 'chat' | 'tasks' | 'code'
-export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code' | 'customize' | 'code_session' | 'code_routines' | 'projects' | 'deploy'
+export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code' | 'customize' | 'code_session' | 'code_routines' | 'projects' | 'deploy' | 'memory' | 'classroom'
 
 export type CategoryId = 'connect' | 'listen' | 'archive' | 'wire' | 'sense' | 'agent-architecture';
 
@@ -83,6 +83,42 @@ export interface Task {
   due_date: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface Course {
+  id: string;
+  title: string;
+  description: string | null;
+  cover_image_url: string | null;
+  published: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CourseModule {
+  id: string;
+  course_id: string;
+  title: string;
+  order_index: number;
+  created_at: string;
+}
+
+export interface Lesson {
+  id: string;
+  module_id: string;
+  title: string;
+  content: string;
+  duration_minutes: number | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LessonProgress {
+  id: string;
+  user_id: string;
+  lesson_id: string;
+  completed_at: string;
 }
 
 export interface Memory {

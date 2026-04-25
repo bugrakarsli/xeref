@@ -268,7 +268,7 @@ export default function LoginPage() {
               <Badge variant="secondary" className="mb-3">Dashboard</Badge>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Everything in one place</h2>
               <p className="mt-3 max-w-[600px] text-muted-foreground">
-                7 of 12 sections are live — and shipping fast.
+                12 of 12 sections are live — and shipping fast.
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -276,15 +276,15 @@ export default function LoginPage() {
                 { icon: <Home className="h-5 w-5" />, title: 'Home', desc: 'Agent overview, Daily Targets, saved agents', live: true },
                 { icon: <Cpu className="h-5 w-5" />, title: 'XerefClaw', desc: 'Agent builder, CLAWS methodology', live: true },
                 { icon: <CheckSquare className="h-5 w-5" />, title: 'All Tasks', desc: 'Unified tasks + AI prioritization', live: true },
-                { icon: <FolderKanban className="h-5 w-5" />, title: 'Projects', desc: 'Goal decomposition + kanban board', live: false },
-                { icon: <BookOpen className="h-5 w-5" />, title: 'Classroom', desc: 'Lessons + semantic search', live: false },
-                { icon: <Brain className="h-5 w-5" />, title: 'Memory', desc: 'Document brain, OCR ingestion', live: false },
-                { icon: <Send className="h-5 w-5" />, title: 'Deploy', desc: 'Telegram, Discord, WhatsApp, web widget', live: false },
+                { icon: <FolderKanban className="h-5 w-5" />, title: 'Projects', desc: 'Goal decomposition + kanban board', live: true },
+                { icon: <BookOpen className="h-5 w-5" />, title: 'Classroom', desc: 'Lessons + semantic search', live: true },
+                { icon: <Brain className="h-5 w-5" />, title: 'Memory', desc: 'Document brain, OCR ingestion', live: true },
+                { icon: <Send className="h-5 w-5" />, title: 'Deploy', desc: 'Telegram, Discord, WhatsApp, web widget', live: true },
                 { icon: <Calendar className="h-5 w-5" />, title: 'Calendar', desc: 'Deadlines + focus blocks + Google Sync', live: true },
                 { icon: <Zap className="h-5 w-5" />, title: 'Workflows', desc: 'Cron triggers + multi-channel automation', live: true },
                 { icon: <MessageSquare className="h-5 w-5" />, title: 'Chats', desc: 'In-app agent chat with streaming + sources', live: true },
                 { icon: <BarChart2 className="h-5 w-5" />, title: 'Stats', desc: 'Productivity trends + agent usage', live: true },
-                { icon: <Inbox className="h-5 w-5" />, title: 'Inbox', desc: 'Bot replies + activity feed', live: false },
+                { icon: <Inbox className="h-5 w-5" />, title: 'Inbox', desc: 'Bot replies + activity feed', live: true },
               ].map(({ icon, title, desc, live }) => (
                 <div key={title} className={`flex flex-col border rounded-xl p-4 transition-colors hover:border-primary/50 ${live ? 'bg-card' : 'bg-card'}`}>
                   <div className={`w-9 h-9 rounded-lg flex items-center justify-center mb-3 ${live ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>

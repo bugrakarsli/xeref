@@ -25,6 +25,8 @@ import { ProjectsView } from './projects-view'
 import { CodeSessionView } from './code-session-view'
 import { CodeRoutinesView } from './code-routines-view'
 import { DeployView } from './deploy-view'
+import { MemoryView } from './memory-view'
+import { ClassroomView } from './classroom-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
@@ -343,6 +345,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 return <ProjectsView />
               case 'deploy':
                 return <DeployView />
+              case 'memory':
+                return <MemoryView />
+              case 'classroom':
+                return <ClassroomView userEmail={userEmail} userId={user.id} />
             }
           })()}
         </main>

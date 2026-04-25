@@ -1,8 +1,39 @@
 export const changelogEntries = [
   {
+    version: 'v2.2',
+    date: 'April 25, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Classroom view — structured course browser with Courses → Modules → Lessons hierarchy, markdown lesson reader, per-lesson progress tracking, and admin content authoring controls (create/edit/delete courses, modules, and lessons inline)',
+          'Semantic search powered by Gemini Embedding 2 (text-embedding-004) and Pinecone — lesson content is indexed on save and searchable with real-time debounced queries against the xeref_lessons namespace',
+          'Memory view — document brain scaffold with drag-and-drop upload area and coming-soon chips for OCR ingestion and semantic search',
+          'Projects, Deploy, and Inbox dashboard sections promoted from COMING SOON to LIVE',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'Added \'classroom\' and \'memory\' to ViewKey in lib/types.ts; new Course, CourseModule, Lesson, LessonProgress interfaces',
+          'Supabase migration: courses, modules, lessons, lesson_progress tables with RLS — admin write restricted to bugra@bugrakarsli.com and bugra@xeref.ai',
+          'lib/ai/embeddings.ts — Gemini Embedding 2 client via @google/generative-ai',
+          'lib/pinecone.ts — Pinecone upsert/delete/search helpers scoped to xeref_lessons namespace',
+          'POST /api/classroom/embed — admin-gated lesson embedding trigger',
+          'GET /api/classroom/search — authenticated semantic search endpoint',
+          'app/actions/classroom.ts — full CRUD + progress server actions',
+          'New packages: @pinecone-database/pinecone, @google/generative-ai',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.1',
     date: 'April 22, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',
