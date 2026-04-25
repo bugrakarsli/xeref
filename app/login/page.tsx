@@ -39,7 +39,7 @@ export default function LoginPage() {
         </nav>
         <div className="ml-auto flex gap-2 items-center">
           <div className="hidden sm:flex gap-2 items-center">
-            <StartBuildingButton size="sm" showLoginButton />
+            <StartBuildingButton size="sm" showLoginButton label="Start Free" />
           </div>
           <MobileNav />
         </div>
@@ -65,7 +65,7 @@ export default function LoginPage() {
               Xeref is an agent-first productivity platform. Design AI agents, manage projects with AI-generated plans, and deploy to Telegram, Discord, and WhatsApp — all powered by long-term memory.
             </p>
             <div className="flex flex-wrap gap-4 justify-center mb-12">
-              <StartBuildingButton size="lg" showArrow />
+              <StartBuildingButton size="lg" showArrow label="Start Free" />
               <Button variant="outline" size="lg" className="h-12 px-8" asChild>
                 <Link href="/builder">Try as guest</Link>
               </Button>

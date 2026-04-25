@@ -23,9 +23,10 @@ interface Props {
   showLoginButton?: boolean
   controlledOpen?: boolean
   onControlledOpenChange?: (open: boolean) => void
+  label?: string
 }
 
-export function StartBuildingButton({ size = 'default', showArrow = false, showLoginButton = false, controlledOpen, onControlledOpenChange }: Props) {
+export function StartBuildingButton({ size = 'default', showArrow = false, showLoginButton = false, controlledOpen, onControlledOpenChange, label = 'Get Started' }: Props) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [internalOpen, setInternalOpen] = useState(false)
 
@@ -134,7 +135,7 @@ export function StartBuildingButton({ size = 'default', showArrow = false, showL
         onClick={handleClick}
         className={`bg-white text-black hover:bg-white/90${size === 'lg' ? ' h-12 px-8' : ''}`}
       >
-        Get Started {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
+        {label} {showArrow && <ArrowRight className="ml-2 h-4 w-4" />}
       </Button>
 
       <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm() }}>
