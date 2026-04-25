@@ -200,7 +200,7 @@ export default function LoginPage() {
               <Badge variant="secondary" className="mb-3">Memory Architecture</Badge>
               <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Long-term memory that grows with you</h2>
               <p className="mt-3 max-w-[600px] text-muted-foreground">
-                Powered by Gemini Embedding 2 and Pinecone. Every task, note, and document is embedded and searchable — by you and your agents.
+                Powered by Pinecone and multilingual-e5-large. Every task, note, and document is embedded and searchable — by you and your agents.
               </p>
             </div>
             <div className="grid gap-10 md:grid-cols-2 items-center">
@@ -222,8 +222,8 @@ export default function LoginPage() {
                   {
                     icon: <Layers className="h-5 w-5" />,
                     color: 'bg-cyan-500/10 text-cyan-500',
-                    title: 'Gemini Embedding 2',
-                    desc: 'Google\'s natively multimodal embedding model. 3072-dimensional vectors, 8192-token context, 100+ languages. Auto-embeds every write via Edge Functions.',
+                    title: 'multilingual-e5-large',
+                    desc: 'Pinecone integrated inference — dense vectors, cosine metric, multilingual support. Embedding happens server-side with no separate API key.',
                   },
                 ].map(({ icon, color, title, desc }) => (
                   <div key={title} className="flex gap-4">
@@ -316,7 +316,7 @@ export default function LoginPage() {
               {[
                 { icon: <Database className="h-6 w-6" />, color: 'bg-blue-500/10 text-blue-500', title: 'Supabase', desc: 'Auth, RLS, Edge Functions, structured data' },
                 { icon: <Brain className="h-6 w-6" />, color: 'bg-emerald-500/10 text-emerald-500', title: 'Pinecone', desc: 'Vector memory, hybrid semantic search' },
-                { icon: <Layers className="h-6 w-6" />, color: 'bg-cyan-500/10 text-cyan-500', title: 'Gemini Embedding 2', desc: '3072-dim multimodal embeddings, 100+ languages' },
+                { icon: <Layers className="h-6 w-6" />, color: 'bg-cyan-500/10 text-cyan-500', title: 'multilingual-e5-large', desc: 'Pinecone integrated inference, dense vectors, cosine metric' },
                 { icon: <Server className="h-6 w-6" />, color: 'bg-amber-500/10 text-amber-500', title: 'Xeref MCP Server', desc: 'Projects, Tasks, Notes, Memory, Daily Targets' },
                 { icon: <Cpu className="h-6 w-6" />, color: 'bg-rose-500/10 text-rose-500', title: 'XerefClaw', desc: 'Agent prompt builder, CLAWS methodology' },
                 { icon: <Smartphone className="h-6 w-6" />, color: 'bg-cyan-500/10 text-cyan-500', title: 'Mobile App', desc: 'React Native companion (roadmap Phase 4)' },
