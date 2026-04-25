@@ -19,7 +19,6 @@ import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
-import { CustomizeView } from './customize-view'
 import { ArtifactsView } from './artifacts-view'
 import { ProjectsView } from './projects-view'
 import { CodeSessionView } from './code-session-view'
@@ -51,7 +50,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   const TAB_DEFAULT_VIEW: Record<SidebarTab, ViewKey> = {
     chat: 'chat',
     tasks: 'tasks',
-    code: 'code',
+    code: 'code_session',
   }
 
   function handleTabChange(tab: SidebarTab) {
@@ -241,6 +240,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         activeTab={activeTab}
         onTabChange={handleTabChange}
         onViewChange={(view) => {
+          if (view === 'customize') { router.push('/customize'); return }
           setActiveView(view)
           localStorage.setItem('xeref_active_view', view)
           window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))
@@ -332,15 +332,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'code_routines':
                 return <CodeRoutinesView />
               case 'customize':
-                return (
-                  <CustomizeView
-                    onBack={() => {
-                      setActiveView('home')
-                      setCollapsed(false)
-                      localStorage.setItem('xeref_active_view', 'home')
-                    }}
-                  />
-                )
+                return null
               case 'projects':
                 return <ProjectsView />
               case 'deploy':
@@ -395,6 +387,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
             window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'chat' }))
           }}
           onViewChange={(view) => {
+            if (view === 'customize') { router.push('/customize'); return }
             setActiveView(view)
             localStorage.setItem('xeref_active_view', view)
             window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))

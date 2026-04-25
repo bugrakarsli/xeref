@@ -116,11 +116,11 @@ export async function createLesson(
   const { data: lesson, error } = await supabase.from('lessons').insert({ module_id: moduleId, ...data }).select().single()
   if (error) throw error
 
-  await fetch('/api/classroom/embed', {
+  fetch('/api/classroom/embed', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ lessonId: lesson.id, courseId }),
-  })
+  }).catch(() => {})
 
   return lesson as Lesson
 }

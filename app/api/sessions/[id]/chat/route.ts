@@ -8,7 +8,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id: sessionId } = await params;
-  const { content, model } = await request.json();
+  const body = await request.json();
+
+  // DefaultChatTransport sends { messages, id, trigger, messageId }
+  // Extract the last user message text and the model preference
+  const messages: any[] = body.messages ?? [];
+  const model: string = body.model ?? 'xeref-free';
+  const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user');
+  const userContent: string =
+    lastUserMsg?.parts?.find((p: any) => p.type === 'text')?.text ??
+    lastUserMsg?.content ??
+    '';
+
   const supabase = await createClient();
 
   // 1. Auth & Plan
@@ -20,40 +31,31 @@ export async function POST(
 
   try {
     // 2. Save user message
-    await supabase.from('code_messages').insert({
-      session_id: sessionId,
-      user_id: user.id,
-      role: 'user',
-      content
-    });
+    if (userContent) {
+      await supabase.from('code_messages').insert({
+        session_id: sessionId,
+        user_id: user.id,
+        role: 'user',
+        content: userContent,
+      });
+    }
 
-    // 3. Fetch history for context
-    const { data: history } = await supabase
-      .from('code_messages')
-      .select('role, content')
-      .eq('session_id', sessionId)
-      .order('created_at', { ascending: true })
-      .limit(30);
-
-    const modelMessages = (history || []).map(m => ({
-      role: m.role as 'user' | 'assistant' | 'system',
-      content: m.content
-    }));
+    // 3. Convert UI messages to model messages for the LLM
+    const modelMessages = await convertToModelMessages(messages);
 
     const openrouter = createOpenRouterForPlan(userPlan as any);
-    const resolvedModelId = resolveModelId(model || 'xeref-free', content);
+    const resolvedModelId = resolveModelId(model, userContent);
 
     // 4. Stream response
     const result = streamText({
       model: openrouter(resolvedModelId),
-      messages: modelMessages as any,
+      messages: modelMessages,
       onFinish: async ({ text }) => {
-        // Save assistant message to DB
         await supabase.from('code_messages').insert({
           session_id: sessionId,
           user_id: user.id,
           role: 'assistant',
-          content: text
+          content: text,
         });
       },
     });

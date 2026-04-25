@@ -2,12 +2,14 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useDesignStore } from "@/store/design-store";
 import { Button } from "@/components/design/ui/button";
 import { Input } from "@/components/design/ui/input";
 
 export function CreateDesignSystemModal({ open }: { open: boolean }) {
   const closeModal = useDesignStore((s) => s.closeModal);
+  const router = useRouter();
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,7 +24,7 @@ export function CreateDesignSystemModal({ open }: { open: boolean }) {
         body: JSON.stringify({ name, description: desc }),
       });
       if (!res.ok) throw new Error("Failed");
-      closeModal(); setName(""); setDesc("");
+      closeModal(); setName(""); setDesc(""); router.refresh();
     } finally { setLoading(false); }
   }
 

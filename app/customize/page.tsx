@@ -1,16 +1,16 @@
 import Link from 'next/link'
-import { LayoutGrid, FileText, Briefcase } from 'lucide-react'
+import { Briefcase, Plug, Zap } from 'lucide-react'
 
 const CARDS = [
   {
     href: '/customize/connectors',
-    icon: LayoutGrid,
+    icon: Plug,
     title: 'Connect your apps',
     desc: 'Let Xeref read and write to the tools you already use.',
   },
   {
     href: '/customize/skills',
-    icon: FileText,
+    icon: Zap,
     title: 'Create new skills',
     desc: 'Teach Xeref your processes, team norms, and expertise.',
   },

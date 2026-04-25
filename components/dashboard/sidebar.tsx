@@ -1035,6 +1035,21 @@ export function Sidebar({
               </div>
             </div>
 
+            {/* Artifacts */}
+            <div>
+              <Link
+                href="/artifacts"
+                className={cn(
+                  'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'hover:bg-accent hover:text-accent-foreground',
+                  focusRing
+                )}
+              >
+                <Layers className="h-4 w-4" />
+                Artifacts
+              </Link>
+            </div>
+
             {/* Routines */}
             <div>
               <button

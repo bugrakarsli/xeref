@@ -3,12 +3,12 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { useDesignStore } from "@/store/design-store";
 
 export function AccountMenu({ userName, orgName }: { userName: string; orgName: string }) {
-  const { accountMenuOpen, toggleAccountMenu, closeAccountMenu, openTutorial } = useDesignStore();
+  const { accountMenuOpen, toggleAccountMenu, closeAccountMenu, openTutorial, setMainTab } = useDesignStore();
   return (
     <DropdownMenu.Root open={accountMenuOpen} onOpenChange={(v) => !v && closeAccountMenu()}>
       <DropdownMenu.Trigger asChild>
         <button onClick={toggleAccountMenu} aria-expanded={accountMenuOpen}
-          className="w-full flex items-center gap-2 flex-wrap rounded-full border border-border bg-surface-soft px-2.5 py-2 text-left hover:bg-surface-muted transition-colors">
+          className="w-full flex items-center gap-2 flex-wrap rounded-full border border-border bg-surface-muted px-2.5 py-2 text-left hover:bg-border-strong transition-colors">
           <span className="w-6 h-6 rounded-full border border-border bg-surface flex items-center justify-center text-xs font-bold flex-shrink-0">{userName[0].toUpperCase()}</span>
           <span className="text-sm font-medium truncate">{userName}</span>
           <span className="text-xs text-muted border border-border bg-surface px-2 py-0.5 rounded-full truncate max-w-[140px]">{orgName}</span>
@@ -25,7 +25,8 @@ export function AccountMenu({ userName, orgName }: { userName: string; orgName: 
             className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm cursor-pointer hover:bg-surface-soft outline-none">
             Tutorial
           </DropdownMenu.Item>
-          <DropdownMenu.Item className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm cursor-pointer hover:bg-surface-soft outline-none">
+          <DropdownMenu.Item onSelect={() => { setMainTab("design_systems"); closeAccountMenu(); }}
+            className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm cursor-pointer hover:bg-surface-soft outline-none">
             Organization settings
           </DropdownMenu.Item>
           <DropdownMenu.Separator className="my-1 border-t border-border" />

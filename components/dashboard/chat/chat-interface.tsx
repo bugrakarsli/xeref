@@ -325,6 +325,22 @@ export function ChatInterface({
     return (
       <div className="flex flex-col flex-1 min-h-0 items-center justify-center py-6">
         <div className="flex flex-col items-center gap-6 w-full">
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{userPlan === 'ultra' ? 'Ultra Plan' : userPlan === 'pro' ? 'Pro Plan' : 'Free plan'}</span>
+            {userPlan !== 'ultra' && (
+              <>
+                <span>·</span>
+                <a
+                  href="/pricing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="underline underline-offset-2 hover:text-foreground transition-colors"
+                >
+                  Upgrade
+                </a>
+              </>
+            )}
+          </div>
           <div className="rounded-full bg-primary/10 p-4">
             <Image src="/xeref.svg" alt="Xeref" width={28} height={28} className="h-7 w-7" />
           </div>

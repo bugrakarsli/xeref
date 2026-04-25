@@ -1,69 +1,91 @@
+'use client'
+
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ChatInputWithGitHub } from '@/app/code/_components/ChatInputWithGitHub'
 import { isSessionId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 
 export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
-  const [session, setSession] = useState<any>(null)
+  const [sessionTitle, setSessionTitle] = useState('New session')
   const [input, setInput] = useState('')
+  // Ref holds the session ID so prepareSendMessagesRequest always reads the latest value
+  // without the transport needing to be recreated.
+  const sessionIdRef = useRef<string | null>(sessionId ?? null)
   const supabase = createClient()
 
-  const { messages, sendMessage, setMessages, status } = useChat({
-    transport: new DefaultChatTransport({ api: `/api/sessions/${sessionId}/chat` }),
-    onFinish: () => {
-      // Refresh session or title if needed
-    }
-  })
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        prepareSendMessagesRequest: (options) => ({
+          api: `/api/sessions/${sessionIdRef.current}/chat`,
+          body: {
+            id: options.id,
+            messages: options.messages,
+            trigger: options.trigger,
+            messageId: options.messageId,
+          },
+        }),
+      }),
+    [],
+  )
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!input.trim() || status === 'streaming' || status === 'submitted') return
-    sendMessage({ text: input })
-    setInput('')
-  }
+  const { messages, sendMessage, setMessages, status } = useChat({ transport })
 
+  // Load history when we already have a session ID on mount
   useEffect(() => {
-    if (!sessionId) return
-    const id = sessionId.startsWith('session_') ? sessionId : `session_${sessionId}`
+    const sid = sessionIdRef.current
+    if (!sid) return
+    const id = sid.startsWith('session_') ? sid : `session_${sid}`
     if (!isSessionId(id)) return
 
-    // 1. Fetch Session Info
     supabase
       .from('code_sessions')
-      .select('*')
+      .select('title')
       .eq('id', id)
       .maybeSingle()
-      .then(({ data }) => setSession(data))
-    
-    // 2. Fetch History
+      .then(({ data }) => { if (data?.title) setSessionTitle(data.title) })
+
     supabase
       .from('code_messages')
       .select('*')
       .eq('session_id', id)
       .order('created_at', { ascending: true })
       .then(({ data }) => {
-        if (data) {
+        if (data && data.length > 0) {
           setMessages(data.map(m => ({
             id: m.id,
             role: m.role as 'user' | 'assistant' | 'system',
-            parts: [{ type: 'text' as const, text: m.content }]
+            parts: [{ type: 'text' as const, text: m.content }],
           })))
         }
       })
-  }, [sessionId, setMessages])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleSubmit = async (e: { preventDefault(): void }) => {
+    e.preventDefault()
+    if (!input.trim() || status === 'streaming' || status === 'submitted') return
+    // Create session on first message
+    if (!sessionIdRef.current) {
+      const res = await fetch('/api/sessions', { method: 'POST' })
+      const data = await res.json()
+      sessionIdRef.current = data.id as string
+    }
+    sendMessage({ text: input })
+    setInput('')
+  }
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
       <header className="px-6 py-4 border-b">
-        <h1 className="text-lg font-medium">{session?.title ?? 'New session'}</h1>
-        {sessionId && <p className="text-xs text-muted-foreground">{sessionId}</p>}
+        <h1 className="text-lg font-medium">{sessionTitle}</h1>
       </header>
-      
+
       <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
@@ -72,16 +94,18 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
         ) : (
           messages.map((m) => (
             <div key={m.id} className={cn(
-              "flex flex-col gap-1.5 max-w-[85%]",
-              m.role === 'user' ? "ml-auto items-end" : "mr-auto items-start"
+              'flex flex-col gap-1.5 max-w-[85%]',
+              m.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start',
             )}>
               <div className={cn(
-                "rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
-                m.role === 'user' 
-                  ? "bg-primary text-primary-foreground rounded-tr-none" 
-                  : "bg-muted border rounded-tl-none"
+                'rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed shadow-sm',
+                m.role === 'user'
+                  ? 'bg-primary text-primary-foreground rounded-tr-none'
+                  : 'bg-muted border rounded-tl-none',
               )}>
-                {m.parts.filter(p => p.type === 'text').map((p, i) => <span key={i}>{(p as any).text}</span>)}
+                {m.parts.filter(p => p.type === 'text').map((p, i) => (
+                  <span key={i}>{(p as any).text}</span>
+                ))}
               </div>
             </div>
           ))
@@ -89,8 +113,8 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
       </div>
 
       <div className="border-t p-4 pb-6">
-        <ChatInputWithGitHub 
-          sessionId={sessionId || undefined} 
+        <ChatInputWithGitHub
+          sessionId={sessionIdRef.current || undefined}
           input={input}
           onInputChange={setInput}
           onSubmit={handleSubmit}
@@ -100,4 +124,3 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
     </div>
   )
 }
-

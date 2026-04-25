@@ -31,7 +31,17 @@
       "Bash(cmd /c \"netstat -ano | findstr \\\\\":3000 \\\\\"\")",
       "Bash(cmd /c \"netstat -ano | findstr \\\\\":3000\\\\\"\")",
       "Bash(cmd /c \"netstat -ano | findstr \\\\\"3000\\\\\"\")",
-      "Bash(cmd /c \"taskkill /F /IM node.exe /T\")"
+      "Bash(cmd /c \"taskkill /F /IM node.exe /T\")",
+      "Bash(grep -E \"\\\\.\\(tsx?|ts\\)$\")",
+      "Bash(grep -E \"\\\\.tsx$\")",
+      "Bash(node -e \"const {Pinecone} = require\\('@pinecone-database/pinecone'\\); const p = new Pinecone\\({apiKey:'x'}\\); const idx = p.index\\('test'\\); console.log\\(Object.getOwnPropertyNames\\(Object.getPrototypeOf\\(idx\\)\\)\\)\")",
+      "Bash(node -e \"const {Pinecone} = require\\('@pinecone-database/pinecone'\\); const p = new Pinecone\\({apiKey:'x'}\\); const ns = p.index\\('test'\\).namespace\\('test'\\); console.log\\(Object.getOwnPropertyNames\\(Object.getPrototypeOf\\(ns\\)\\)\\)\")",
+      "Bash(npx eslint *)",
+      "Bash(find /d/bugrakarsli/02-projects/xeref/components/dashboard/code-session-view.* /d/bugrakarsli/02-projects/xeref/app/code -name \"*.tsx\" -o -name \"*.ts\")",
+      "Bash(node -e \"const p=require\\('./node_modules/ai/package.json'\\); console.log\\('ai:', p.version\\)\")",
+      "Bash(node -e \"const p=require\\('./node_modules/@ai-sdk/react/package.json'\\); console.log\\('@ai-sdk/react:', p.version\\)\")",
+      "Bash(node -e \"const ai = require\\('./node_modules/ai'\\); console.log\\('DefaultChatTransport:', typeof ai.DefaultChatTransport\\); console.log\\('keys:', Object.keys\\(ai\\).filter\\(k => k.toLowerCase\\(\\).includes\\('transport'\\) || k.toLowerCase\\(\\).includes\\('chat'\\)\\)\\)\")",
+      "Bash(node -e ' *)"
     ]
   }
 }

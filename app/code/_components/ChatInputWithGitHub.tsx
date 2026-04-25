@@ -76,6 +76,7 @@ export function ChatInputWithGitHub({
         webSearchEnabled={webSearchEnabled}
         onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
         leadingToolbar={<GitHubRepoButton sessionId={sessionId || 'new'} />}
+        hideAgentSelector={true}
       />
     </div>
   );

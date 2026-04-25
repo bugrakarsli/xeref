@@ -62,6 +62,7 @@ interface ChatInputProps {
   tall?: boolean
   noBorder?: boolean
   leadingToolbar?: React.ReactNode
+  hideAgentSelector?: boolean
 }
 
 export interface ChatInputHandle {
@@ -87,6 +88,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onWebSearchToggle,
   noBorder = false,
   leadingToolbar,
+  hideAgentSelector = false,
 }: ChatInputProps, ref) {
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -299,7 +301,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
               </DropdownMenu>
 
               {/* Agent selector */}
-              <DropdownMenu>
+              {!hideAgentSelector && <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     type="button"
@@ -366,7 +368,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                     </>
                   )}
                 </DropdownMenuContent>
-              </DropdownMenu>
+              </DropdownMenu>}
             </div>
 
             {/* Model selector + send */}

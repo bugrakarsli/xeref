@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ArrowLeft, LayoutGrid, FileText } from 'lucide-react'
+import { ArrowLeft, Zap, Plug } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const NAV_ITEMS = [
-  { href: '/customize/skills', label: 'Skills', icon: FileText },
-  { href: '/customize/connectors', label: 'Connectors', icon: LayoutGrid },
+  { href: '/customize/skills', label: 'Skills', icon: Zap },
+  { href: '/customize/connectors', label: 'Connectors', icon: Plug },
 ]
 
 export function CustomizeNav() {
