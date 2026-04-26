@@ -1,16 +1,27 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import { Github, Check } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 type Repo = { full_name: string };
 
-export function GitHubRepoButton({ sessionId }: { sessionId: string }) {
+interface GitHubRepoButtonProps {
+  sessionId: string;
+  /** Controlled: currently selected repo name */
+  selectedRepo?: string | null;
+  /** Controlled: called when user picks a repo */
+  onRepoSelect?: (full_name: string) => void;
+}
+
+export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, onRepoSelect }: GitHubRepoButtonProps) {
   const [open, setOpen] = useState(false);
   const [repos, setRepos] = useState<Repo[]>([]);
-  const [selected, setSelected] = useState<string | null>(null);
+  // Internal fallback if not controlled
+  const [internalSelected, setInternalSelected] = useState<string | null>(null);
   const ref = useRef<HTMLDivElement>(null);
-
   const [error, setError] = useState<string | null>(null);
+
+  const selected = controlledSelected !== undefined ? controlledSelected : internalSelected;
 
   useEffect(() => {
     if (!open) return;
@@ -41,7 +52,11 @@ export function GitHubRepoButton({ sessionId }: { sessionId: string }) {
   }, []);
 
   const pick = async (full_name: string) => {
-    setSelected(full_name);
+    if (onRepoSelect) {
+      onRepoSelect(full_name);
+    } else {
+      setInternalSelected(full_name);
+    }
     setOpen(false);
     await fetch(`/api/sessions/${sessionId}`, {
       method: 'PATCH',
@@ -55,7 +70,12 @@ export function GitHubRepoButton({ sessionId }: { sessionId: string }) {
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 rounded-md border border-black/10 dark:border-white/10 px-2.5 py-1.5 text-xs hover:bg-black/5 dark:hover:bg-white/5"
+        className={cn(
+          'flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs hover:bg-black/5 dark:hover:bg-white/5 transition-colors',
+          selected
+            ? 'border-primary/40 text-primary'
+            : 'border-black/10 dark:border-white/10'
+        )}
         aria-label="Select a GitHub repository"
       >
         <Github size={14} />

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import type { Project, Chat, ViewKey, SidebarTab } from '@/lib/types'
+import type { Project, Chat, CodeSession, ViewKey, SidebarTab } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
 import { Button } from '@/components/ui/button'
 import {
@@ -56,6 +56,7 @@ import {
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
 import { updateChatTitle, deleteChat, removeChatFromProject } from '@/app/actions/chats'
+import { renameCodeSession, deleteCodeSession } from '@/app/actions/code-sessions'
 import { toast } from 'sonner'
 import { MoreVertical } from 'lucide-react'
 import { AddChatToProjectDialog } from '@/components/dashboard/add-chat-to-project-dialog'
@@ -85,6 +86,11 @@ interface SidebarProps {
   onChatDeleted?: (id: string) => void
   onChatSelect?: (id: string) => void
   onNewChat?: () => void
+  onNewSession?: () => void
+  codeSessions?: CodeSession[]
+  onSessionSelect?: (id: string) => void
+  onSessionRenamed?: (id: string, title: string) => void
+  onSessionDeleted?: (id: string) => void
   onChatProjectAdded?: (chatId: string, projectId: string) => void
   onChatProjectRemoved?: (chatId: string) => void
   onShowChatList?: () => void
@@ -214,6 +220,8 @@ function InlineEditRow({ label, onSave, onNavigate, onDelete, active }: InlineEd
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       className={cn(
         'group/row flex items-center gap-1 w-full rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer',
         active && 'bg-accent/50 text-accent-foreground'
@@ -238,6 +246,115 @@ function InlineEditRow({ label, onSave, onNavigate, onDelete, active }: InlineEd
           <Trash2 className="h-2.5 w-2.5" />
         </button>
       </div>
+    </div>
+  )
+}
+
+/* ── CodeSessionItem ──────────────────────────────────────────── */
+
+interface CodeSessionItemProps {
+  session: CodeSession
+  onNavigate: () => void
+  onSave: (title: string) => Promise<void>
+  onDelete: () => Promise<void>
+}
+
+function CodeSessionItem({ session, onNavigate, onSave, onDelete }: CodeSessionItemProps) {
+  const [renaming, setRenaming] = useState(false)
+  const [value, setValue] = useState(session.title ?? 'New session')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  async function handleRename() {
+    const trimmed = value.trim()
+    if (!trimmed || trimmed === (session.title ?? 'New session')) {
+      setRenaming(false)
+      setValue(session.title ?? 'New session')
+      return
+    }
+    try {
+      await onSave(trimmed)
+      setRenaming(false)
+    } catch {
+      toast.error('Failed to rename')
+      setValue(session.title ?? 'New session')
+    }
+  }
+
+  if (renaming) {
+    return (
+      <div className="flex items-center gap-1 px-2 py-1">
+        <Code2 className="h-3 w-3 shrink-0 text-primary" />
+        <input
+          ref={inputRef}
+          autoFocus
+          aria-label={`Rename session`}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleRename()
+            if (e.key === 'Escape') { setRenaming(false); setValue(session.title ?? 'New session') }
+          }}
+          onBlur={handleRename}
+          className="flex-1 min-w-0 bg-transparent text-sm outline-none border-b border-primary/60 pb-0.5"
+        />
+        <button onClick={handleRename} aria-label="Confirm rename" className="shrink-0 text-emerald-400 hover:text-emerald-300 p-1">
+          <Check className="h-3 w-3" />
+        </button>
+        <button onClick={() => { setRenaming(false); setValue(session.title ?? 'New session') }} aria-label="Cancel" className="shrink-0 text-muted-foreground hover:text-foreground p-1">
+          <X className="h-3 w-3" />
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      className={cn(
+        'group flex items-center gap-1 w-full rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer relative',
+        focusRing
+      )}
+      onClick={onNavigate}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNavigate() } }}
+    >
+      <Code2 className="h-3 w-3 shrink-0 text-primary" />
+      <span className="truncate flex-1 text-sm">{session.title ?? 'New session'}</span>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              'h-5 w-5 flex items-center justify-center rounded shrink-0 transition-colors',
+              'opacity-0 group-hover:opacity-100 focus:opacity-100',
+              'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+              focusRing
+            )}
+            aria-label={`Options for ${session.title ?? 'session'}`}
+          >
+            <MoreVertical className="h-3 w-3" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent side="right" align="start" className="min-w-[140px]">
+          <DropdownMenuItem
+            className="gap-2 cursor-pointer"
+            onClick={(e) => { e.stopPropagation(); setValue(session.title ?? 'New session'); setRenaming(true) }}
+          >
+            <Pencil className="h-3 w-3" />
+            Rename
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+            onClick={(e) => { e.stopPropagation(); onDelete() }}
+          >
+            <Trash2 className="h-3 w-3" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }
@@ -449,6 +566,11 @@ export function Sidebar({
   onChatDeleted,
   onChatSelect,
   onNewChat,
+  onNewSession,
+  codeSessions = [],
+  onSessionSelect,
+  onSessionRenamed,
+  onSessionDeleted,
   onChatProjectAdded,
   onChatProjectRemoved,
   onShowChatList,
@@ -457,6 +579,7 @@ export function Sidebar({
 }: SidebarProps) {
   const [advancedOpen, setAdvancedOpen] = useState(true)
   const [chatsOpen, setChatsOpen] = useState(true)
+  const [codeSessionsOpen, setCodeSessionsOpen] = useState(true)
   const [projectsOpen, setProjectsOpen] = useState(true)
   const [pinnedChats, setPinnedChats] = useState<string[]>([])
   const [isHydrated, setIsHydrated] = useState(false)
@@ -711,7 +834,7 @@ export function Sidebar({
             />
 
             {/* ── Pinned Chats + Recents section ── */}
-            {!collapsed && (
+            {!collapsed && isHydrated && (
               <div className="flex flex-col flex-1 mt-2 min-h-0">
                 {/* Pinned section */}
                 <div className="rounded-lg transition-all duration-150 shrink-0">
@@ -1019,7 +1142,7 @@ export function Sidebar({
             <div>
               <div className="group relative">
                 <button
-                  onClick={() => onViewChange('code_session')}
+                  onClick={() => onNewSession?.()}
                   className={cn(
                     'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',
@@ -1104,6 +1227,52 @@ export function Sidebar({
                   onClick={() => onViewChange('agents')}
                 />
               </div>
+            </div>
+
+            {/* ── Session History section ── */}
+            <div className="mt-4 flex flex-col flex-1 min-h-0">
+              <div
+                className={cn(
+                  'group flex items-center justify-between w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:bg-accent hover:text-foreground transition-colors shrink-0 rounded-lg',
+                  focusRing
+                )}
+              >
+                <button onClick={() => setCodeSessionsOpen((o) => !o)} className="flex items-center gap-1 flex-1 outline-none text-left">
+                  History
+                  <ChevronRight
+                    className={cn(
+                      'h-3 w-3 transition-transform duration-150',
+                      codeSessionsOpen && 'rotate-90'
+                    )}
+                  />
+                </button>
+              </div>
+              {codeSessionsOpen && (
+                <div className="mt-1 flex flex-col gap-0.5 min-h-0 overflow-y-auto max-h-[40vh]">
+                  {codeSessions.length === 0 ? (
+                    <div className="mx-2 mb-1 px-2 py-2 rounded border border-dashed border-muted-foreground/20 text-xs text-muted-foreground/50 italic text-center">
+                      No sessions yet
+                    </div>
+                  ) : (
+                    codeSessions.map((s) => (
+                      <CodeSessionItem
+                        key={s.id}
+                        session={s}
+                        onNavigate={() => onSessionSelect?.(s.id)}
+                        onSave={async (title) => {
+                          await renameCodeSession(s.id, title)
+                          onSessionRenamed?.(s.id, title)
+                        }}
+                        onDelete={async () => {
+                          await deleteCodeSession(s.id)
+                          onSessionDeleted?.(s.id)
+                          toast.success('Session deleted')
+                        }}
+                      />
+                    ))
+                  )}
+                </div>
+              )}
             </div>
           </div>
         )}

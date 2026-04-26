@@ -1,8 +1,48 @@
 export const changelogEntries = [
   {
+    version: 'v2.3',
+    date: 'April 26, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Code session history — sessions are now persisted to Supabase and appear in a collapsible "History" section in the Code tab sidebar, mirroring the Chat "Recents" pattern',
+          'Session resume on refresh — the active code session ID is stored in localStorage and restored on page reload, automatically reloading messages from the database',
+          'Inline session management — hover any history item to reveal a "⋮" menu with Rename (inline edit) and Delete actions',
+          'Repo required validation — submitting a message without selecting a GitHub repository now shows an animated red warning "Select a repo first" above the input instead of silently failing',
+          'GitHub repo button state feedback — the repo selector now highlights with a primary-colored border when a repository is selected',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Radix UI hydration mismatch — sidebar is now loaded client-only via next/dynamic with ssr:false, eliminating useId() ID mismatches between server HTML and client render',
+          'Pinned/Recents section guarded by isHydrated — the Radix-heavy dropdown section no longer renders until localStorage has loaded, providing defense-in-depth against hydration errors',
+          'New session button now resets selectedSessionId to null (blank session) while preserving previous sessions in History',
+          'Code session messages now reload when switching between sessions without a full page refresh',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          'app/actions/code-sessions.ts — new server actions: getUserCodeSessions, renameCodeSession, deleteCodeSession',
+          'Supabase migration: updated_at column + auto-update trigger added to code_sessions table',
+          'CodeSession interface added to lib/types.ts',
+          'GitHubRepoButton refactored to a controlled component — accepts selectedRepo and onRepoSelect props for parent-driven state',
+          'DashboardShell: selectedSessionId and codeSessions state wired through to Sidebar and CodeSessionView',
+          'CodeSessionView: accepts onSessionCreated callback, reloads messages reactively on sessionId prop changes',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.2',
     date: 'April 25, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

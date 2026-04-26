@@ -7,14 +7,28 @@ import { createClient } from '@/lib/supabase/client'
 import { ChatInputWithGitHub } from '@/app/code/_components/ChatInputWithGitHub'
 import { isSessionId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
+import type { CodeSession } from '@/lib/types'
 
-export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
+interface CodeSessionViewProps {
+  sessionId?: string | null
+  onSessionCreated?: (session: CodeSession) => void
+}
+
+export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionViewProps) {
   const [sessionTitle, setSessionTitle] = useState('New session')
   const [input, setInput] = useState('')
   // Ref holds the session ID so prepareSendMessagesRequest always reads the latest value
   // without the transport needing to be recreated.
   const sessionIdRef = useRef<string | null>(sessionId ?? null)
   const supabase = createClient()
+
+  // Keep ref in sync when prop changes (e.g. user selects a different session)
+  useEffect(() => {
+    sessionIdRef.current = sessionId ?? null
+    if (!sessionId) {
+      setSessionTitle('New session')
+    }
+  }, [sessionId])
 
   const transport = useMemo(
     () =>
@@ -34,9 +48,10 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
 
   const { messages, sendMessage, setMessages, status } = useChat({ transport })
 
-  // Load history when we already have a session ID on mount
+  // Load history when we already have a session ID on mount or when sessionId changes
   useEffect(() => {
-    const sid = sessionIdRef.current
+    setMessages([])
+    const sid = sessionId
     if (!sid) return
     const id = sid.startsWith('session_') ? sid : `session_${sid}`
     if (!isSessionId(id)) return
@@ -63,7 +78,7 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
         }
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [sessionId])
 
   const handleSubmit = async (e: { preventDefault(): void }) => {
     e.preventDefault()
@@ -72,7 +87,17 @@ export function CodeSessionView({ sessionId }: { sessionId?: string | null }) {
     if (!sessionIdRef.current) {
       const res = await fetch('/api/sessions', { method: 'POST' })
       const data = await res.json()
-      sessionIdRef.current = data.id as string
+      const newId = data.id as string
+      sessionIdRef.current = newId
+      const newSession: CodeSession = {
+        id: newId,
+        user_id: '',
+        title: 'New session',
+        repo_full_name: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+      onSessionCreated?.(newSession)
     }
     sendMessage({ text: input })
     setInput('')

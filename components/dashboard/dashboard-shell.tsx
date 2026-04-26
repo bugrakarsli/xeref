@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
-import type { Project, Chat, ViewKey, SidebarTab } from '@/lib/types'
+import type { Project, Chat, CodeSession, ViewKey, SidebarTab } from '@/lib/types'
+import { getUserCodeSessions } from '@/app/actions/code-sessions'
 import type { UserPlan } from '@/app/actions/profile'
 import { createClient } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
-import { Sidebar } from './sidebar'
 import { HomeView } from './home-view'
 import { TasksView } from './tasks-view'
 import { StatsView } from './stats-view'
@@ -31,6 +32,22 @@ import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
 import { WhatsNewToast } from './whats-new-toast'
 import { OnboardingModal } from './onboarding-modal'
+
+const Sidebar = dynamic(
+  () => import('./sidebar').then((m) => ({ default: m.Sidebar })),
+  {
+    ssr: false,
+    loading: () => (
+      <div
+        className={cn(
+          'flex h-full bg-card border-r transition-all duration-200 shrink-0',
+          'w-56'
+        )}
+      />
+    ),
+  }
+)
+
 
 interface DashboardShellProps {
   user: User
@@ -67,6 +84,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [codeSessions, setCodeSessions] = useState<CodeSession[]>([])
   const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted)
   const [searchOpen, setSearchOpen] = useState(false)
 
@@ -91,6 +110,30 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     setSelectedChatId(chat.id)
   }
 
+  function handleNewSession() {
+    setSelectedSessionId(null)
+    setActiveView('code_session')
+    localStorage.setItem('xeref_active_view', 'code_session')
+    localStorage.removeItem('xeref_selected_session_id')
+    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
+    if (window.innerWidth < 768) setCollapsed(true)
+  }
+
+  function handleSessionCreated(session: CodeSession) {
+    setCodeSessions((prev) => [session, ...prev.filter((s) => s.id !== session.id)])
+    setSelectedSessionId(session.id)
+    localStorage.setItem('xeref_selected_session_id', session.id)
+  }
+
+  function handleSessionSelected(id: string) {
+    setSelectedSessionId(id)
+    setActiveView('code_session')
+    localStorage.setItem('xeref_active_view', 'code_session')
+    localStorage.setItem('xeref_selected_session_id', id)
+    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
+    if (window.innerWidth < 768) setCollapsed(true)
+  }
+
   useEffect(() => {
     const saved = localStorage.getItem('xeref_active_view') as ViewKey | null
     if (saved) {
@@ -100,11 +143,18 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
       window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'home' }))
     }
 
+    // Restore selected session
+    const savedSessionId = localStorage.getItem('xeref_selected_session_id')
+    if (savedSessionId) setSelectedSessionId(savedSessionId)
+
     // Load agent panel states
     const savedPanelOpen = localStorage.getItem('xeref_agent_panel_open') === 'true'
     const savedPanelMinimized = localStorage.getItem('xeref_agent_panel_minimized') === 'true'
     setShowAgentPanel(savedPanelOpen)
     setAgentPanelMinimized(savedPanelMinimized)
+
+    // Load code sessions
+    getUserCodeSessions().then(setCodeSessions)
   }, [])
 
   // Keyboard shortcuts: Ctrl+1/2/3 for tab switching, Ctrl+Shift+O for new item (context-aware)
@@ -254,6 +304,17 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
           if (window.innerWidth < 768) setCollapsed(true)
         }}
         onNewChat={handleNewChat}
+        onNewSession={handleNewSession}
+        codeSessions={codeSessions}
+        onSessionSelect={handleSessionSelected}
+        onSessionRenamed={(id, title) => setCodeSessions((prev) => prev.map((s) => s.id === id ? { ...s, title } : s))}
+        onSessionDeleted={(id) => {
+          setCodeSessions((prev) => prev.filter((s) => s.id !== id))
+          if (selectedSessionId === id) {
+            setSelectedSessionId(null)
+            localStorage.removeItem('xeref_selected_session_id')
+          }
+        }}
         projects={projects}
         chats={chats}
         userEmail={userEmail}
@@ -328,7 +389,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'code':
                 return <ArtifactsView />
               case 'code_session':
-                return <CodeSessionView sessionId={null} />
+                return (
+                  <CodeSessionView
+                    sessionId={selectedSessionId}
+                    onSessionCreated={handleSessionCreated}
+                  />
+                )
               case 'code_routines':
                 return <CodeRoutinesView />
               case 'customize':

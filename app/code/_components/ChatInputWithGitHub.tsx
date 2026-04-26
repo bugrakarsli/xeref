@@ -20,6 +20,8 @@ export function ChatInputWithGitHub({
   const [model, setModel] = useState('xeref-free');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+  const [repoError, setRepoError] = useState(false);
 
   const input = externalInput ?? internalInput;
   const onInputChange = externalOnInputChange ?? ((val: string) => setInternalInput(val));
@@ -27,6 +29,16 @@ export function ChatInputWithGitHub({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Block if no repo selected
+    if (!selectedRepo) {
+      setRepoError(true);
+      setTimeout(() => setRepoError(false), 3000);
+      return;
+    }
+
+    setRepoError(false);
+
     if (externalOnSubmit) {
       externalOnSubmit(e);
       return;
@@ -52,11 +64,16 @@ export function ChatInputWithGitHub({
 
   return (
     <div className="w-full max-w-3xl mx-auto">
+      {/* Repo required warning */}
+      {repoError && (
+        <div className="mb-2 px-3 py-1.5 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-xs font-medium animate-in fade-in slide-in-from-bottom-1 duration-200">
+          ⚠ Select a repo first before sending a message.
+        </div>
+      )}
       <ChatInput 
         input={input}
         onInputChange={(val) => {
           if (externalOnInputChange) {
-            // handleInputChange from useChat expects a ChangeEvent or string
             externalOnInputChange(val);
           } else {
             setInternalInput(val);
@@ -75,10 +92,18 @@ export function ChatInputWithGitHub({
         onRemoveAttachment={() => {}}
         webSearchEnabled={webSearchEnabled}
         onWebSearchToggle={() => setWebSearchEnabled(!webSearchEnabled)}
-        leadingToolbar={<GitHubRepoButton sessionId={sessionId || 'new'} />}
+        leadingToolbar={
+          <GitHubRepoButton
+            sessionId={sessionId || 'new'}
+            selectedRepo={selectedRepo}
+            onRepoSelect={(repo) => {
+              setSelectedRepo(repo);
+              setRepoError(false);
+            }}
+          />
+        }
         hideAgentSelector={true}
       />
     </div>
   );
 }
-

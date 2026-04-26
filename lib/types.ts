@@ -57,6 +57,15 @@ export interface Chat {
   updated_at: string;
 }
 
+export interface CodeSession {
+  id: string;
+  user_id: string;
+  title: string | null;
+  repo_full_name: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface Citation {
   title: string;
   url?: string;
