@@ -421,7 +421,7 @@ export function ClassroomView({ userEmail, userId }: Props) {
               <BookOpen className="h-6 w-6 text-muted-foreground" />
             </div>
             <p className="text-sm font-medium">No courses yet</p>
-            {isAdmin && <p className="text-xs text-muted-foreground">Click "New Course" to get started.</p>}
+            {isAdmin && <p className="text-xs text-muted-foreground">Click &ldquo;New Course&rdquo; to get started.</p>}
           </div>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

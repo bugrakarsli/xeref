@@ -17,6 +17,12 @@ const SlashBoxIcon = ({size=14, className=""}: {size?: number, className?: strin
     </svg>
 );
 
+const Toggle = ({ active, onChange }: { active: boolean; onChange: () => void }) => (
+    <div onClick={onChange} className={`w-10 h-5 rounded-full cursor-pointer p-0.5 transition-colors flex items-center ${active ? 'bg-indigo-600' : 'bg-gray-700'}`}>
+        <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${active ? 'translate-x-5' : 'translate-x-0'}`} />
+    </div>
+);
+
 export type ViewType = 'tasks' | 'workflows' | 'settings' | 'new_conversation' | 'knowledge';
 
 interface AgentManagerViewProps {
@@ -41,7 +47,7 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
     const [selectedMode, setSelectedMode] = useState('Planning');
     const [isListening, setIsListening] = useState(false);
     const [inputText, setInputText] = useState("");
-    const recognitionRef = React.useRef<any>(null);
+    const recognitionRef = React.useRef<SpeechRecognition | null>(null);
     const [shortcutsOpen, setShortcutsOpen] = useState(false);
     const [moreMenuOpen, setMoreMenuOpen] = useState(false);
     const [sidebarHidden, setSidebarHidden] = useState(false);
@@ -62,9 +68,9 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
             return;
         }
 
-        const SpeechRecognitionApi = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+        const SpeechRecognitionApi = window.SpeechRecognition ?? window.webkitSpeechRecognition;
         if (!SpeechRecognitionApi) return;
-        
+
         const recognition = new SpeechRecognitionApi();
         recognitionRef.current = recognition;
         
@@ -75,7 +81,7 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
             setIsListening(true);
         };
         
-        recognition.onresult = (event: any) => {
+        recognition.onresult = (event: SpeechRecognitionEvent) => {
             let finalTranscript = '';
             for (let i = event.resultIndex; i < event.results.length; ++i) {
                 if (event.results[i].isFinal) {
@@ -87,7 +93,7 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
             }
         };
         
-        recognition.onerror = (event: any) => {
+        recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
             console.error("Speech recognition error", event.error);
             setIsListening(false);
         };
@@ -121,12 +127,6 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
-
-    const Toggle = ({ active, onChange }: { active: boolean, onChange: () => void }) => (
-        <div onClick={onChange} className={`w-10 h-5 rounded-full cursor-pointer p-0.5 transition-colors flex items-center ${active ? 'bg-indigo-600' : 'bg-gray-700'}`}>
-            <div className={`w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${active ? 'translate-x-5' : 'translate-x-0'}`} />
-        </div>
-    );
 
     return (
         <div className="flex h-full w-full font-sans bg-[#09090b] text-[#d4d4d8]">

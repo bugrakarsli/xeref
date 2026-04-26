@@ -78,7 +78,7 @@ export default async function RoutineDetailPage({
             </div>
           </div>
           <ul className="mt-3 divide-y divide-black/10 dark:divide-white/10">
-            {runs?.map((r: any) => (
+            {runs?.map((r: { id: string; started_at: string; kind: string }) => (
               <li key={r.id} className="flex items-center gap-3 py-3 text-sm">
                 <span className="h-4 w-4 rounded-full border border-green-500/60 grid place-items-center text-green-500">✓</span>
                 <span>{new Date(r.started_at).toLocaleString()}</span>

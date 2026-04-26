@@ -1,27 +1,39 @@
 'use client';
 import { useState } from 'react';
 import { GitHubRepoButton } from './GitHubRepoButton';
-import { ChatInput } from '@/components/dashboard/chat/chat-input';
+import { ChatInput, type ModelId } from '@/components/dashboard/chat/chat-input';
 
-export function ChatInputWithGitHub({ 
-  sessionId, 
+export function ChatInputWithGitHub({
+  sessionId,
   input: externalInput,
   onInputChange: externalOnInputChange,
   onSubmit: externalOnSubmit,
-  isLoading: externalIsLoading
-}: { 
+  isLoading: externalIsLoading,
+  selectedRepo: externalSelectedRepo,
+  onRepoSelect: externalOnRepoSelect,
+  selectedModel: externalModel,
+  onModelSelect: externalOnModelSelect,
+}: {
   sessionId?: string;
   input?: string;
-  onInputChange?: (e: any) => void;
-  onSubmit?: (e: any) => void;
+  onInputChange?: (value: string) => void;
+  onSubmit?: (e: React.FormEvent) => void;
   isLoading?: boolean;
+  selectedRepo?: string | null;
+  onRepoSelect?: (repo: string) => void;
+  selectedModel?: ModelId;
+  onModelSelect?: (model: ModelId) => void;
 }) {
   const [internalInput, setInternalInput] = useState('');
-  const [model, setModel] = useState('xeref-free');
+  const [internalModel, setInternalModel] = useState<ModelId>('xeref-free');
   const [internalIsLoading, setInternalIsLoading] = useState(false);
   const [webSearchEnabled, setWebSearchEnabled] = useState(false);
-  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+  const [internalSelectedRepo, setInternalSelectedRepo] = useState<string | null>(null);
   const [repoError, setRepoError] = useState(false);
+
+  const selectedRepo = externalSelectedRepo !== undefined ? externalSelectedRepo : internalSelectedRepo;
+  const model = externalModel !== undefined ? externalModel : internalModel;
+  const setModel = externalOnModelSelect ?? setInternalModel;
 
   const input = externalInput ?? internalInput;
   const onInputChange = externalOnInputChange ?? ((val: string) => setInternalInput(val));
@@ -53,7 +65,7 @@ export function ChatInputWithGitHub({
       await fetch(`/api/sessions/${sessionId}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content, model }),
+        body: JSON.stringify({ content, model, repo: selectedRepo }),
       });
     } catch (error) {
       console.error('Failed to send message:', error);
@@ -84,7 +96,7 @@ export function ChatInputWithGitHub({
         projects={[]}
         selectedAgent={null}
         onAgentSelect={() => {}}
-        selectedModel={model as any}
+        selectedModel={model}
         onModelSelect={(m) => setModel(m)}
         userPlan="ultra"
         attachments={[]}
@@ -97,7 +109,11 @@ export function ChatInputWithGitHub({
             sessionId={sessionId || 'new'}
             selectedRepo={selectedRepo}
             onRepoSelect={(repo) => {
-              setSelectedRepo(repo);
+              if (externalOnRepoSelect) {
+                externalOnRepoSelect(repo);
+              } else {
+                setInternalSelectedRepo(repo);
+              }
               setRepoError(false);
             }}
           />

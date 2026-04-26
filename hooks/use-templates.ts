@@ -5,11 +5,11 @@ import type { ProjectTemplate } from "@/types/design";
 
 export function useTemplates(orgId: string | null) {
   const [templates, setTemplates] = useState<ProjectTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(orgId !== null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orgId) { setLoading(false); return; }
+    if (!orgId) return;
     const supabase = createClient();
     supabase
       .from("project_templates").select("*").eq("org_id", orgId).order("created_at", { ascending: false })

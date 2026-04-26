@@ -1,6 +1,7 @@
 'use client'
 
 import { Archive, ExternalLink } from 'lucide-react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import type { Artifact } from '@/lib/types'
 import { ArtifactTypeIcon } from './artifact-type-icon'
@@ -24,7 +25,7 @@ export function ArtifactPublicView({ artifact }: ArtifactPublicViewProps) {
           This artifact may have been deleted or is not publicly shared.
         </p>
         <Button variant="outline" className="mt-6" asChild>
-          <a href="/">Go to Dashboard</a>
+          <Link href="/">Go to Dashboard</Link>
         </Button>
       </main>
     )
@@ -47,10 +48,10 @@ export function ArtifactPublicView({ artifact }: ArtifactPublicViewProps) {
           </div>
         </div>
         <Button variant="outline" size="sm" className="gap-1.5 shrink-0" asChild>
-          <a href="/">
+          <Link href="/">
             <ExternalLink className="h-3.5 w-3.5" />
             Open in xeref
-          </a>
+          </Link>
         </Button>
       </header>
 

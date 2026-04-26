@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 function verifySignature(rawBody: string, signature: string): boolean {
   const computed = crypto
@@ -21,9 +21,8 @@ function determinePlan(product: { name: string }): 'pro' | 'ultra' | null {
   return null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function resolveUserId(
-  supabase: any,
+  supabase: SupabaseClient,
   event: Record<string, unknown>
 ): Promise<string | null> {
   const obj = event.object as Record<string, unknown> | undefined

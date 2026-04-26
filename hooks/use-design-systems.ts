@@ -5,11 +5,11 @@ import type { DesignSystem } from "@/types/design";
 
 export function useDesignSystems(orgId: string | null) {
   const [designSystems, setDesignSystems] = useState<DesignSystem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(orgId !== null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orgId) { setLoading(false); return; }
+    if (!orgId) return;
     const supabase = createClient();
     async function fetch() {
       setLoading(true);

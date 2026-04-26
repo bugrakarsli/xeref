@@ -75,7 +75,7 @@ export function NewRoutineModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <h3 className="mt-6 text-sm font-medium">Connectors</h3>
-        <p className="text-xs opacity-70 mt-1">All connected integrations are included by default. Remove any you don't need for this task.</p>
+        <p className="text-xs opacity-70 mt-1">All connected integrations are included by default. Remove any you don&apos;t need for this task.</p>
         <div className="mt-2 flex flex-wrap gap-2">
           {DEFAULT_CONNECTORS.map(c => (
             <button key={c} onClick={() => toggle(c)}

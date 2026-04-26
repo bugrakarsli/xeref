@@ -5,11 +5,12 @@ import type { DesignProject } from "@/types/design";
 
 export function useDesignProjects(orgId: string | null) {
   const [projects, setProjects] = useState<DesignProject[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(orgId !== null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!orgId) { setLoading(false); return; }
+    if (!orgId) return;
+    setLoading(true);
     const supabase = createClient();
     supabase
       .from("design_projects").select("*").eq("org_id", orgId).order("updated_at", { ascending: false })

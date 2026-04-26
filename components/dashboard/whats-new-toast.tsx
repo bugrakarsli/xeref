@@ -14,18 +14,14 @@ const highlights = [
 ]
 
 export function WhatsNewToast() {
-  const [visible, setVisible] = useState(false)
-
-  useEffect(() => {
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === 'undefined') return false
     try {
-      const dismissed = localStorage.getItem(STORAGE_KEY)
-      if (dismissed !== CURRENT_VERSION) {
-        setVisible(true)
-      }
+      return localStorage.getItem(STORAGE_KEY) !== CURRENT_VERSION
     } catch {
-      // localStorage unavailable
+      return false
     }
-  }, [])
+  })
 
   function dismiss() {
     try {

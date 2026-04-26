@@ -1,17 +1,39 @@
-import { NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
+import { createClient } from '@/lib/supabase/server'
+import { createState, OAUTH_STATE_COOKIE } from '@/lib/connections/oauth-state'
 
-export async function GET() {
-  const clientId = process.env.GITHUB_APP_CLIENT_ID;
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  const redirectUri = `${siteUrl}/api/auth/callback/github`;
-  
+export async function GET(request: Request) {
+  const clientId = process.env.GITHUB_APP_CLIENT_ID
   if (!clientId) {
-    return NextResponse.json({ error: 'GITHUB_APP_CLIENT_ID not configured' }, { status: 500 });
+    return NextResponse.json({ error: 'GITHUB_APP_CLIENT_ID not configured' }, { status: 500 })
   }
 
-  // Removing explicit redirect_uri to let GitHub use the one configured in the App settings.
-  // This avoids mismatch errors like "redirect_uri is not associated with this application".
-  const githubUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=repo`;
-  
-  return NextResponse.redirect(githubUrl);
+  // Require an authenticated xeref user — we associate the resulting GitHub token with their row.
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) {
+    const loginUrl = new URL('/login', request.url)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  const url = new URL(request.url)
+  const returnTo = url.searchParams.get('returnTo') || '/customize/connectors'
+  const { state, cookieValue } = createState(user.id, returnTo)
+
+  const cookieStore = await cookies()
+  cookieStore.set(OAUTH_STATE_COOKIE, cookieValue, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 600,
+  })
+
+  const authorize = new URL('https://github.com/login/oauth/authorize')
+  authorize.searchParams.set('client_id', clientId)
+  authorize.searchParams.set('scope', 'repo read:user')
+  authorize.searchParams.set('state', state)
+
+  return NextResponse.redirect(authorize.toString())
 }

@@ -193,8 +193,9 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     
     const effectiveText = planningMode ? `[Planning Mode Active] ${messageText}` : messageText;
 
+    type ApiContentPart = { type: string; text?: string; source?: { type: string; url: string } };
     // Prepare contents for API
-    let apiContents: any = effectiveText;
+    let apiContents: string | ApiContentPart[] = effectiveText;
     if (attachedImage) {
         apiContents = [
             { type: "text", text: effectiveText },

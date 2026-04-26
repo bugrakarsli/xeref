@@ -8,6 +8,7 @@ import { ChatInputWithGitHub } from '@/app/code/_components/ChatInputWithGitHub'
 import { isSessionId } from '@/lib/ids'
 import { cn } from '@/lib/utils'
 import type { CodeSession } from '@/lib/types'
+import type { ModelId } from '@/components/dashboard/chat/chat-input'
 
 interface CodeSessionViewProps {
   sessionId?: string | null
@@ -17,10 +18,17 @@ interface CodeSessionViewProps {
 export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionViewProps) {
   const [sessionTitle, setSessionTitle] = useState('New session')
   const [input, setInput] = useState('')
-  // Ref holds the session ID so prepareSendMessagesRequest always reads the latest value
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null)
+  const [model, setModel] = useState<ModelId>('xeref-free')
+  // Refs hold latest values so prepareSendMessagesRequest always reads them
   // without the transport needing to be recreated.
   const sessionIdRef = useRef<string | null>(sessionId ?? null)
+  const selectedRepoRef = useRef<string | null>(null)
+  const modelRef = useRef<ModelId>('xeref-free')
   const supabase = createClient()
+
+  useEffect(() => { selectedRepoRef.current = selectedRepo }, [selectedRepo])
+  useEffect(() => { modelRef.current = model }, [model])
 
   // Keep ref in sync when prop changes (e.g. user selects a different session)
   useEffect(() => {
@@ -40,6 +48,8 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
             messages: options.messages,
             trigger: options.trigger,
             messageId: options.messageId,
+            repo: selectedRepoRef.current,
+            model: modelRef.current,
           },
         }),
       }),
@@ -129,7 +139,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
                   : 'bg-muted border rounded-tl-none',
               )}>
                 {m.parts.filter(p => p.type === 'text').map((p, i) => (
-                  <span key={i}>{(p as any).text}</span>
+                  <span key={i}>{'text' in p ? p.text : null}</span>
                 ))}
               </div>
             </div>
@@ -144,6 +154,10 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
           onInputChange={setInput}
           onSubmit={handleSubmit}
           isLoading={isLoading}
+          selectedRepo={selectedRepo}
+          onRepoSelect={setSelectedRepo}
+          selectedModel={model}
+          onModelSelect={setModel}
         />
       </div>
     </div>

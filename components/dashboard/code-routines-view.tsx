@@ -6,7 +6,7 @@ import { NewRoutineButton } from '@/app/code/routines/_components/NewRoutineButt
 import { Zap } from 'lucide-react'
 
 export function CodeRoutinesView() {
-  const [routines, setRoutines] = useState<any[]>([])
+  const [routines, setRoutines] = useState<{ id: string; name: string; trigger_type: string; created_at: string; repo_full_name?: string | null; schedule_cron?: string | null }[]>([])
   const supabase = createClient()
 
   useEffect(() => {
