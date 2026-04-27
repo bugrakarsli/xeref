@@ -13,13 +13,23 @@ export async function GET(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   const url = new URL(request.url)
   const returnTo = url.searchParams.get('returnTo') || '/customize/connectors'
-  const { state, cookieValue } = createState(user.id, returnTo)
+
+  let state: string
+  let cookieValue: string
+  try {
+    ;({ state, cookieValue } = createState(user.id, returnTo))
+  } catch (err) {
+    console.error('[github/login] createState failed — check CONNECTIONS_ENCRYPTION_KEY:', err instanceof Error ? err.message : err)
+    return NextResponse.json(
+      { error: 'OAuth state generation failed — server configuration error' },
+      { status: 500 }
+    )
+  }
 
   const cookieStore = await cookies()
   cookieStore.set(OAUTH_STATE_COOKIE, cookieValue, {
@@ -30,10 +40,17 @@ export async function GET(request: Request) {
     maxAge: 600,
   })
 
+  // Explicit redirect_uri ensures GitHub uses our callback regardless of what is
+  // set as the default in the OAuth App settings.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || url.origin
+  const redirectUri = `${siteUrl}/api/auth/callback/github`
+
   const authorize = new URL('https://github.com/login/oauth/authorize')
   authorize.searchParams.set('client_id', clientId)
+  authorize.searchParams.set('redirect_uri', redirectUri)
   authorize.searchParams.set('scope', 'repo read:user')
   authorize.searchParams.set('state', state)
 
+  console.log('[github/login] starting OAuth flow, redirect_uri:', redirectUri)
   return NextResponse.redirect(authorize.toString())
 }
