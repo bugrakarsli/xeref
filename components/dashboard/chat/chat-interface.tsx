@@ -2,7 +2,7 @@
 
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport } from 'ai'
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { ChatMessage } from './chat-message'
 import { toast } from 'sonner'
 import { ChatInput, type ChatInputHandle, type ModelId, type AgentSelection, MODELS } from './chat-input'
@@ -54,32 +54,27 @@ export function ChatInterface({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<ChatInputHandle>(null)
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
-  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
-  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
-  const [greeting, setGreeting] = useState('')
-  const activeChatIdRef = useRef<string | null>(null)
-
-  useEffect(() => {
-    setGreeting(`${getGreeting()}${userName ? `, ${userName.split(' ')[0]}` : ''}`)
-  }, [userName])
-
-  // Restore persisted model on mount.
-  // If a previously-saved model is no longer on the user's plan, fall back to xeref-free.
-  useEffect(() => {
+  const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
+    if (typeof window === 'undefined') return 'xeref-free'
     try {
       const saved = localStorage.getItem('xeref_selected_model')
       if (saved && MODELS.find((m) => m.id === saved)) {
         const savedModel = saved as ModelId
         // Haiku moved from free→pro; reset free users who had it saved
-        if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') {
-          setSelectedModel('xeref-free')
-        } else {
-          setSelectedModel(savedModel)
-        }
+        if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') return 'xeref-free'
+        return savedModel
       }
     } catch {}
-  }, [])
+    return 'xeref-free'
+  })
+  const [attachments, setAttachments] = useState<ChatAttachment[]>([])
+  const [webSearchEnabled, setWebSearchEnabled] = useState(false)
+  const greeting = useMemo(
+    () => `${getGreeting()}${userName ? `, ${userName.split(' ')[0]}` : ''}`,
+    [userName]
+  )
+  const activeChatIdRef = useRef<string | null>(null)
+
 
   const { messages, sendMessage, status, setMessages } = useChat({
     transport: new DefaultChatTransport({ api: '/api/chat' }),

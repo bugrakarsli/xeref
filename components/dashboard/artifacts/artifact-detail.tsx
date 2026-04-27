@@ -44,11 +44,12 @@ export function ArtifactDetail({
   const [published, setPublished] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setPublished(artifact?.published ?? false)
     setLinkCopied(false)
     setActiveTab('preview')
-  }, [artifact?.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [artifact?.id])
 
   function handlePublishToggle(checked: boolean) {
     setPublished(checked)

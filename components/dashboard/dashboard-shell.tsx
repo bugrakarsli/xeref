@@ -60,7 +60,10 @@ interface DashboardShellProps {
 export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
-  const [activeView, setActiveView] = useState<ViewKey>('home')
+  const [activeView, setActiveView] = useState<ViewKey>(() => {
+    if (typeof window === 'undefined') return 'home'
+    return (localStorage.getItem('xeref_active_view') as ViewKey) ?? 'home'
+  })
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat')
 
   // Default main-area view for each sidebar tab
@@ -79,12 +82,21 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     if (window.innerWidth < 768) setCollapsed(true)
   }
 
-  const [showAgentPanel, setShowAgentPanel] = useState(false)
-  const [agentPanelMinimized, setAgentPanelMinimized] = useState(false)
+  const [showAgentPanel, setShowAgentPanel] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('xeref_agent_panel_open') === 'true'
+  })
+  const [agentPanelMinimized, setAgentPanelMinimized] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return localStorage.getItem('xeref_agent_panel_minimized') === 'true'
+  })
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return localStorage.getItem('xeref_selected_session_id')
+  })
   const [codeSessions, setCodeSessions] = useState<CodeSession[]>([])
   const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -135,24 +147,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   useEffect(() => {
-    const saved = localStorage.getItem('xeref_active_view') as ViewKey | null
-    if (saved) {
-      setActiveView(saved)
-      window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: saved }))
-    } else {
-      window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'home' }))
-    }
+    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: activeView }))
+  }, [activeView])
 
-    // Restore selected session
-    const savedSessionId = localStorage.getItem('xeref_selected_session_id')
-    if (savedSessionId) setSelectedSessionId(savedSessionId)
-
-    // Load agent panel states
-    const savedPanelOpen = localStorage.getItem('xeref_agent_panel_open') === 'true'
-    const savedPanelMinimized = localStorage.getItem('xeref_agent_panel_minimized') === 'true'
-    setShowAgentPanel(savedPanelOpen)
-    setAgentPanelMinimized(savedPanelMinimized)
-
+  useEffect(() => {
     // Load code sessions
     getUserCodeSessions().then(setCodeSessions)
   }, [])

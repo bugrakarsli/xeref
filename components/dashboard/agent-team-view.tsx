@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { Plus, Pencil, Trash2, BrainCircuit } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -177,21 +177,17 @@ const EMPTY_FORM: Omit<Agent, 'id' | 'dynamic'> = {
 // ─── Main View ────────────────────────────────────────────────────────────────
 
 export function AgentTeamView() {
-  const [allAgents, setAllAgents] = useState<Agent[]>(STATIC_AGENTS)
+  const [allAgents, setAllAgents] = useState<Agent[]>(() => {
+    if (typeof window === 'undefined') return STATIC_AGENTS
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (saved) return [...STATIC_AGENTS, ...JSON.parse(saved)]
+    } catch {}
+    return STATIC_AGENTS
+  })
   const [modalOpen, setModalOpen] = useState(false)
   const [form, setForm] = useState<Omit<Agent, 'id' | 'dynamic'>>(EMPTY_FORM)
   const [editId, setEditId] = useState<string | null>(null)
-
-  // Load dynamic agents from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (saved) {
-        const dynamic: Agent[] = JSON.parse(saved)
-        setAllAgents([...STATIC_AGENTS, ...dynamic])
-      }
-    } catch {}
-  }, [])
 
   const saveDynamic = useCallback((agents: Agent[]) => {
     const dynamic = agents.filter((a) => a.dynamic)

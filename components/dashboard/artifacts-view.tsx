@@ -10,7 +10,10 @@ import { ArtifactDetail } from './artifacts/artifact-detail'
 export function ArtifactsView() {
   const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null)
   const [selectedVersionIndex, setSelectedVersionIndex] = useState(0)
-  const [filterType, setFilterType] = useState<ArtifactFilterType>('all')
+  const [filterType, setFilterType] = useState<ArtifactFilterType>(() => {
+    if (typeof window === 'undefined') return 'all'
+    return (new URLSearchParams(window.location.search).get('filter') as ArtifactFilterType) || 'all'
+  })
   const [searchQuery, setSearchQuery] = useState('')
   const [showingDetail, setShowingDetail] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -20,9 +23,6 @@ export function ArtifactsView() {
     const params = new URLSearchParams(window.location.search)
     const artifactId = params.get('artifact')
     const version = params.get('version')
-    const filter = params.get('filter') as ArtifactFilterType | null
-
-    if (filter && filter !== 'all') setFilterType(filter)
 
     const timer = setTimeout(() => {
       setLoading(false)

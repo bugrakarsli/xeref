@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import crypto from 'crypto'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -44,6 +45,26 @@ export async function POST(
   }
 
   const botToken = profile.telegram_bot_token
+
+  const incomingSecret = req.headers.get('x-telegram-bot-api-secret-token')
+  if (!incomingSecret) {
+    return NextResponse.json({ ok: false }, { status: 401 })
+  }
+  const expectedSecret = crypto
+    .createHmac('sha256', process.env.TELEGRAM_WEBHOOK_SECRET!)
+    .update(botToken)
+    .digest('hex')
+    .slice(0, 64)
+  try {
+    const valid = crypto.timingSafeEqual(
+      Buffer.from(incomingSecret),
+      Buffer.from(expectedSecret)
+    )
+    if (!valid) return NextResponse.json({ ok: false }, { status: 401 })
+  } catch {
+    return NextResponse.json({ ok: false }, { status: 401 })
+  }
+
   const update = await req.json().catch(() => null) as TelegramUpdate | null
   const message = update?.message
   if (!message?.text) return NextResponse.json({ ok: true })

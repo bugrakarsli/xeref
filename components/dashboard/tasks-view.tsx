@@ -131,7 +131,9 @@ function NotesPanel() {
 
   useEffect(() => {
     if (!selected) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitleDraft(selected.title)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContentDraft(selected.content)
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 

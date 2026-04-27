@@ -581,8 +581,16 @@ export function Sidebar({
   const [chatsOpen, setChatsOpen] = useState(true)
   const [codeSessionsOpen, setCodeSessionsOpen] = useState(true)
   const [projectsOpen, setProjectsOpen] = useState(true)
-  const [pinnedChats, setPinnedChats] = useState<string[]>([])
-  const [isHydrated, setIsHydrated] = useState(false)
+  const [pinnedChats, setPinnedChats] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return []
+    try {
+      const saved = localStorage.getItem('xeref_pinned_chats')
+      return saved ? JSON.parse(saved) : []
+    } catch {
+      return []
+    }
+  })
+  const [isHydrated] = useState(true)
   const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false)
   const [selectedChatForProject, setSelectedChatForProject] = useState<Chat | null>(null)
   const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
@@ -590,17 +598,6 @@ export function Sidebar({
   const router = useRouter()
   const isBuilderActive = pathname === '/builder'
   const isDesignActive = pathname === '/design'
-
-  // Load pinned chats from localStorage on mount and persist changes
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('xeref_pinned_chats')
-      setPinnedChats(saved ? JSON.parse(saved) : [])
-    } catch {
-      setPinnedChats([])
-    }
-    setIsHydrated(true)
-  }, [])
 
   useEffect(() => {
     if (!isHydrated) return

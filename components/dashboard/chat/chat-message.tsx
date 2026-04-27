@@ -183,6 +183,7 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
   const editRef = useRef<HTMLTextAreaElement>(null)
 
   // Sync editContent if content prop changes externally
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isEditing) setEditContent(content)
   }, [content, isEditing])
