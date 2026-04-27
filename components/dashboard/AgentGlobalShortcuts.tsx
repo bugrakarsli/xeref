@@ -18,9 +18,9 @@ export default function AgentGlobalShortcuts() {
     useEffect(() => {
         const supabase = createClient();
         
-        // Initial session check
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setIsLoggedIn(!!session);
+        // Initial auth check — getUser() validates the JWT server-side
+        supabase.auth.getUser().then(({ data: { user } }) => {
+            setIsLoggedIn(!!user);
         });
 
         // Listen for auth changes

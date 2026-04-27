@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import crypto from 'crypto'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
@@ -15,11 +16,16 @@ export async function POST(req: NextRequest) {
 
   // Verify token with Telegram and set webhook
   const webhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/bots/telegram/${user.id}`
+  const webhookSecret = crypto
+    .createHmac('sha256', process.env.TELEGRAM_WEBHOOK_SECRET!)
+    .update(token)
+    .digest('hex')
+    .slice(0, 64)
 
   const tgRes = await fetch(`https://api.telegram.org/bot${token}/setWebhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url: webhookUrl }),
+    body: JSON.stringify({ url: webhookUrl, secret_token: webhookSecret }),
   })
 
   const tgJson = await tgRes.json()
