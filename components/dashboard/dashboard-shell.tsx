@@ -123,12 +123,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleNewSession() {
-    setSelectedSessionId(null)
-    setActiveView('code_session')
-    localStorage.setItem('xeref_active_view', 'code_session')
-    localStorage.removeItem('xeref_selected_session_id')
-    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
-    if (window.innerWidth < 768) setCollapsed(true)
+    router.push('/code')
   }
 
   function handleSessionCreated(session: CodeSession) {
@@ -138,12 +133,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleSessionSelected(id: string) {
-    setSelectedSessionId(id)
-    setActiveView('code_session')
-    localStorage.setItem('xeref_active_view', 'code_session')
-    localStorage.setItem('xeref_selected_session_id', id)
-    window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
-    if (window.innerWidth < 768) setCollapsed(true)
+    router.push(`/code/${id}`)
   }
 
   useEffect(() => {
@@ -211,10 +201,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
           }
           window.dispatchEvent(new CustomEvent('xeref_open_task_dialog'))
         } else if (activeTab === 'code') {
-          if (activeTab !== 'code') handleTabChange('code')
-          setActiveView('code_session')
-          localStorage.setItem('xeref_active_view', 'code_session')
-          window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: 'code_session' }))
+          handleNewSession()
         }
       }
     }
