@@ -12,7 +12,10 @@ export default function AgentGlobalShortcuts() {
     const [panelOpen, setPanelOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [activeView, setActiveView] = useState('home');
+    const [activeView, setActiveView] = useState(() => {
+        if (typeof window === 'undefined') return 'home';
+        return localStorage.getItem('xeref_active_view') ?? 'home';
+    });
     const pathname = usePathname();
 
     useEffect(() => {
@@ -34,10 +37,6 @@ export default function AgentGlobalShortcuts() {
             setActiveView(customEvent.detail);
         };
         window.addEventListener('xeref_active_view_changed', handleViewChange);
-        
-        // Check local storage initial
-        const savedView = localStorage.getItem('xeref_active_view');
-        if (savedView) setActiveView(savedView);
 
         return () => {
             subscription.unsubscribe();

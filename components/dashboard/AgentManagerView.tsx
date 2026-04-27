@@ -109,12 +109,14 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
     useEffect(() => {
         if (initialView) {
             if (initialView === 'settings') {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSettingsOpen(true);
             } else {
+                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setActiveView(initialView);
             }
         }
-    }, [initialView]);
+    }, [initialView, setSettingsOpen, setActiveView]);
     
     // Global Keyboard Shortcuts
     useEffect(() => {

@@ -304,8 +304,7 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
     agent: SYSTEM_AGENTS[0],
   })
   const [showingList, setShowingList] = useState(false)
-  const [greeting, setGreeting] = useState('')
-  useEffect(() => { setGreeting(getGreeting()) }, [])
+  const [greeting] = useState(() => getGreeting())
 
   async function handleNewChat() {
     if (activeChat && chatMessages.length > 0) {

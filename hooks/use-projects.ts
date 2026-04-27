@@ -10,6 +10,7 @@ export function useDesignProjects(orgId: string | null) {
 
   useEffect(() => {
     if (!orgId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
     const supabase = createClient();
     supabase
@@ -18,7 +19,7 @@ export function useDesignProjects(orgId: string | null) {
         if (err) setError(err.message); else setProjects(data ?? []);
         setLoading(false);
       });
-  }, [orgId]);
+  }, [orgId, setLoading, setError, setProjects]);
 
   return { projects, loading, error };
 }

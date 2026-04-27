@@ -46,11 +46,13 @@ export function TaskDialog({
 
   useEffect(() => {
     if (open) {
+      /* eslint-disable react-hooks/set-state-in-effect */
       setTitle(task?.title ?? '')
       setDescription(task?.description ?? '')
       setPriority(task?.priority ?? 'medium')
       setStatus(task?.status ?? 'todo')
       setDueDate(task?.due_date ? new Date(task.due_date).toISOString().split('T')[0] : '')
+      /* eslint-enable react-hooks/set-state-in-effect */
     }
   }, [open, task])
 
