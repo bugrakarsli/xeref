@@ -3,23 +3,30 @@
 import { useState, useEffect } from 'react'
 
 export function useLocalStorage<T>(key: string, initialValue: T) {
-  const [value, setValue] = useState<T>(() => {
-    if (typeof window === 'undefined') return initialValue
+  const [hydrated, setHydrated] = useState(false)
+  const [value, setValue] = useState<T>(initialValue)
+
+  // Read from localStorage after first mount (after SSR hydration completes)
+  useEffect(() => {
     try {
       const stored = window.localStorage.getItem(key)
-      return stored ? (JSON.parse(stored) as T) : initialValue
+      if (stored) setValue(JSON.parse(stored) as T)
     } catch {
-      return initialValue
+      // corrupt storage — ignore
     }
-  })
+    setHydrated(true)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key])
 
+  // Only write once hydrated — prevents overwriting localStorage with initialValue on mount
   useEffect(() => {
+    if (!hydrated) return
     try {
       window.localStorage.setItem(key, JSON.stringify(value))
     } catch {
-      // quota exceeded or SSR — ignore
+      // quota exceeded — ignore
     }
-  }, [key, value])
+  }, [key, value, hydrated])
 
   return [value, setValue] as const
 }

@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Brain, Upload, FileText, Search, Scan, Trash2, File, FileType } from 'lucide-react'
+import { Brain, Upload, FileText, Search, Scan, Trash2, File, FileType, X } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
 
 interface Document {
@@ -35,7 +36,11 @@ export function MemoryView() {
   const [uploading, setUploading] = useState(false)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
+  const [ocrEnabled, setOcrEnabled] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const dragCounter = useRef(0)
 
   const fetchDocs = useCallback(async () => {
@@ -92,6 +97,18 @@ export function MemoryView() {
     handleFiles(e.dataTransfer.files)
   }
 
+  const filteredDocs = searchQuery.trim()
+    ? docs.filter(d => d.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : docs
+
+  const toggleSearch = () => {
+    setSearchOpen(prev => {
+      if (prev) setSearchQuery('')
+      else setTimeout(() => searchInputRef.current?.focus(), 50)
+      return !prev
+    })
+  }
+
   const handleDelete = async (id: string) => {
     setDocs(prev => prev.filter(d => d.id !== id))
     await fetch(`/api/memory/documents/${id}`, { method: 'DELETE' })
@@ -140,8 +157,9 @@ export function MemoryView() {
         <Button
           variant="outline"
           size="sm"
-          className="mt-2 pointer-events-none"
+          className="mt-2"
           disabled={uploading}
+          onClick={e => { e.stopPropagation(); fileInputRef.current?.click() }}
         >
           {uploading ? 'Uploading…' : 'Upload document'}
         </Button>
@@ -153,17 +171,55 @@ export function MemoryView() {
 
       {/* Capability chips */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <div className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-muted-foreground">
+        <button
+          onClick={() => setOcrEnabled(prev => !prev)}
+          className={cn(
+            'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors',
+            ocrEnabled
+              ? 'border-primary/60 bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+          )}
+        >
           <Scan className="h-3.5 w-3.5" />
           OCR ingestion
-          <Badge variant="outline" className="text-[9px] ml-1 py-0">soon</Badge>
-        </div>
-        <div className="flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-muted-foreground">
+          <Badge variant="outline" className="text-[9px] ml-1 py-0">beta</Badge>
+        </button>
+        <button
+          onClick={toggleSearch}
+          className={cn(
+            'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors',
+            searchOpen
+              ? 'border-primary/60 bg-primary/10 text-primary'
+              : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground',
+          )}
+        >
           <Search className="h-3.5 w-3.5" />
           Semantic search
-          <Badge variant="outline" className="text-[9px] ml-1 py-0">soon</Badge>
-        </div>
+          <Badge variant="outline" className="text-[9px] ml-1 py-0">beta</Badge>
+        </button>
       </div>
+
+      {/* Semantic search bar */}
+      {searchOpen && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+          <Input
+            ref={searchInputRef}
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Search documents…"
+            className="pl-8 pr-8 h-9 text-sm"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery('')}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Document list */}
       <div className="rounded-xl border bg-card overflow-hidden">
@@ -172,13 +228,19 @@ export function MemoryView() {
             Documents
           </span>
           {docs.length > 0 && (
-            <span className="text-xs text-muted-foreground">{docs.length} file{docs.length !== 1 ? 's' : ''}</span>
+            <span className="text-xs text-muted-foreground">
+              {searchQuery ? `${filteredDocs.length} of ${docs.length}` : `${docs.length} file${docs.length !== 1 ? 's' : ''}`}
+            </span>
           )}
         </div>
 
         {loading ? (
           <div className="flex items-center justify-center p-12">
             <div className="h-5 w-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          </div>
+        ) : filteredDocs.length === 0 && searchQuery ? (
+          <div className="flex flex-col items-center justify-center gap-2 p-10 text-center">
+            <p className="text-sm text-muted-foreground">No documents match &ldquo;{searchQuery}&rdquo;</p>
           </div>
         ) : docs.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 p-12 text-center">
@@ -192,7 +254,7 @@ export function MemoryView() {
           </div>
         ) : (
           <ul className="divide-y divide-border">
-            {docs.map(doc => (
+            {filteredDocs.map(doc => (
               <li key={doc.id} className="flex items-center gap-3 px-4 py-3 group">
                 {fileIcon(doc.mime_type)}
                 <div className="flex-1 min-w-0">

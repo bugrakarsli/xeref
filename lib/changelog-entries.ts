@@ -1,8 +1,43 @@
 export const changelogEntries = [
   {
+    version: 'v2.4',
+    date: 'April 29, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Claude Code workspace — Ultra-plan workspace at /code with a Claude-Code-style sidebar (New session, Routines, Dispatch, Customize, More, Pinned, Recents) and a rich landing pane (Welcome banner, Sessions cards with Needs input/Unread badges, composer)',
+          'Inline due date editing on tasks list — click the Due cell of any task row to set or clear a due date without opening the full dialog; saves immediately to Supabase',
+          '/dispatch coming-soon stub — the new Dispatch nav item in the Code sidebar now links to a placeholder page instead of 404ing',
+          'Pricing page updated — Claude Code workspace listed as an Ultra-plan feature',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-sky-400',
+        items: [
+          'Dashboard Code tab now redirects to /code instead of rendering the inline CodeSessionView, consolidating to a single Code experience',
+          '/code landing page no longer auto-creates a Supabase session row on load — sessions are created lazily on first message send, reducing orphaned DB rows',
+          'CodeSidebar rebuilt with brand row, full primary nav, Pinned stub, and Recents from real code_sessions data',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Hydration mismatch on WorkflowsView — DashboardShell now initialises activeView, showAgentPanel, agentPanelMinimized, and selectedSessionId with SSR-safe defaults and hydrates from localStorage in a single useEffect after mount',
+          'useLocalStorage hydration bug — write effect now skips on first mount using a hydrated flag, preventing initialValue from transiently overwriting stored data before the read effect fires',
+          'Connectors page hydration error — localStorage read deferred to after hydration, eliminating server/client count mismatch',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.3',
     date: 'April 26, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

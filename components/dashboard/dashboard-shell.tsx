@@ -22,8 +22,6 @@ import { AgentTeamView } from './agent-team-view'
 import { ComingSoonView } from './coming-soon-view'
 import { ArtifactsView } from './artifacts-view'
 import { ProjectsView } from './projects-view'
-import { CodeSessionView } from './code-session-view'
-import { CodeRoutinesView } from './code-routines-view'
 import { DeployView } from './deploy-view'
 import { MemoryView } from './memory-view'
 import { ClassroomView } from './classroom-view'
@@ -60,10 +58,7 @@ interface DashboardShellProps {
 export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted }: DashboardShellProps) {
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
-  const [activeView, setActiveView] = useState<ViewKey>(() => {
-    if (typeof window === 'undefined') return 'home'
-    return (localStorage.getItem('xeref_active_view') as ViewKey) ?? 'home'
-  })
+  const [activeView, setActiveView] = useState<ViewKey>('home')
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat')
 
   // Default main-area view for each sidebar tab
@@ -74,6 +69,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleTabChange(tab: SidebarTab) {
+    if (tab === 'code') {
+      router.push('/code')
+      return
+    }
     setActiveTab(tab)
     const defaultView = TAB_DEFAULT_VIEW[tab]
     setActiveView(defaultView)
@@ -82,21 +81,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     if (window.innerWidth < 768) setCollapsed(true)
   }
 
-  const [showAgentPanel, setShowAgentPanel] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('xeref_agent_panel_open') === 'true'
-  })
-  const [agentPanelMinimized, setAgentPanelMinimized] = useState(() => {
-    if (typeof window === 'undefined') return false
-    return localStorage.getItem('xeref_agent_panel_minimized') === 'true'
-  })
+  const [showAgentPanel, setShowAgentPanel] = useState(false)
+  const [agentPanelMinimized, setAgentPanelMinimized] = useState(false)
   const [projects, setProjects] = useState<Project[]>(initialProjects)
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
-  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(() => {
-    if (typeof window === 'undefined') return null
-    return localStorage.getItem('xeref_selected_session_id')
-  })
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null)
   const [codeSessions, setCodeSessions] = useState<CodeSession[]>([])
   const [showOnboarding, setShowOnboarding] = useState(!onboardingCompleted)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -135,6 +125,18 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   function handleSessionSelected(id: string) {
     router.push(`/code/${id}`)
   }
+
+  // Hydrate localStorage-persisted state after mount (avoids SSR/client mismatch)
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const savedView = localStorage.getItem('xeref_active_view') as ViewKey | null
+    if (savedView) setActiveView(savedView)
+    if (localStorage.getItem('xeref_agent_panel_open') === 'true') setShowAgentPanel(true)
+    if (localStorage.getItem('xeref_agent_panel_minimized') === 'true') setAgentPanelMinimized(true)
+    const savedSession = localStorage.getItem('xeref_selected_session_id')
+    if (savedSession) setSelectedSessionId(savedSession)
+  }, [])
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: activeView }))
@@ -374,14 +376,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'code':
                 return <ArtifactsView />
               case 'code_session':
-                return (
-                  <CodeSessionView
-                    sessionId={selectedSessionId}
-                    onSessionCreated={handleSessionCreated}
-                  />
-                )
               case 'code_routines':
-                return <CodeRoutinesView />
+                return null
               case 'customize':
                 return null
               case 'projects':

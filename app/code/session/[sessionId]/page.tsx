@@ -1,6 +1,7 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { ChatInputWithGitHub } from '../../_components/ChatInputWithGitHub';
 import { createClient } from '@/lib/supabase/server';
+import { getUserPlan } from '@/app/actions/profile';
 import { isSessionId } from '@/lib/ids';
 
 export default async function SessionPage({
@@ -12,6 +13,9 @@ export default async function SessionPage({
   // Accept "session_<ULID>" (via rewrite) and "<ULID>" (direct)
   const id = raw.startsWith('session_') ? raw : `session_${raw}`;
   if (!isSessionId(id)) notFound();
+
+  const plan = await getUserPlan();
+  if (plan !== 'ultra') redirect('/pricing?upgrade=code');
 
   const supabase = await createClient();
   const { data: session } = await supabase

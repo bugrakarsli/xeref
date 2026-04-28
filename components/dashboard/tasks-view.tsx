@@ -281,6 +281,7 @@ export function TasksView({ projectCount }: TasksViewProps) {
   const [kanbanSettingsOpen, setKanbanSettingsOpen] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
+  const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [dailyTarget, setDailyTarget] = useState<DailyTarget | null>(null)
 
@@ -359,6 +360,18 @@ export function TasksView({ projectCount }: TasksViewProps) {
         toast.error('Failed to update task')
       }
     })
+  }
+
+  async function handleInlineDueDate(task: Task, value: string) {
+    const due_date = value || null
+    setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, due_date } : t)))
+    setEditingDueDateId(null)
+    try {
+      await updateTask(task.id, { due_date })
+    } catch {
+      setTasks((prev) => prev.map((t) => (t.id === task.id ? { ...t, due_date: task.due_date } : t)))
+      toast.error('Failed to update due date')
+    }
   }
 
   async function handleDelete(task: Task) {
@@ -592,8 +605,29 @@ export function TasksView({ projectCount }: TasksViewProps) {
                           {task.priority}
                         </Badge>
                       </div>
-                      <div className="col-span-2 text-xs text-muted-foreground truncate">
-                        {task.due_date ? new Date(task.due_date).toLocaleDateString() : '—'}
+                      <div className="col-span-2">
+                        {editingDueDateId === task.id ? (
+                          <input
+                            type="date"
+                            autoFocus
+                            defaultValue={task.due_date ? task.due_date.split('T')[0] : ''}
+                            onBlur={(e) => handleInlineDueDate(task, e.target.value)}
+                            onChange={(e) => { if (e.target.value) handleInlineDueDate(task, e.target.value) }}
+                            className="w-full text-xs bg-background border border-primary/40 rounded px-1.5 py-0.5 outline-none focus:border-primary"
+                          />
+                        ) : (
+                          <button
+                            onClick={() => setEditingDueDateId(task.id)}
+                            className={cn(
+                              'text-xs truncate hover:text-foreground transition-colors text-left w-full',
+                              task.due_date ? 'text-foreground' : 'text-muted-foreground'
+                            )}
+                          >
+                            {task.due_date
+                              ? new Date(task.due_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                              : '—'}
+                          </button>
+                        )}
                       </div>
                       <div className="col-span-1 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
