@@ -81,8 +81,8 @@ export async function GET(request: Request) {
     })
   } catch (err) {
     console.error('[vercel/callback] upsertConnection failed:', err instanceof Error ? err.message : err)
-    return NextResponse.json({ error: 'Failed to save Vercel connection' }, { status: 500 })
+    return NextResponse.redirect(new URL(`${verified.returnTo || '/customize/connectors'}?error=connection_failed`, origin))
   }
 
-  return NextResponse.redirect(new URL(verified.returnTo || '/customize/connectors', origin))
+  return NextResponse.redirect(new URL(`${verified.returnTo || '/customize/connectors'}?connected=vercel`, origin))
 }

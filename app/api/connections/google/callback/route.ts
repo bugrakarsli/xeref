@@ -98,8 +98,8 @@ export async function GET(request: Request) {
     console.log('[google/callback] connection saved for userId:', verified.userId)
   } catch (err) {
     console.error('[google/callback] upsertConnection failed:', err instanceof Error ? err.message : err)
-    return NextResponse.json({ error: 'Failed to save Google connection' }, { status: 500 })
+    return NextResponse.redirect(new URL(`${verified.returnTo || '/customize/connectors'}?error=connection_failed`, origin))
   }
 
-  return NextResponse.redirect(new URL(verified.returnTo || '/customize/connectors', origin))
+  return NextResponse.redirect(new URL(`${verified.returnTo || '/customize/connectors'}?connected=google`, origin))
 }

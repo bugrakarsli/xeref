@@ -80,6 +80,8 @@ export async function GET(request: Request) {
     ? tokenData.scope.split(',').filter(Boolean)
     : []
 
+  const returnBase = verified.returnTo || '/customize/connectors'
+
   try {
     await upsertConnection({
       userId: verified.userId,
@@ -93,16 +95,13 @@ export async function GET(request: Request) {
     console.log('[github/callback] connection upserted, login:', ghLogin ?? '(unavailable)')
   } catch (err) {
     console.error('[github/callback] upsertConnection failed — check CONNECTIONS_ENCRYPTION_KEY and SUPABASE_SERVICE_ROLE_KEY:', err instanceof Error ? err.message : err)
-    return NextResponse.json(
-      { error: 'Failed to save GitHub connection — please try again' },
-      { status: 500 }
-    )
+    return NextResponse.redirect(new URL(`${returnBase}?error=connection_failed`, origin))
   }
 
   // Clear any legacy cookie from before this migration so it doesn't shadow the DB row.
   cookieStore.delete('gh_token')
 
-  const redirectTo = new URL(verified.returnTo || '/customize/connectors', origin)
+  const redirectTo = new URL(`${returnBase}?connected=github`, origin)
   console.log('[github/callback] redirecting to:', redirectTo.toString())
   return NextResponse.redirect(redirectTo)
 }

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Search, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { PROVIDERS, type ProviderId } from '@/lib/connections/registry'
 import {
@@ -72,12 +74,37 @@ interface UiCard {
   metadata: Record<string, unknown>
 }
 
+const PROVIDER_LABELS: Record<string, string> = {
+  github: 'GitHub', google: 'Google', notion: 'Notion',
+  slack: 'Slack', vercel: 'Vercel',
+}
+
 export function ConnectorsSection() {
+  const searchParams = useSearchParams()
   const [providers, setProviders] = useState<ProviderState[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [disconnecting, setDisconnecting] = useState<string | null>(null)
   const [search, setSearch] = useState('')
+
+  // Show toast on redirect-back from OAuth callbacks
+  useEffect(() => {
+    const connectedProvider = searchParams.get('connected')
+    const oauthError = searchParams.get('error')
+    if (connectedProvider) {
+      const label = PROVIDER_LABELS[connectedProvider] ?? connectedProvider
+      toast.success(`${label} connected successfully!`)
+      window.history.replaceState({}, '', '/customize/connectors')
+    } else if (oauthError) {
+      toast.error(
+        oauthError === 'access_denied'
+          ? 'Connection cancelled.'
+          : 'Failed to connect. Check that CONNECTIONS_ENCRYPTION_KEY and SUPABASE_SERVICE_ROLE_KEY are set in your environment, and that the user_connections migration has been applied.'
+      )
+      window.history.replaceState({}, '', '/customize/connectors')
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchConnections = useCallback(async () => {
     try {
