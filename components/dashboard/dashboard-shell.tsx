@@ -131,6 +131,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleSessionSelected(id: string) {
+    setSelectedSessionId(id)
+    localStorage.setItem('xeref_selected_session_id', id)
     router.push(`/code/${id}`)
   }
 
@@ -338,6 +340,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         onNewChat={handleNewChat}
         onNewSession={handleNewSession}
         codeSessions={codeSessions}
+        selectedSessionId={(() => {
+          // Derive from URL so the highlight works on direct navigation / page reload
+          const m = pathname?.match(/^\/code\/(.+)$/)
+          if (!m) return selectedSessionId
+          const raw = m[1]
+          return raw.startsWith('session_') ? raw : `session_${raw}`
+        })()}
         onSessionSelect={handleSessionSelected}
         onSessionRenamed={(id, title) => setCodeSessions((prev) => prev.map((s) => s.id === id ? { ...s, title } : s))}
         onSessionDeleted={(id) => {

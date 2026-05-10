@@ -83,18 +83,22 @@ export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, 
       </button>
       {open && (
         <div className="absolute bottom-full mb-2 left-0 z-50 w-72 max-h-72 overflow-y-auto rounded-md border border-black/10 dark:border-white/10 bg-[var(--color-surface)] shadow-lg">
-          {error === 'unauthorized' ? (
+          {error ? (
             <div className="p-4 flex flex-col gap-2 items-center text-center">
-              <p className="text-xs opacity-70">Connect your GitHub account to select a repository.</p>
-              <a 
+              <p className="text-xs opacity-70">
+                {error === 'unauthorized'
+                  ? 'Connect your GitHub account to select a repository.'
+                  : 'Could not load repositories. Try reconnecting your GitHub account.'}
+              </p>
+              <a
                 href="/api/github/login"
                 className="w-full py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium hover:bg-primary/90 transition-colors"
               >
-                Connect to GitHub
+                {error === 'unauthorized' ? 'Connect to GitHub' : 'Reconnect GitHub'}
               </a>
             </div>
           ) : repos.length === 0 ? (
-            <div className="p-3 text-xs opacity-60">{error || 'No repositories found.'}</div>
+            <div className="p-3 text-xs opacity-60">No repositories found.</div>
           ) : (
             repos.map(r => (
               <button

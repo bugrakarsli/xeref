@@ -88,6 +88,7 @@ interface SidebarProps {
   onNewChat?: () => void
   onNewSession?: () => void
   codeSessions?: CodeSession[]
+  selectedSessionId?: string | null
   onSessionSelect?: (id: string) => void
   onSessionRenamed?: (id: string, title: string) => void
   onSessionDeleted?: (id: string) => void
@@ -254,12 +255,13 @@ function InlineEditRow({ label, onSave, onNavigate, onDelete, active }: InlineEd
 
 interface CodeSessionItemProps {
   session: CodeSession
+  active?: boolean
   onNavigate: () => void
   onSave: (title: string) => Promise<void>
   onDelete: () => Promise<void>
 }
 
-function CodeSessionItem({ session, onNavigate, onSave, onDelete }: CodeSessionItemProps) {
+function CodeSessionItem({ session, active, onNavigate, onSave, onDelete }: CodeSessionItemProps) {
   const [renaming, setRenaming] = useState(false)
   const [value, setValue] = useState(session.title ?? 'New session')
   const inputRef = useRef<HTMLInputElement>(null)
@@ -313,6 +315,7 @@ function CodeSessionItem({ session, onNavigate, onSave, onDelete }: CodeSessionI
       tabIndex={0}
       className={cn(
         'group flex items-center gap-1 w-full rounded-lg px-2 py-1.5 text-sm text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer relative',
+        active && 'bg-accent text-accent-foreground',
         focusRing
       )}
       onClick={onNavigate}
@@ -568,6 +571,7 @@ export function Sidebar({
   onNewChat,
   onNewSession,
   codeSessions = [],
+  selectedSessionId,
   onSessionSelect,
   onSessionRenamed,
   onSessionDeleted,
@@ -1255,6 +1259,7 @@ export function Sidebar({
                       <CodeSessionItem
                         key={s.id}
                         session={s}
+                        active={s.id === selectedSessionId}
                         onNavigate={() => onSessionSelect?.(s.id)}
                         onSave={async (title) => {
                           await renameCodeSession(s.id, title)

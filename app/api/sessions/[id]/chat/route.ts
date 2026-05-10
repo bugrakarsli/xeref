@@ -66,7 +66,7 @@ export async function POST(
   const userPlan = profile?.plan || 'free';
 
   try {
-    // 2. Save user message
+    // 2. Save user message + auto-title the session on first message
     if (userContent) {
       await supabase.from('code_messages').insert({
         session_id: sessionId,
@@ -74,6 +74,20 @@ export async function POST(
         role: 'user',
         content: userContent,
       });
+
+      // Set session title from first user message if still default
+      const { data: session } = await supabase
+        .from('code_sessions')
+        .select('title')
+        .eq('id', sessionId)
+        .single();
+      if (!session?.title || session.title === 'New session') {
+        const autoTitle = userContent.slice(0, 60).trim();
+        await supabase
+          .from('code_sessions')
+          .update({ title: autoTitle, updated_at: new Date().toISOString() })
+          .eq('id', sessionId);
+      }
     }
 
     // 3. Build system prompt — include GitHub repo context if a repo is selected
