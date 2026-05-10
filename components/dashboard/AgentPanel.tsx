@@ -82,7 +82,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
   // Update session ref when settings change
   useEffect(() => {
     if (!activeSessionId) {
-        chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction, settings.enableSynthID);
+        chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction);
     }
   }, [settings, activeSessionId]);
 
@@ -156,7 +156,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     setChatState({ messages: [], isLoading: false });
     setActiveSessionId(null);
     setAttachedImage(null);
-    chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction, settings.enableSynthID);
+    chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction);
   };
 
   const saveCurrentSession = () => {
@@ -180,7 +180,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     setActiveSessionId(session.id);
     setAttachedImage(null);
     setShowHistory(false);
-    chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction, settings.enableSynthID);
+    chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction);
   };
 
   const handleSendMessage = async () => {
@@ -188,7 +188,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
     if (!messageText && !attachedImage) return;
 
     if (!chatSessionRef.current) {
-      chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction, settings.enableSynthID);
+      chatSessionRef.current = createChatSession(settings.modelName, settings.systemInstruction);
     }
     
     const effectiveText = planningMode ? `[Planning Mode Active] ${messageText}` : messageText;
