@@ -26,13 +26,25 @@ export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, 
   useEffect(() => {
     if (!open) return;
     fetch('/api/github/repos')
-      .then(r => r.json())
+      .then(async (r) => {
+        // Guard against non-JSON responses (e.g. HTML 500 error pages)
+        const text = await r.text();
+        try {
+          return JSON.parse(text);
+        } catch {
+          console.error('[GitHubRepoButton] non-JSON response:', text.slice(0, 200));
+          return { error: 'github_api_error' };
+        }
+      })
       .then(data => {
         if (data.error === 'unauthorized') {
           setError('unauthorized');
           setRepos([]);
+        } else if (data.error === 'github_api_error') {
+          setError('github_api_error');
+          setRepos([]);
         } else if (data.error) {
-          setError(data.error);
+          setError('unauthorized');
           setRepos([]);
         } else {
           setError(null);
@@ -40,7 +52,7 @@ export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, 
         }
       })
       .catch(() => {
-        setError('Failed to fetch repositories');
+        setError('github_api_error');
         setRepos([]);
       });
   }, [open]);
@@ -83,18 +95,24 @@ export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, 
       </button>
       {open && (
         <div className="absolute bottom-full mb-2 left-0 z-50 w-72 max-h-72 overflow-y-auto rounded-md border border-black/10 dark:border-white/10 bg-[var(--color-surface)] shadow-lg">
-          {error ? (
+          {error === 'unauthorized' ? (
             <div className="p-4 flex flex-col gap-2 items-center text-center">
-              <p className="text-xs opacity-70">
-                {error === 'unauthorized'
-                  ? 'Connect your GitHub account to select a repository.'
-                  : 'Could not load repositories. Try reconnecting your GitHub account.'}
-              </p>
+              <p className="text-xs opacity-70">Connect your GitHub account to select a repository.</p>
               <a
                 href="/api/github/login"
                 className="w-full py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium hover:bg-primary/90 transition-colors"
               >
-                {error === 'unauthorized' ? 'Connect to GitHub' : 'Reconnect GitHub'}
+                Connect to GitHub
+              </a>
+            </div>
+          ) : error === 'github_api_error' ? (
+            <div className="p-4 flex flex-col gap-2 items-center text-center">
+              <p className="text-xs opacity-70">Could not load repositories. Your token may have expired.</p>
+              <a
+                href="/api/github/login"
+                className="w-full py-2 bg-primary text-primary-foreground rounded-md text-xs font-medium hover:bg-primary/90 transition-colors"
+              >
+                Reconnect GitHub
               </a>
             </div>
           ) : repos.length === 0 ? (
