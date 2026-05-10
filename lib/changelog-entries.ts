@@ -8,6 +8,7 @@ export const changelogEntries = [
         type: 'New',
         color: 'text-emerald-400',
         items: [
+          'Telegram Channels section on /customize/connectors — live status card reads telegram_bot_token from the user\'s profile; shows masked token when connected with a Disconnect action, or a Configure button that opens the Deploy wizard',
           'Vercel OAuth connection — new Vercel provider added to the connections registry; OAuth flow at /api/connections/vercel/login with full callback and token storage',
           'Google, Notion, and Slack OAuth callback routes — complete /api/connections/{provider}/callback implementations with CSRF validation, token encryption, and profile upsert',
           'Settings page — dedicated /settings route with account and integration management',
@@ -33,6 +34,8 @@ export const changelogEntries = [
           '/code first message never saved — CodeLanding.handleSubmit no longer fires a broken direct POST to the chat API; initial message is stashed in sessionStorage and auto-sent via useChat on the session page',
           'GitHub OAuth routing — 500 errors and 404s on the GitHub OAuth callback and Code route URLs resolved',
           'ESLint set-state-in-effect — 14 violations across dashboard components resolved without altering runtime behavior',
+          'Telegram webhook handler bypasses cookie auth — /api/bots/telegram/[userId] now calls OpenRouter directly via generateText instead of proxying through /api/chat (which requires Supabase session cookies); bot responses now reach users reliably',
+          'clearTelegramBotToken server action added to profile.ts — Disconnect button on the Telegram card nulls the stored token and revalidates the path',
           'Routines auth guards and Telegram webhook verification — getSession replaced with getUser server-side; Telegram webhook now validates the secret header before processing updates',
         ],
       },

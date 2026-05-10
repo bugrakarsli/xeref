@@ -132,3 +132,17 @@ export async function saveTelegramBotToken(botToken: string): Promise<void> {
   if (error) throw error
   revalidatePath('/')
 }
+
+export async function clearTelegramBotToken(): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ telegram_bot_token: null })
+    .eq('id', user.id)
+
+  if (error) throw error
+  revalidatePath('/')
+}

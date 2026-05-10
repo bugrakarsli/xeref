@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Search, Loader2, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Search, Loader2, CheckCircle2, AlertCircle, Send } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { PROVIDERS, type ProviderId } from '@/lib/connections/registry'
+import { getTelegramBotToken, clearTelegramBotToken } from '@/app/actions/profile'
 import {
   Github,
   Mail,
@@ -77,6 +78,82 @@ interface UiCard {
 const PROVIDER_LABELS: Record<string, string> = {
   github: 'GitHub', google: 'Google', notion: 'Notion',
   slack: 'Slack', vercel: 'Vercel',
+}
+
+function TelegramCard() {
+  const router = useRouter()
+  const [token, setToken] = useState<string | null | undefined>(undefined)
+  const [disconnecting, setDisconnecting] = useState(false)
+
+  useEffect(() => {
+    getTelegramBotToken().then(setToken).catch(() => setToken(null))
+  }, [])
+
+  async function handleDisconnect() {
+    setDisconnecting(true)
+    try {
+      await clearTelegramBotToken()
+      setToken(null)
+      toast.success('Telegram bot disconnected')
+    } catch {
+      toast.error('Failed to disconnect')
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
+  const connected = !!token
+  const maskedToken = token ? `${token.slice(0, 10)}:${'•'.repeat(16)}` : null
+
+  return (
+    <div className={cn(
+      'flex items-center gap-4 p-4 rounded-xl border transition-all',
+      connected ? 'bg-muted/60 border-border' : 'bg-muted/30 border-border hover:border-muted-foreground/30'
+    )}>
+      <span className="relative flex items-center justify-center w-9 h-9 rounded-lg bg-background border border-border shrink-0">
+        <Send className="w-4 h-4 text-blue-400" />
+        {connected && (
+          <span className="absolute -bottom-1 -right-1 w-3.5 h-3.5 rounded-full bg-background flex items-center justify-center">
+            <CheckCircle2 className="w-3 h-3 text-green-400" />
+          </span>
+        )}
+      </span>
+
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium">Telegram Bot</p>
+        <p className="text-xs text-muted-foreground truncate">
+          {token === undefined
+            ? 'Loading…'
+            : connected
+            ? `Webhook active — ${maskedToken}`
+            : 'Route messages from Telegram through your xeref agent'}
+        </p>
+      </div>
+
+      {token === undefined ? (
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground shrink-0" />
+      ) : connected ? (
+        <button
+          onClick={handleDisconnect}
+          disabled={disconnecting}
+          className={cn(
+            'shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors',
+            'bg-muted hover:bg-destructive/15 text-muted-foreground hover:text-destructive',
+            disconnecting && 'opacity-50 cursor-not-allowed'
+          )}
+        >
+          {disconnecting ? <Loader2 className="w-3 h-3 animate-spin" /> : 'Disconnect'}
+        </button>
+      ) : (
+        <button
+          onClick={() => router.push('/?view=deploy')}
+          className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors bg-blue-500/15 hover:bg-blue-500/25 text-blue-400"
+        >
+          Configure
+        </button>
+      )}
+    </div>
+  )
 }
 
 export function ConnectorsSection() {
@@ -184,6 +261,14 @@ export function ConnectorsSection() {
           {error}
         </div>
       )}
+
+      {/* Channels — Telegram (profile-based, not OAuth) */}
+      <div className="flex flex-col gap-2">
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+          Channels
+        </p>
+        <TelegramCard />
+      </div>
 
       {loading ? (
         <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground text-sm">
