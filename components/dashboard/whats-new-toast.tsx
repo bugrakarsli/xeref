@@ -5,12 +5,13 @@ import Link from 'next/link'
 import { X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-const CURRENT_VERSION = 'v1.7.0'
+const CURRENT_VERSION = 'v2.5'
 const STORAGE_KEY = 'xeref_dismissed_version'
 
 const highlights = [
-  'New Conversation view centered on screen',
-  'Icon, title, and input aligned as one unit',
+  'Vercel OAuth connection added',
+  'Claude Opus 4.7 + DeepSeek V4 models live',
+  '/code session chat now streams and persists',
 ]
 
 export function WhatsNewToast() {
