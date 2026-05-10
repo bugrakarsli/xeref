@@ -74,7 +74,7 @@ export async function POST(
 
   // Route through the chat API (reuse existing inference endpoint)
   try {
-    const chatRes = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/chat`, {
+    const chatRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
