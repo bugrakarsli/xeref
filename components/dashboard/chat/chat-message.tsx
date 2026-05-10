@@ -36,6 +36,7 @@ interface ChatMessageProps {
   messageId?: string
   isLast?: boolean
   onEdit?: (content: string) => void
+  onEditPrompt?: () => void
   onRetry?: () => void
 }
 
@@ -186,6 +187,7 @@ export function ChatMessage({
   messageId,
   isLast,
   onEdit,
+  onEditPrompt,
   onRetry
 }: ChatMessageProps) {
   const isUser = role === 'user'
