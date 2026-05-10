@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef, useEffect } from 'react';
-import { Plus, ChevronDown, ArrowUp, File, Image, Code, Check } from 'lucide-react';
+import { Plus, ChevronDown, ArrowUp, File, Image as ImageIcon, Code, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AVAILABLE_MODELS } from '@/lib/models-config';
 
@@ -191,7 +191,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
                             onClick={handleAddImage}
                             className="flex items-center gap-2 w-full px-2 py-1.5 text-xs hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-700 dark:text-gray-300"
                         >
-                            <Image size={14} /> Add Image
+                            <ImageIcon size={14} /> Add Image
                         </button>
                         <button 
                             onClick={handleAddCodeSnippet}

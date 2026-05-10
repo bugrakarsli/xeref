@@ -48,7 +48,7 @@ export function NewRoutineModal({ onClose }: { onClose: () => void }) {
         </label>
 
         <textarea value={prompt} onChange={e => setPrompt(e.target.value)}
-          placeholder="Describe what Claude should do in each session"
+          placeholder="Describe what Xeref should do in each session"
           rows={6}
           className="mt-4 w-full rounded-md border border-black/10 dark:border-white/10 bg-transparent p-3 text-sm" />
 

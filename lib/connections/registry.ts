@@ -1,4 +1,4 @@
-export type ProviderId = 'github' | 'google' | 'notion' | 'slack' | 'supabase' | 'webhook'
+export type ProviderId = 'github' | 'google' | 'notion' | 'slack' | 'supabase' | 'webhook' | 'vercel'
 export type ProviderKind = 'oauth' | 'pat' | 'webhook'
 
 export interface ProviderDef {
@@ -79,6 +79,16 @@ export const PROVIDERS: Record<ProviderId, ProviderDef> = {
     requiredEnv: [],
     uiCards: [
       { id: 'webhook', name: 'Custom Webhook', description: 'Call any HTTP endpoint from your agents.' },
+    ],
+  },
+  vercel: {
+    id: 'vercel',
+    name: 'Vercel',
+    kind: 'oauth',
+    scopes: [],
+    requiredEnv: ['VERCEL_CLIENT_ID', 'VERCEL_CLIENT_SECRET'],
+    uiCards: [
+      { id: 'vercel', name: 'Vercel', description: 'Manage deployments and project settings.' },
     ],
   },
 }

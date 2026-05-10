@@ -19,6 +19,12 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     tier: 'PRO',
   },
   {
+    id: 'deepseek-v4-flash',
+    name: 'DeepSeek V4 Flash',
+    description: 'Fast and affordable from DeepSeek',
+    tier: 'PRO',
+  },
+  {
     id: 'claude-sonnet-4-6',
     name: 'Sonnet 4.6',
     description: 'Best balance of speed and intelligence',
@@ -31,15 +37,21 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     tier: 'ULTRA',
   },
   {
-    id: 'claude-opus-4-6',
-    name: 'Opus 4.6',
+    id: 'claude-opus-4-7',
+    name: 'Opus 4.7',
     description: 'Most capable for complex work',
+    tier: 'ULTRA',
+  },
+  {
+    id: 'deepseek-v4-pro',
+    name: 'DeepSeek V4 Pro',
+    description: 'Powerful reasoning from DeepSeek',
     tier: 'ULTRA',
   },
   {
     id: 'opus-plan',
     name: 'Opus Plan Mode',
-    description: 'Uses Opus 4.6 for planning, Sonnet 4.6 otherwise',
+    description: 'Uses Opus 4.7 for planning, Sonnet 4.6 otherwise',
     tier: 'ULTRA',
   },
 ]

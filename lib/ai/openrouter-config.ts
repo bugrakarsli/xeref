@@ -8,7 +8,9 @@ export type ModelId =
   | 'xeref-free'
   | 'claude-haiku-4-5-20251001'
   | 'claude-sonnet-4-6'
-  | 'claude-opus-4-6'
+  | 'claude-opus-4-7'
+  | 'deepseek-v4-pro'
+  | 'deepseek-v4-flash'
   | 'opus-plan'
   | 'best'
 
@@ -37,7 +39,9 @@ const MODEL_MAP: Record<string, string> = {
   'xeref-free': 'openrouter/free',
   'claude-haiku-4-5-20251001': 'anthropic/claude-haiku-4-5',
   'claude-sonnet-4-6': 'anthropic/claude-sonnet-4-6',
-  'claude-opus-4-6': 'anthropic/claude-opus-4-6',
+  'claude-opus-4-7': 'anthropic/claude-opus-4-7',
+  'deepseek-v4-pro': 'deepseek/deepseek-v4-pro',
+  'deepseek-v4-flash': 'deepseek/deepseek-v4-flash',
 }
 
 const OPUS_PLAN_REGEX = /plan|roadmap|decompose|break down|architecture|goals|agent/i
@@ -46,7 +50,7 @@ export function resolveModelId(modelId: string, lastUserMessage?: string): strin
   // opus-plan: dynamic routing — Opus for planning queries, Sonnet otherwise
   if (modelId === 'opus-plan') {
     const isPlan = OPUS_PLAN_REGEX.test(lastUserMessage ?? '')
-    return isPlan ? MODEL_MAP['claude-opus-4-6'] : MODEL_MAP['claude-sonnet-4-6']
+    return isPlan ? MODEL_MAP['claude-opus-4-7'] : MODEL_MAP['claude-sonnet-4-6']
   }
   // best: OpenRouter auto-routing (Ultra only, distinct from explicit Opus selection)
   if (modelId === 'best') return 'openrouter/auto'
@@ -57,12 +61,14 @@ export function resolveModelId(modelId: string, lastUserMessage?: string): strin
 
 const PLAN_MODELS: Record<UserPlan, Set<string>> = {
   free: new Set(['xeref-free']),
-  pro: new Set(['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6']),
+  pro: new Set(['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'deepseek-v4-flash']),
   ultra: new Set([
     'xeref-free',
     'claude-haiku-4-5-20251001',
     'claude-sonnet-4-6',
-    'claude-opus-4-6',
+    'deepseek-v4-flash',
+    'claude-opus-4-7',
+    'deepseek-v4-pro',
     'opus-plan',
     'best',
   ]),

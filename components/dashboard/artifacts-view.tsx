@@ -16,6 +16,7 @@ export function ArtifactsView() {
   })
   const [searchQuery, setSearchQuery] = useState('')
   const [showingDetail, setShowingDetail] = useState(false)
+  const [artifacts, setArtifacts] = useState<Artifact[]>(MOCK_ARTIFACTS)
   const [loading, setLoading] = useState(true)
 
   // Simulate async fetch and restore URL state on mount
@@ -45,7 +46,7 @@ export function ArtifactsView() {
   }, [])
 
   const filteredArtifacts = useMemo(() => {
-    return MOCK_ARTIFACTS
+    return artifacts
       .filter((a) => filterType === 'all' || a.type === filterType)
       .filter((a) => {
         if (!searchQuery) return true
@@ -56,9 +57,9 @@ export function ArtifactsView() {
           a.tags.some((t) => t.includes(q))
         )
       })
-  }, [filterType, searchQuery])
+  }, [artifacts, filterType, searchQuery])
 
-  const selectedArtifact = MOCK_ARTIFACTS.find((a) => a.id === selectedArtifactId) ?? null
+  const selectedArtifact = artifacts.find((a) => a.id === selectedArtifactId) ?? null
 
   function updateUrl(
     artifactId: string | null,
@@ -106,6 +107,12 @@ export function ArtifactsView() {
     updateUrl(null, null, filterType)
   }
 
+  function handleDelete() {
+    if (!selectedArtifactId) return
+    setArtifacts((prev) => prev.filter((a) => a.id !== selectedArtifactId))
+    handleBack()
+  }
+
   return (
     <section
       aria-label="Artifacts"
@@ -127,6 +134,7 @@ export function ArtifactsView() {
         selectedVersionIndex={selectedVersionIndex}
         onVersionChange={handleVersionChange}
         onBack={handleBack}
+        onDelete={handleDelete}
         visible={showingDetail}
       />
     </section>

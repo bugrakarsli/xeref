@@ -87,6 +87,26 @@ Dark mode forced globally in `layout.tsx` via `className="dark"`. Colors use OKL
 - `public/xeref.svg` — logo component + favicon
 - `public/xeref-ai-og-image.jpg` — OG/Twitter metadata (wired in `layout.tsx`)
 
+## Key Infrastructure
+
+### Connections (`lib/connections/`)
+
+OAuth tokens stored encrypted (AES-256-GCM) via `lib/connections/crypto.ts`. CSRF state is HMAC-SHA256 signed with a nonce + 10-min TTL in `lib/connections/oauth-state.ts`. `listConnectionsForUser()` never returns raw tokens — only `getConnectionWithSecrets()` decrypts (server-only). All require `CONNECTIONS_ENCRYPTION_KEY` (32-byte hex in `.env.local`).
+
+Active providers: `google` | `notion` | `slack` — login + callback routes at `app/api/connections/[provider]/`.
+
+### MCP Server (`mcp/server.ts`)
+
+Self-hosted, single-user. Transport: stdio. Auth: `SUPABASE_SERVICE_ROLE_KEY` + `XEREF_MCP_USER_ID` env vars. Exposes CRUD tools for tasks, projects, notes, chats. Not multi-tenant — `XEREF_MCP_USER_ID` is fixed per deployment. HTTP wrapper at `app/api/mcp/route.ts`.
+
+### Semantic Memory (`lib/pinecone.ts`)
+
+Pinecone index. Currently scoped to `xeref_lessons` namespace (classroom feature only). Planned: `xeref_user_memory` namespace for unified cross-entity search across tasks/projects/notes/chats.
+
+### Three-Brain Skill (`docs/doc/three-brain-SKILL.md`)
+
+Routes work to Codex (adversarial review/rescue) or Gemini (multimodal/long-context). Installed Gemini CLI v0.1.9 does **not** support `@file` — pipe files via stdin instead: `cat file.pdf | gemini -p "your prompt"`.
+
 ---
 
 # CLAUDE.md

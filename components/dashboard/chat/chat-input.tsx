@@ -16,7 +16,7 @@ import { cn } from '@/lib/utils'
 import type { Project, ChatAttachment } from '@/lib/types'
 import { SYSTEM_AGENTS, type SystemAgent } from '@/lib/system-agents'
 
-export type ModelId = 'xeref-free' | 'claude-haiku-4-5-20251001' | 'claude-sonnet-4-6' | 'claude-opus-4-6' | 'opus-plan' | 'best'
+export type ModelId = 'xeref-free' | 'claude-haiku-4-5-20251001' | 'claude-sonnet-4-6' | 'claude-opus-4-7' | 'deepseek-v4-pro' | 'deepseek-v4-flash' | 'opus-plan' | 'best'
 export type UserPlan = 'free' | 'pro' | 'ultra'
 export type AgentSelection =
   | { type: 'system'; agent: SystemAgent }
@@ -28,10 +28,12 @@ const PLAN_RANK: Record<UserPlan, number> = { free: 0, pro: 1, ultra: 2 }
 export const MODELS: { id: ModelId; label: string; description: string; plan: UserPlan; planLabel: string }[] = [
   { id: 'xeref-free',                label: 'Xeref',          description: 'Fast and free for everyday use',                       plan: 'free',  planLabel: 'BASIC' },
   { id: 'claude-haiku-4-5-20251001', label: 'Haiku 4.5',     description: 'Fastest for quick answers',                            plan: 'pro',   planLabel: 'PRO'   },
+  { id: 'deepseek-v4-flash',         label: 'DeepSeek V4 Flash', description: 'Fast and affordable from DeepSeek',                plan: 'pro',   planLabel: 'PRO'   },
   { id: 'claude-sonnet-4-6',         label: 'Sonnet 4.6',    description: 'Best balance of speed and intelligence',               plan: 'pro',   planLabel: 'PRO'   },
   { id: 'best',                      label: 'Best (Auto)',    description: 'Dynamically routes your query to the best model',     plan: 'ultra', planLabel: 'ULTRA' },
-  { id: 'claude-opus-4-6',           label: 'Opus 4.6',      description: 'Most capable for complex work',                       plan: 'ultra', planLabel: 'ULTRA' },
-  { id: 'opus-plan',                 label: 'Opus Plan Mode', description: 'Uses Opus 4.6 for planning, Sonnet 4.6 otherwise',   plan: 'ultra', planLabel: 'ULTRA' },
+  { id: 'claude-opus-4-7',           label: 'Opus 4.7',      description: 'Most capable for complex work',                       plan: 'ultra', planLabel: 'ULTRA' },
+  { id: 'deepseek-v4-pro',           label: 'DeepSeek V4 Pro',  description: 'Powerful reasoning from DeepSeek',                  plan: 'ultra', planLabel: 'ULTRA' },
+  { id: 'opus-plan',                 label: 'Opus Plan Mode', description: 'Uses Opus 4.7 for planning, Sonnet 4.6 otherwise',   plan: 'ultra', planLabel: 'ULTRA' },
 ]
 
 function canUse(userPlan: UserPlan, modelPlan: UserPlan) {

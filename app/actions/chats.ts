@@ -139,3 +139,34 @@ export async function saveMessage(
     .eq('id', chatId)
     .eq('user_id', user.id)
 }
+
+export async function updateMessage(messageId: string, content: string): Promise<void> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  // Verify message belongs to a chat owned by the user
+  const { data: message, error: fetchError } = await supabase
+    .from('messages')
+    .select('chat_id')
+    .eq('id', messageId)
+    .single()
+
+  if (fetchError || !message) throw new Error('Message not found')
+
+  const { data: chat, error: chatError } = await supabase
+    .from('chats')
+    .select('id')
+    .eq('id', message.chat_id)
+    .eq('user_id', user.id)
+    .single()
+
+  if (chatError || !chat) throw new Error('Access denied')
+
+  const { error } = await supabase
+    .from('messages')
+    .update({ content, updated_at: new Date().toISOString() })
+    .eq('id', messageId)
+
+  if (error) throw error
+}

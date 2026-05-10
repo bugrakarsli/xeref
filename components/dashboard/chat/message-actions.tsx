@@ -60,10 +60,11 @@ export function UserMessageActions({ content, onEdit }: UserMessageActionsProps)
 interface AssistantMessageActionsProps {
   content: string
   messageId: string
+  onEdit: () => void
   onRetry?: () => void
 }
 
-export function AssistantMessageActions({ content, messageId, onRetry }: AssistantMessageActionsProps) {
+export function AssistantMessageActions({ content, messageId, onEdit, onRetry }: AssistantMessageActionsProps) {
   const [copied, setCopied] = useState(false)
   const [feedback, setFeedback] = useState<'up' | 'down' | null>(null)
 
@@ -127,6 +128,16 @@ export function AssistantMessageActions({ content, messageId, onRetry }: Assista
         type="button"
       >
         <ThumbsDown className="h-3 w-3" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 text-muted-foreground hover:text-foreground"
+        onClick={onEdit}
+        title="Edit response"
+        type="button"
+      >
+        <Pencil className="h-3 w-3" />
       </Button>
       {onRetry && (
         <button

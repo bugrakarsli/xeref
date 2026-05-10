@@ -6,10 +6,9 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { ChatMessage } from './chat-message'
 import { toast } from 'sonner'
 import { ChatInput, type ChatInputHandle, type ModelId, type AgentSelection, MODELS } from './chat-input'
-import { saveMessage, createChat } from '@/app/actions/chats'
+import { saveMessage, createChat, updateMessage } from '@/app/actions/chats'
 import { uploadChatAttachment } from '@/app/actions/upload'
 import type { Project, Chat, Message, ChatAttachment } from '@/lib/types'
-import { SYSTEM_AGENTS } from '@/lib/system-agents'
 import { ScrollToBottomButton } from '@/components/ui/ScrollToBottomButton'
 import Image from 'next/image'
 
@@ -268,11 +267,37 @@ export function ChatInterface({
   }))
 
   async function handleEditMessage(index: number, newContent: string) {
-    setMessages((prev) => prev.slice(0, index))
-    const body: Record<string, unknown> = { model: selectedModel, webSearchEnabled }
-    if (selectedAgent?.type === 'system') body.systemAgentId = selectedAgent.agent.id
-    else if (selectedAgent?.type === 'project') body.projectId = selectedAgent.project.id
-    await sendMessage({ text: newContent }, { body })
+    const message = messages[index]
+    if (!message) return
+
+    if (message.role === 'user') {
+      // Regenerate from this user message
+      setMessages((prev) => prev.slice(0, index))
+      const body: Record<string, unknown> = { model: selectedModel, webSearchEnabled }
+      if (selectedAgent?.type === 'system') body.systemAgentId = selectedAgent.agent.id
+      else if (selectedAgent?.type === 'project') body.projectId = selectedAgent.project.id
+      await sendMessage({ text: newContent }, { body })
+    } else {
+      // Just update the assistant response content
+      setMessages((prev) =>
+        prev.map((m, i) =>
+          i === index
+            ? { ...m, parts: [{ type: 'text' as const, text: newContent }] }
+            : m
+        )
+      )
+      
+      // Persist to DB if we have a message ID
+      if (message.id) {
+        try {
+          await updateMessage(message.id, newContent)
+          toast.success('Response updated')
+        } catch (err) {
+          console.error('Failed to update message:', err)
+          toast.error('Failed to save changes to database')
+        }
+      }
+    }
   }
 
   async function handleRetry(assistantIndex: number) {
@@ -287,13 +312,6 @@ export function ChatInterface({
   }
 
   const hasActivatedAgents = projects.some((p) => p.prompt)
-
-  const selectedLabel =
-    selectedAgent?.type === 'system'
-      ? selectedAgent.agent.name
-      : selectedAgent?.type === 'project'
-      ? selectedAgent.project.name
-      : null
 
   const sharedInputProps = {
     input,
@@ -370,7 +388,14 @@ export function ChatInterface({
               isStreaming={isLoading && i === renderedMessages.length - 1 && message.role === 'assistant'}
               userName={userName}
               messageId={message.id}
+              isLast={i === renderedMessages.length - 1}
               onEdit={(content) => handleEditMessage(i, content)}
+              onEditPrompt={() => {
+                const prevUser = renderedMessages.slice(0, i).reverse().find(m => m.role === 'user')
+                if (prevUser) {
+                  window.dispatchEvent(new CustomEvent('xeref_edit_message', { detail: { messageId: prevUser.id } }))
+                }
+              }}
               onRetry={message.role === 'assistant' ? () => handleRetry(i) : undefined}
             />
           ))}

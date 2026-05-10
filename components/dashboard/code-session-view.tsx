@@ -25,6 +25,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
   const sessionIdRef = useRef<string | null>(sessionId ?? null)
   const selectedRepoRef = useRef<string | null>(null)
   const modelRef = useRef<ModelId>('xeref-free')
+  const didAutoSendRef = useRef(false)
   const supabase = createClient()
 
   useEffect(() => { selectedRepoRef.current = selectedRepo }, [selectedRepo])
@@ -61,6 +62,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
   // Load history when we already have a session ID on mount or when sessionId changes
   useEffect(() => {
     setMessages([])
+    didAutoSendRef.current = false
     const sid = sessionId
     if (!sid) return
     const id = sid.startsWith('session_') ? sid : `session_${sid}`
@@ -85,6 +87,21 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
             role: m.role as 'user' | 'assistant' | 'system',
             parts: [{ type: 'text' as const, text: m.content }],
           })))
+          return
+        }
+        // No history — check if the landing page stashed an initial message
+        if (didAutoSendRef.current) return
+        const stored = sessionStorage.getItem(`code:initial:${id}`)
+        if (!stored) return
+        try {
+          const { content, repo, model: m } = JSON.parse(stored) as { content: string; repo: string; model: ModelId }
+          sessionStorage.removeItem(`code:initial:${id}`)
+          didAutoSendRef.current = true
+          if (repo) { setSelectedRepo(repo); selectedRepoRef.current = repo }
+          if (m) { setModel(m); modelRef.current = m }
+          sendMessage({ text: content })
+        } catch {
+          sessionStorage.removeItem(`code:initial:${id}`)
         }
       })
   // eslint-disable-next-line react-hooks/exhaustive-deps

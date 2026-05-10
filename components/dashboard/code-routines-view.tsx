@@ -7,10 +7,9 @@ import { Zap } from 'lucide-react'
 
 export function CodeRoutinesView() {
   const [routines, setRoutines] = useState<{ id: string; name: string; trigger_type: string; created_at: string; repo_full_name?: string | null; schedule_cron?: string | null }[]>([])
-  const supabase = createClient()
 
   useEffect(() => {
-    supabase
+    createClient()
       .from('routines')
       .select('*')
       .order('created_at', { ascending: false })

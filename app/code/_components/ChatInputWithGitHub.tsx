@@ -36,7 +36,6 @@ export function ChatInputWithGitHub({
   const setModel = externalOnModelSelect ?? setInternalModel;
 
   const input = externalInput ?? internalInput;
-  const onInputChange = externalOnInputChange ?? ((val: string) => setInternalInput(val));
   const isLoading = externalIsLoading ?? internalIsLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {

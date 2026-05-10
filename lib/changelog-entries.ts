@@ -1,8 +1,57 @@
 export const changelogEntries = [
   {
+    version: 'v2.5',
+    date: 'May 10, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Vercel OAuth connection — new Vercel provider added to the connections registry; OAuth flow at /api/connections/vercel/login with full callback and token storage',
+          'Google, Notion, and Slack OAuth callback routes — complete /api/connections/{provider}/callback implementations with CSRF validation, token encryption, and profile upsert',
+          'Settings page — dedicated /settings route with account and integration management',
+          'DeepSeek V4 Flash (Pro) and DeepSeek V4 Pro (Ultra) — two new model options; Flash is now available on Pro plan alongside Haiku 4.5 and Sonnet 4.6',
+          'Referral view redesign — full visual overhaul with gradient hero, animated star, social sharing buttons (Twitter, LinkedIn, Email), copy-with-feedback, and step description cards',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Claude Opus 4.6 upgraded to Opus 4.7 — Ultra plan and Opus Plan Mode now route to the latest flagship model',
+          '/code layout unified with DashboardShell — the Code workspace now shares the main dashboard shell (sidebar, plan gating, nav) instead of the standalone CodeSidebar; CodeSidebar.tsx removed',
+          'ConnectorsSection rebuilt as a live OAuth-driven status board — cards fetch real connected/not-connected state from the database and "Connect" buttons initiate the correct OAuth flow per provider',
+          '/code footer mode and effort pickers — dead decorative markup replaced with functional dropdowns: left pill cycles "Default / Accept edits / Plan" edit mode; right pill shows real selected model label and reasoning effort (Low / Medium / High), both persisted to localStorage',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          '/code session chat no response — CodeSessionView (DefaultChatTransport + useChat + transcript renderer) wired into the session page; responses now stream and persist correctly',
+          '/code first message never saved — CodeLanding.handleSubmit no longer fires a broken direct POST to the chat API; initial message is stashed in sessionStorage and auto-sent via useChat on the session page',
+          'GitHub OAuth routing — 500 errors and 404s on the GitHub OAuth callback and Code route URLs resolved',
+          'ESLint set-state-in-effect — 14 violations across dashboard components resolved without altering runtime behavior',
+          'Routines auth guards and Telegram webhook verification — getSession replaced with getUser server-side; Telegram webhook now validates the secret header before processing updates',
+        ],
+      },
+      {
+        type: 'Architecture',
+        color: 'text-blue-400',
+        items: [
+          '/api/connections/[provider]/ pattern — login and callback routes for google, notion, slack, and vercel with AES-256-GCM token encryption and HMAC-SHA256 CSRF state',
+          'lib/connections/registry.ts — Vercel added as an OAuth provider with VERCEL_CLIENT_ID / VERCEL_CLIENT_SECRET env requirements',
+          'AGENTS.md and GEMINI.md — agent runtime documentation committed to the repo',
+          'code-session-view.tsx — sessionStorage handoff pattern for auto-sending the first message on new sessions without a double-render or StrictMode double-send',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.4',
     date: 'April 29, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

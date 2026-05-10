@@ -61,15 +61,6 @@ const STATIC_AGENTS: Agent[] = [
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function statusBadgeVariant(status: AgentStatus) {
-  switch (status) {
-    case 'AT WORK':        return 'default'
-    case 'ALWAYS THINKING': return 'secondary'
-    case 'CONTROL PANEL':  return 'outline'
-    case 'IDLE':           return 'outline'
-  }
-}
-
 function statusColor(status: AgentStatus) {
   switch (status) {
     case 'AT WORK':         return 'text-emerald-400'

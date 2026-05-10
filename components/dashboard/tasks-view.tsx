@@ -1,16 +1,10 @@
 'use client'
 
 import { useState, useEffect, useTransition, useRef, useCallback } from 'react'
-import { CheckSquare, Plus, Trash2, ChevronDown, FileText, Target, Pencil, Kanban, List as ListIcon, Settings2 } from 'lucide-react'
+import { CheckSquare, Plus, Trash2, FileText, Target, Pencil, Kanban, List as ListIcon, Settings2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { createTask, getUserTasks, updateTask, deleteTask, getDailyTarget, setDailyGoal, incrementDailyCompleted } from '@/app/actions/tasks'
@@ -133,7 +127,6 @@ function NotesPanel() {
     if (!selected) return
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setTitleDraft(selected.title)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setContentDraft(selected.content)
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -282,7 +275,7 @@ export function TasksView({ projectCount }: TasksViewProps) {
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [editingTask, setEditingTask] = useState<Task | null>(null)
   const [editingDueDateId, setEditingDueDateId] = useState<string | null>(null)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [dailyTarget, setDailyTarget] = useState<DailyTarget | null>(null)
 
   useEffect(() => {

@@ -15,7 +15,7 @@ async function checkAnonRateLimit(userId: string): Promise<boolean> {
   const admin = createAdminClient(url, key)
   const window = Math.floor(Date.now() / 60000) // current minute bucket
 
-  const { data, error } = await admin
+  const { error } = await admin
     .from('rate_limits')
     .upsert({ user_id: userId, window_start: window, count: 1 }, {
       onConflict: 'user_id,window_start',

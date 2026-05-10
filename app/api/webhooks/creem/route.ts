@@ -3,8 +3,14 @@ import crypto from 'crypto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 function verifySignature(rawBody: string, signature: string): boolean {
+  const secret = process.env.CREEM_WEBHOOK_SECRET
+  if (!secret) {
+    console.error('[Creem] CREEM_WEBHOOK_SECRET is not defined in environment variables')
+    return false
+  }
+
   const computed = crypto
-    .createHmac('sha256', process.env.CREEM_WEBHOOK_SECRET!)
+    .createHmac('sha256', secret)
     .update(rawBody)
     .digest('hex')
 

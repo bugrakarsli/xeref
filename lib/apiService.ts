@@ -12,7 +12,6 @@ export interface OpenRouterChatSession {
 export function createChatSession(
   modelName: string,
   systemInstruction: string,
-  _enableSynthID?: boolean
 ): OpenRouterChatSession {
   return { modelName, systemInstruction, messages: [] }
 }

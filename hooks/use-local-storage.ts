@@ -15,7 +15,6 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
       // corrupt storage — ignore
     }
     setHydrated(true)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
 
   // Only write once hydrated — prevents overwriting localStorage with initialValue on mount

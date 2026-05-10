@@ -1,8 +1,8 @@
 import { notFound, redirect } from 'next/navigation';
-import { ChatInputWithGitHub } from '../../_components/ChatInputWithGitHub';
 import { createClient } from '@/lib/supabase/server';
 import { getUserPlan } from '@/app/actions/profile';
 import { isSessionId } from '@/lib/ids';
+import { CodeSessionView } from '@/components/dashboard/code-session-view';
 
 export default async function SessionPage({
   params,
@@ -17,22 +17,11 @@ export default async function SessionPage({
   const plan = await getUserPlan();
   if (plan !== 'ultra') redirect('/pricing?upgrade=code');
 
+  // Verify session belongs to authed user
   const supabase = await createClient();
   const { data: session } = await supabase
-    .from('code_sessions').select('*').eq('id', id).maybeSingle();
+    .from('code_sessions').select('id').eq('id', id).maybeSingle();
+  if (!session) notFound();
 
-  return (
-    <div className="flex flex-col h-full">
-      <header className="px-6 py-4 border-b border-black/10 dark:border-white/10">
-        <h1 className="text-lg font-medium">{session?.title ?? 'New session'}</h1>
-        <p className="text-xs opacity-60">{id}</p>
-      </header>
-      <div className="flex-1 overflow-y-auto px-6 py-8">
-        {/* existing chat transcript goes here */}
-      </div>
-      <div className="border-t border-black/10 dark:border-white/10 p-4">
-        <ChatInputWithGitHub sessionId={id} />
-      </div>
-    </div>
-  );
+  return <CodeSessionView sessionId={id} />;
 }

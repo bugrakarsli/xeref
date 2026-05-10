@@ -47,7 +47,6 @@ export function ChatsView({ projects, initialChats, userName, userPlan = 'free',
         }
       }
     } catch {}
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   function handleAgentSelect(agent: AgentSelection) {

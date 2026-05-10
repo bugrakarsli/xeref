@@ -34,6 +34,7 @@ interface ChatMessageProps {
   isStreaming?: boolean
   userName?: string
   messageId?: string
+  isLast?: boolean
   onEdit?: (content: string) => void
   onRetry?: () => void
 }
@@ -176,17 +177,36 @@ function ToolResultCard({ toolName, result }: { toolName: string; result: ToolRe
   return null
 }
 
-export function ChatMessage({ role, content, parts, isStreaming, userName = 'U', messageId, onEdit, onRetry }: ChatMessageProps) {
+export function ChatMessage({
+  role,
+  content,
+  parts,
+  isStreaming,
+  userName = 'U',
+  messageId,
+  isLast,
+  onEdit,
+  onRetry
+}: ChatMessageProps) {
   const isUser = role === 'user'
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState(content)
   const editRef = useRef<HTMLTextAreaElement>(null)
 
   // Sync editContent if content prop changes externally
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!isEditing) setEditContent(content)
   }, [content, isEditing])
+
+  useEffect(() => {
+    const handleTrigger = (e: CustomEvent) => {
+      if (e.detail.messageId === messageId) {
+        setIsEditing(true)
+      }
+    }
+    window.addEventListener('xeref_edit_message', handleTrigger as EventListener)
+    return () => window.removeEventListener('xeref_edit_message', handleTrigger as EventListener)
+  }, [messageId])
 
   // Auto-resize + focus on enter edit mode
   useEffect(() => {
@@ -234,8 +254,8 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
 
       <div className={cn('flex flex-col gap-1', isUser ? 'items-end max-w-[80%]' : 'max-w-[80%]')}>
         {/* Inline edit mode */}
-        {isUser && isEditing ? (
-          <div className="flex flex-col gap-2 w-full">
+        {isEditing ? (
+          <div className="flex flex-col gap-2 w-full min-w-[300px]">
             <textarea
               ref={editRef}
               value={editContent}
@@ -246,9 +266,21 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
               }}
               onKeyDown={handleEditKeyDown}
               rows={1}
-              className="w-full resize-none rounded-2xl rounded-br-sm border border-primary/50 bg-card px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary"
+              className={cn(
+                "w-full resize-none rounded-2xl border bg-card px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary",
+                isUser ? "rounded-br-sm border-primary/50" : "rounded-bl-sm border-muted"
+              )}
             />
-            <div className="flex items-center gap-2 justify-end">
+            <div className={cn("flex items-center gap-2", isUser ? "justify-end" : "justify-start")}>
+              {!isUser && (
+                <button
+                  type="button"
+                  onClick={handleEditDone}
+                  className="text-xs font-medium bg-foreground text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Done
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => { setEditContent(content); setIsEditing(false) }}
@@ -256,25 +288,42 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={handleEditDone}
-                className="text-xs font-medium bg-foreground text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
-              >
-                Done
-              </button>
+              {isUser && (
+                <button
+                  type="button"
+                  onClick={handleEditDone}
+                  className="text-xs font-medium bg-foreground text-background px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                >
+                  Done
+                </button>
+              )}
             </div>
           </div>
         ) : (
           <>
             <div
+              onClick={() => {
+                if (!isUser && isLast) {
+                  setIsEditing(true)
+                }
+              }}
               className={cn(
-                'rounded-2xl px-4 py-2.5 text-sm',
+                'relative rounded-2xl px-4 py-2.5 text-sm transition-all',
                 isUser
                   ? 'bg-primary text-primary-foreground rounded-br-sm'
-                  : 'bg-card border rounded-bl-sm'
+                  : 'bg-card border rounded-bl-sm',
+                !isUser && isLast && 'cursor-pointer hover:border-primary/50'
               )}
             >
+              {!isUser && isLast && (
+                <div className="absolute -top-3 -left-1 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-lg animate-in fade-in slide-in-from-bottom-1 duration-500">
+                  <span className="relative flex h-1.5 w-1.5">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-blue-300"></span>
+                  </span>
+                  New! Click to edit
+                </div>
+              )}
               {isUser ? (
                 <p className="whitespace-pre-wrap">{content}</p>
               ) : isStreaming && !content ? (
@@ -309,6 +358,7 @@ export function ChatMessage({ role, content, parts, isStreaming, userName = 'U',
                 <AssistantMessageActions
                   content={content}
                   messageId={messageId ?? ''}
+                  onEdit={() => setIsEditing(true)}
                   onRetry={onRetry}
                 />
               )

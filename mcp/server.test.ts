@@ -5,7 +5,7 @@
  * Each suite verifies the create → read → update → delete flow for one entity type.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 
 // ── Shared mock factory ──────────────────────────────────────────────────────
 

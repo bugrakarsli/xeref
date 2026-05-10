@@ -295,7 +295,7 @@ export function HomeView({ user, projects, chats: initialChats, userName, userPl
   const raw = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'there'
   const displayName = raw.charAt(0).toUpperCase() + raw.slice(1)
 
-  const [activeTab, setActiveTab] = useState<HomeTab>('home')
+  const [activeTab] = useState<HomeTab>('home')
   const [chats, setChats] = useState<Chat[]>(initialChats)
   const [activeChat, setActiveChat] = useState<Chat | null>(null)
   const [chatMessages, setChatMessages] = useState<Message[]>([])

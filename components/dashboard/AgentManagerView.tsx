@@ -112,7 +112,6 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
                 // eslint-disable-next-line react-hooks/set-state-in-effect
                 setSettingsOpen(true);
             } else {
-                // eslint-disable-next-line react-hooks/set-state-in-effect
                 setActiveView(initialView);
             }
         }

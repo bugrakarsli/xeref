@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { GitBranch, XCircle, AlertTriangle, Radio, Bell, ChevronDown, ChevronRight, Settings, ExternalLink } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 
 interface StatusBarProps {
     onOpenCustomizations?: () => void;
@@ -22,12 +22,6 @@ const StatusBar: React.FC<StatusBarProps> = ({ onOpenCustomizations, onOpenSetti
   const [tabImport, setTabImport] = useState(true);
   const [tabJump, setTabJump] = useState(true);
   const [snoozeActive, setSnoozeActive] = useState(false);
-
-  // Placeholder data for Git status
-  const gitStatus = {
-      branch: '[feature/new-login]',
-      status: 'ahead 2 commits'
-  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

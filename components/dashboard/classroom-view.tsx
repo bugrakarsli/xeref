@@ -3,12 +3,11 @@
 import { useState, useEffect, useCallback, useTransition } from 'react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { BookOpen, Search, Plus, ChevronDown, ChevronRight, Clock, CheckCircle2, Circle, Pencil, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
+import { BookOpen, Search, Plus, ChevronDown, ChevronRight, Clock, CheckCircle2, Circle, Trash2, ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import type { Course, CourseModule, Lesson } from '@/lib/types'
 import type { LessonSearchResult } from '@/lib/pinecone'
 import {
@@ -18,7 +17,6 @@ import {
   markLessonComplete,
   markLessonIncomplete,
   createCourse,
-  updateCourse,
   deleteCourse,
   createModule,
   createLesson,
@@ -253,7 +251,7 @@ export function ClassroomView({ userEmail, userId }: Props) {
                 <div key={mod.id} className="rounded-xl border bg-card overflow-hidden">
                   <button
                     className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/40 transition-colors"
-                    onClick={() => setExpandedModules((s) => { const n = new Set(s); n.has(mod.id) ? n.delete(mod.id) : n.add(mod.id); return n })}
+                    onClick={() => setExpandedModules((s) => { const n = new Set(s); if (n.has(mod.id)) n.delete(mod.id); else n.add(mod.id); return n })}
                   >
                     <span className="text-sm font-semibold">{mod.title}</span>
                     <div className="flex items-center gap-2">

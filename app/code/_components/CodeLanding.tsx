@@ -1,11 +1,36 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, ChevronDown, Check } from 'lucide-react';
 import { ChatInputWithGitHub } from './ChatInputWithGitHub';
 import { SessionCard } from './SessionCard';
 import type { CodeSession } from '@/lib/types';
 import type { ModelId } from '@/components/dashboard/chat/chat-input';
+import { MODELS } from '@/components/dashboard/chat/chat-input';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
+type EditMode = 'default' | 'accept-edits' | 'plan';
+type Effort = 'low' | 'medium' | 'high';
+
+const MODE_LABELS: Record<EditMode, string> = {
+  'default': 'Default',
+  'accept-edits': 'Accept edits',
+  'plan': 'Plan',
+};
+
+const EFFORT_LABELS: Record<Effort, string> = {
+  low: 'Low',
+  medium: 'Medium',
+  high: 'High',
+};
 
 function getBadge(session: CodeSession, index: number) {
   // Heuristic until real status fields exist:
@@ -26,6 +51,8 @@ export function CodeLanding({
   const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
   const [model, setModel] = useState<ModelId>('xeref-free');
   const [isLoading, setIsLoading] = useState(false);
+  const [editMode, setEditMode] = useLocalStorage<EditMode>('code:edit-mode', 'accept-edits');
+  const [effort, setEffort] = useLocalStorage<Effort>('code:effort', 'medium');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +61,8 @@ export function CodeLanding({
     try {
       const createRes = await fetch('/api/sessions', { method: 'POST' });
       const { id } = await createRes.json();
-      await fetch(`/api/sessions/${id}/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: input, model, repo: selectedRepo }),
-      });
+      // Stash the first message for CodeSessionView to auto-send via useChat
+      sessionStorage.setItem(`code:initial:${id}`, JSON.stringify({ content: input, repo: selectedRepo, model }));
       router.push(`/code/${id}`);
     } catch {
       setIsLoading(false);
@@ -93,16 +117,56 @@ export function CodeLanding({
           selectedModel={model}
           onModelSelect={setModel}
         />
-        {/* Accept edits footer */}
-        <div className="flex items-center gap-3 max-w-3xl mx-auto w-full text-xs text-white/30 select-none">
-          <span>Accept edits</span>
-          <span className="flex items-center gap-1">
-            <kbd className="px-1 rounded bg-white/8 text-white/40">⊞</kbd>
-            <kbd className="px-1 rounded bg-white/8 text-white/40">+</kbd>
-            <kbd className="px-1 rounded bg-white/8 text-white/40">🎤</kbd>
-            <span className="text-white/20">▾</span>
-          </span>
-          <span className="ml-auto">Sonnet 4.6 · Medium</span>
+        {/* Mode + effort footer */}
+        <div className="flex items-center gap-3 max-w-3xl mx-auto w-full text-xs text-white/30">
+          {/* Edit mode picker */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-1.5 hover:text-white/60 transition-colors focus:outline-none">
+                <span>{MODE_LABELS[editMode]}</span>
+                <ChevronDown size={11} className="opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="min-w-36">
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Edit mode</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(Object.entries(MODE_LABELS) as [EditMode, string][]).map(([id, label]) => (
+                <DropdownMenuItem key={id} onSelect={() => setEditMode(id)} className="flex items-center gap-2 text-xs">
+                  <Check size={12} className={editMode === id ? 'opacity-100' : 'opacity-0'} />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          {/* Model + effort picker */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="ml-auto flex items-center gap-1.5 hover:text-white/60 transition-colors focus:outline-none">
+                <span>{MODELS.find(m => m.id === model)?.label ?? 'Xeref'} · {EFFORT_LABELS[effort]}</span>
+                <ChevronDown size={11} className="opacity-50" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-44">
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Model</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {MODELS.map((m) => (
+                <DropdownMenuItem key={m.id} onSelect={() => setModel(m.id)} className="flex items-center gap-2 text-xs">
+                  <Check size={12} className={model === m.id ? 'opacity-100' : 'opacity-0'} />
+                  {m.label}
+                </DropdownMenuItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Reasoning effort</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(Object.entries(EFFORT_LABELS) as [Effort, string][]).map(([id, label]) => (
+                <DropdownMenuItem key={id} onSelect={() => setEffort(id)} className="flex items-center gap-2 text-xs">
+                  <Check size={12} className={effort === id ? 'opacity-100' : 'opacity-0'} />
+                  {label}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </div>

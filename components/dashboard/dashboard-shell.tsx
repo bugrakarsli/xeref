@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import type { User } from '@supabase/supabase-js'
 import type { Project, Chat, CodeSession, ViewKey, SidebarTab } from '@/lib/types'
 import { getUserCodeSessions } from '@/app/actions/code-sessions'
@@ -19,8 +19,6 @@ import { ChatsView } from './chats-view'
 import { SettingsView } from './settings-view'
 import { ReferralView } from './referral-view'
 import { AgentTeamView } from './agent-team-view'
-import { ComingSoonView } from './coming-soon-view'
-import { ArtifactsView } from './artifacts-view'
 import { ProjectsView } from './projects-view'
 import { DeployView } from './deploy-view'
 import { MemoryView } from './memory-view'
@@ -46,20 +44,31 @@ const Sidebar = dynamic(
   }
 )
 
-
 interface DashboardShellProps {
   user: User
   projects: Project[]
   chats: Chat[]
   userPlan: UserPlan
   onboardingCompleted: boolean
+  children?: React.ReactNode
+  initialTab?: SidebarTab
+  initialView?: ViewKey
 }
 
-export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted, children, initialTab = 'chat', initialView = 'home' }: DashboardShellProps) {
   const router = useRouter()
+  const pathname = usePathname()
+
+  // Compute actual initial state based on pathname
+  const isCodeRoute = pathname?.startsWith('/code')
+  const actualInitialTab = isCodeRoute ? 'code' : initialTab
+  const actualInitialView = isCodeRoute 
+    ? (pathname.includes('/session') ? 'code_session' : pathname.includes('/routines') ? 'code_routines' : 'code') 
+    : initialView
+
   const [collapsed, setCollapsed] = useState(false)
-  const [activeView, setActiveView] = useState<ViewKey>('home')
-  const [activeTab, setActiveTab] = useState<SidebarTab>('chat')
+  const [activeView, setActiveView] = useState<ViewKey>(actualInitialView)
+  const [activeTab, setActiveTab] = useState<SidebarTab>(actualInitialTab)
 
   // Default main-area view for each sidebar tab
   const TAB_DEFAULT_VIEW: Record<SidebarTab, ViewKey> = {
@@ -69,8 +78,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleTabChange(tab: SidebarTab) {
-    if (tab === 'code') {
+    if (tab === 'code' && activeTab !== 'code') {
       router.push('/code')
+      return
+    }
+    if (tab !== 'code' && activeTab === 'code') {
+      localStorage.setItem('xeref_pending_tab', tab)
+      router.push('/')
       return
     }
     setActiveTab(tab)
@@ -116,12 +130,6 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     router.push('/code')
   }
 
-  function handleSessionCreated(session: CodeSession) {
-    setCodeSessions((prev) => [session, ...prev.filter((s) => s.id !== session.id)])
-    setSelectedSessionId(session.id)
-    localStorage.setItem('xeref_selected_session_id', session.id)
-  }
-
   function handleSessionSelected(id: string) {
     router.push(`/code/${id}`)
   }
@@ -129,12 +137,23 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   // Hydrate localStorage-persisted state after mount (avoids SSR/client mismatch)
   /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
-    const savedView = localStorage.getItem('xeref_active_view') as ViewKey | null
-    if (savedView) setActiveView(savedView)
+    const pendingTab = localStorage.getItem('xeref_pending_tab') as SidebarTab | null
+    if (pendingTab) {
+      localStorage.removeItem('xeref_pending_tab')
+      setActiveTab(pendingTab)
+      const defaultView = TAB_DEFAULT_VIEW[pendingTab]
+      setActiveView(defaultView)
+      localStorage.setItem('xeref_active_view', defaultView)
+    } else if (initialTab === 'chat') {
+      const savedView = localStorage.getItem('xeref_active_view') as ViewKey | null
+      if (savedView) setActiveView(savedView)
+    }
+
     if (localStorage.getItem('xeref_agent_panel_open') === 'true') setShowAgentPanel(true)
     if (localStorage.getItem('xeref_agent_panel_minimized') === 'true') setAgentPanelMinimized(true)
     const savedSession = localStorage.getItem('xeref_selected_session_id')
     if (savedSession) setSelectedSessionId(savedSession)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   /* eslint-enable react-hooks/set-state-in-effect */
 
@@ -145,7 +164,33 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   useEffect(() => {
     // Load code sessions
     getUserCodeSessions().then(setCodeSessions)
-  }, [])
+
+    const supabase = createClient()
+    const userId = user.id
+
+    const channel = supabase
+      .channel('code_sessions_dashboard')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'code_sessions' },
+        (payload) => {
+          const row = (payload.new ?? payload.old) as CodeSession
+          if (row.user_id !== userId) return
+          if (payload.eventType === 'INSERT') {
+            setCodeSessions((prev) => [row, ...prev].slice(0, 30))
+          } else if (payload.eventType === 'UPDATE') {
+            setCodeSessions((prev) =>
+              prev.map((s) => (s.id === row.id ? { ...s, ...row } : s))
+            )
+          } else if (payload.eventType === 'DELETE') {
+            setCodeSessions((prev) => prev.filter((s) => s.id !== row.id))
+          }
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [user.id])
 
   // Keyboard shortcuts: Ctrl+1/2/3 for tab switching, Ctrl+Shift+O for new item (context-aware)
   useEffect(() => {
@@ -209,7 +254,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     }
     window.addEventListener('keydown', handleKeyDown, true)
     return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [activeTab, handleNewChat, handleTabChange])
+  }, [activeTab, activeView, handleNewChat, handleNewSession, handleTabChange])
 
   async function handleSignOut() {
     const supabase = createClient()
@@ -374,12 +419,10 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'agents':
                 return <AgentTeamView />
               case 'code':
-                return <ArtifactsView />
               case 'code_session':
               case 'code_routines':
-                return null
               case 'customize':
-                return null
+                return children || null
               case 'projects':
                 return <ProjectsView />
               case 'deploy':

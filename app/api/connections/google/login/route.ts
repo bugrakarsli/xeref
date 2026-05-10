@@ -28,7 +28,8 @@ export async function GET(request: Request) {
     maxAge: 600,
   })
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || url.origin
+  const isDev = process.env.NODE_ENV === 'development'
+  const siteUrl = isDev ? url.origin : (process.env.NEXT_PUBLIC_SITE_URL || url.origin)
   const redirectUri = `${siteUrl}/api/connections/google/callback`
 
   const authorize = new URL('https://accounts.google.com/o/oauth2/v2/auth')

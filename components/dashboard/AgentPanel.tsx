@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  MessageSquarePlus, History, MoreHorizontal, Maximize2, Settings, Copy, Play, Trash2, Save,
+  MessageSquarePlus, History, Settings, Copy, Play, Trash2, Save,
   FileText, Code, Plus, Pencil, ThumbsUp, ThumbsDown, Check, X
 } from 'lucide-react';
 import ChatInput from './ChatInput';
@@ -29,9 +29,9 @@ const DEFAULT_SETTINGS: AgentSettings = {
   enableSynthID: false,
 };
 
-export const AgentPanel: React.FC<AgentPanelProps> = ({ 
-    onClose, onMinimize, isMinimized, theme, 
-    activeView = 'chat', onViewChange 
+export const AgentPanel: React.FC<AgentPanelProps> = ({
+    onMinimize, isMinimized, theme,
+    activeView = 'chat', onViewChange
 }) => {
   // State
   const [chatState, setChatState] = useState<ChatState>({ messages: [], isLoading: false });
@@ -735,6 +735,7 @@ export const AgentPanel: React.FC<AgentPanelProps> = ({
                 <div className="px-4 pb-2 flex gap-2 animate-fade-in">
                     <div className="relative group/image">
                         <div className={`w-16 h-16 rounded-lg overflow-hidden border ${theme === 'dark' ? 'border-gray-700 bg-gray-800' : 'border-gray-200 bg-gray-100'}`}>
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={`data:${attachedImage.mimeType};base64,${attachedImage.data}`} alt="Attached" className="w-full h-full object-cover" />
                         </div>
                         <button 

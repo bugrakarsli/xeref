@@ -20,6 +20,7 @@ interface ArtifactDetailProps {
   selectedVersionIndex: number
   onVersionChange: (index: number) => void
   onBack: () => void
+  onDelete: () => void
   visible: boolean
 }
 
@@ -38,17 +39,17 @@ function NoSelection() {
 }
 
 export function ArtifactDetail({
-  artifact, selectedVersionIndex, onVersionChange, onBack, visible,
+  artifact, selectedVersionIndex, onVersionChange, onBack, onDelete, visible,
 }: ArtifactDetailProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'versions'>('preview')
   const [published, setPublished] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setPublished(artifact?.published ?? false)
     setLinkCopied(false)
     setActiveTab('preview')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [artifact?.id])
 
   function handlePublishToggle(checked: boolean) {
@@ -69,6 +70,32 @@ export function ArtifactDetail({
       toast.success('Share link copied')
       setTimeout(() => setLinkCopied(false), 2000)
     }).catch(() => toast.error('Copy failed'))
+  }
+
+  function handleDownload() {
+    if (!artifact) return
+    const version = artifact.versions[selectedVersionIndex] ?? artifact.versions[0]
+    const lang = version.language ?? artifact.language
+    const extMap: Record<string, string> = {
+      typescript: 'ts', javascript: 'js', python: 'py',
+      bash: 'sh', json: 'json', markdown: 'md',
+    }
+    const ext = extMap[lang ?? ''] ?? 'txt'
+    const filename = `${artifact.title.toLowerCase().replace(/\s+/g, '-')}.${ext}`
+    const blob = new Blob([version.content], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`Downloaded ${filename}`)
+  }
+
+  function handleDelete() {
+    if (!artifact) return
+    onDelete()
+    toast.success(`"${artifact.title}" deleted`)
   }
 
   return (
@@ -107,7 +134,7 @@ export function ArtifactDetail({
             <div className="flex items-center gap-1 shrink-0">
               <Button
                 variant="ghost" size="icon" className="h-8 w-8"
-                onClick={() => toast('Download coming soon')}
+                onClick={handleDownload}
                 title="Download"
               >
                 <Download className="h-3.5 w-3.5" />
@@ -115,7 +142,7 @@ export function ArtifactDetail({
               <Button
                 variant="ghost" size="icon"
                 className="h-8 w-8 text-destructive/60 hover:text-destructive"
-                onClick={() => toast.error('Delete not available in demo mode')}
+                onClick={handleDelete}
                 title="Delete"
               >
                 <Trash2 className="h-3.5 w-3.5" />

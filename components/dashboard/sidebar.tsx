@@ -890,7 +890,7 @@ export function Sidebar({
                           <button
                             onClick={(e) => {
                               e.stopPropagation()
-                              onShowChatList ? onShowChatList() : window.dispatchEvent(new CustomEvent('xeref_show_chat_list'))
+                              if (onShowChatList) { onShowChatList() } else { window.dispatchEvent(new CustomEvent('xeref_show_chat_list')) }
                             }}
                             className="opacity-0 group-hover:opacity-100 transition-opacity hover:bg-background/50 rounded p-0.5 text-muted-foreground hover:text-foreground"
                             aria-label="Chat history"
