@@ -163,9 +163,11 @@ lib/
 | `xeref-free` (default)      | `openrouter/free`                                               | Basic |
 | `claude-haiku-4-5-20251001` | `anthropic/claude-haiku-4-5`                                    | Pro   |
 | `claude-sonnet-4-6`         | `anthropic/claude-sonnet-4-6`                                   | Pro   |
+| `deepseek-v4-flash`         | `deepseek/deepseek-v4-flash`                                    | Pro   |
 | `best`                      | `openrouter/auto`                                               | Ultra |
-| `claude-opus-4-6`           | `anthropic/claude-opus-4-6`                                     | Ultra |
-| `opus-plan`                 | Opus 4.6 if message contains planning keywords, else Sonnet 4.6 | Ultra |
+| `claude-opus-4-7`           | `anthropic/claude-opus-4-7`                                     | Ultra |
+| `deepseek-v4-pro`           | `deepseek/deepseek-v4-pro`                                      | Ultra |
+| `opus-plan`                 | Opus 4.7 if message contains planning keywords, else Sonnet 4.6 | Ultra |
 
 If a `projectId` is provided, the project's generated CLAWS prompt is used as the system prompt. Disallowed models return `403 { error, code: 'PLAN_LIMIT' }`.
 
