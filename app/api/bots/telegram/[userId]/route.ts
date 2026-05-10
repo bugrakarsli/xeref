@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
+import { createOpenRouterForPlan, resolveModelId } from '@/lib/ai/openrouter-config'
+import { generateText } from 'ai'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,10 +22,22 @@ interface TelegramUpdate {
 }
 
 async function sendTelegramMessage(botToken: string, chatId: number, text: string) {
-  await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text }),
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    console.error('[Telegram] sendMessage failed:', err)
+  }
+}
+
+async function sendTypingAction(botToken: string, chatId: number) {
+  await fetch(`https://api.telegram.org/bot${botToken}/sendChatAction`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ chat_id: chatId, action: 'typing' }),
   })
 }
 
@@ -33,10 +47,10 @@ export async function POST(
 ) {
   const { userId } = await params
 
-  // Fetch user's bot token and profile
+  // Fetch user's bot token and plan
   const { data: profile } = await supabaseAdmin
     .from('profiles')
-    .select('telegram_bot_token, preferred_model')
+    .select('telegram_bot_token, plan')
     .eq('id', userId)
     .single()
 
@@ -46,6 +60,7 @@ export async function POST(
 
   const botToken = profile.telegram_bot_token
 
+  // Verify webhook secret
   const incomingSecret = req.headers.get('x-telegram-bot-api-secret-token')
   if (!incomingSecret) {
     return NextResponse.json({ ok: false }, { status: 401 })
@@ -72,48 +87,26 @@ export async function POST(
   const chatId = message.chat.id
   const userText = message.text
 
-  // Route through the chat API (reuse existing inference endpoint)
-  try {
-    const chatRes = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/api/chat`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        // Pass user identity via a service header the chat route can trust
-        'x-xeref-user-id': userId,
-        'x-xeref-source': 'telegram',
-      },
-      body: JSON.stringify({
+  // Acknowledge to Telegram immediately (prevents retries) then process async
+  void (async () => {
+    try {
+      await sendTypingAction(botToken, chatId)
+
+      const userPlan = (profile.plan ?? 'free') as 'free' | 'pro' | 'ultra'
+      const openrouter = createOpenRouterForPlan(userPlan)
+      const modelId = resolveModelId('xeref-free', userText)
+
+      const { text } = await generateText({
+        model: openrouter(modelId),
         messages: [{ role: 'user', content: userText }],
-        model: 'xeref-free',
-      }),
-    })
+      })
 
-    if (!chatRes.ok) throw new Error(`Chat API ${chatRes.status}`)
-
-    // Chat API returns a streaming response — collect it
-    const reader = chatRes.body?.getReader()
-    const decoder = new TextDecoder()
-    let reply = ''
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read()
-        if (done) break
-        const chunk = decoder.decode(value, { stream: true })
-        // Vercel AI SDK data stream: lines starting with "0:" contain text deltas
-        for (const line of chunk.split('\n')) {
-          if (line.startsWith('0:')) {
-            try {
-              reply += JSON.parse(line.slice(2))
-            } catch { /* skip malformed */ }
-          }
-        }
-      }
+      await sendTelegramMessage(botToken, chatId, text || 'Done.')
+    } catch (err) {
+      console.error('[Telegram] webhook handler error:', err)
+      await sendTelegramMessage(botToken, chatId, 'Something went wrong. Please try again.')
     }
-
-    await sendTelegramMessage(botToken, chatId, reply || 'Done.')
-  } catch {
-    await sendTelegramMessage(botToken, chatId, 'Something went wrong. Please try again.')
-  }
+  })()
 
   return NextResponse.json({ ok: true })
 }

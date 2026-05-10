@@ -15,6 +15,13 @@ export async function POST(req: NextRequest) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
+
+  if (siteUrl.startsWith('http://localhost') || siteUrl.startsWith('http://127.')) {
+    return NextResponse.json({
+      error: 'Telegram requires a public HTTPS URL. Run `ngrok http 3000`, set NEXT_PUBLIC_SITE_URL to the ngrok URL in .env.local, and restart the dev server.',
+    }, { status: 400 })
+  }
+
   const webhookSecret = process.env.TELEGRAM_WEBHOOK_SECRET
   if (!webhookSecret) {
     return NextResponse.json({ error: 'Server misconfiguration: TELEGRAM_WEBHOOK_SECRET not set' }, { status: 500 })

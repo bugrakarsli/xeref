@@ -4,9 +4,15 @@ import Link from 'next/link'
 import { useState, useEffect, useTransition } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Zap, Eye, EyeOff, RefreshCw, Copy, Check } from 'lucide-react'
+import { Zap, Eye, EyeOff, RefreshCw, Copy, Check, Send, Unlink } from 'lucide-react'
 import type { UserPlan } from '@/app/actions/profile'
 import { getMcpToken, regenerateMcpToken } from '@/app/actions/profile'
+import {
+  getTelegramLinkStatus,
+  generateTelegramPairingCode,
+  unlinkTelegram,
+  type TelegramLinkStatus,
+} from '@/app/actions/telegram'
 
 const PLAN_CONFIG: Record<UserPlan, { label: string; features: string[] }> = {
   free: {
@@ -52,9 +58,13 @@ export function SettingsView({ userEmail, userName, userPlan = 'free' }: Setting
   const [showToken, setShowToken] = useState(false)
   const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
+  const [tgStatus, setTgStatus] = useState<TelegramLinkStatus | null>(null)
+  const [pairingCode, setPairingCode] = useState<string | null>(null)
+  const [codeCopied, setCodeCopied] = useState(false)
 
   useEffect(() => {
     getMcpToken().then(setMcpToken).catch(() => null)
+    getTelegramLinkStatus().then(setTgStatus).catch(() => null)
   }, [])
 
   function handleRegenerate() {
@@ -70,6 +80,28 @@ export function SettingsView({ userEmail, userName, userPlan = 'free' }: Setting
     navigator.clipboard.writeText(mcpToken)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function handleGeneratePairingCode() {
+    startTransition(async () => {
+      const code = await generateTelegramPairingCode()
+      setPairingCode(code)
+    })
+  }
+
+  function handleCopyCode() {
+    if (!pairingCode) return
+    navigator.clipboard.writeText(pairingCode)
+    setCodeCopied(true)
+    setTimeout(() => setCodeCopied(false), 2000)
+  }
+
+  function handleUnlinkTelegram() {
+    startTransition(async () => {
+      await unlinkTelegram()
+      setTgStatus({ linked: false, telegramUsername: null })
+      setPairingCode(null)
+    })
   }
 
   const maskedToken = mcpToken ? `${mcpToken.slice(0, 10)}${'•'.repeat(30)}` : null
@@ -164,6 +196,54 @@ export function SettingsView({ userEmail, userName, userPlan = 'free' }: Setting
               <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
               Generate Token
             </Button>
+          )}
+        </div>
+        {/* Telegram card */}
+        <div className="rounded-xl border bg-card p-5">
+          <div className="flex items-center gap-2 mb-1">
+            <Send className="h-4 w-4" />
+            <h2 className="text-sm font-semibold">Telegram Bot</h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Link your Telegram account to chat with your xeref assistant from Telegram.
+          </p>
+
+          {tgStatus?.linked ? (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary">Linked</Badge>
+                {tgStatus.telegramUsername && (
+                  <span className="text-xs text-muted-foreground">@{tgStatus.telegramUsername}</span>
+                )}
+              </div>
+              <Button size="sm" variant="outline" className="gap-2 w-fit text-destructive" onClick={handleUnlinkTelegram} disabled={isPending}>
+                <Unlink className="h-4 w-4" />
+                Unlink Telegram
+              </Button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {pairingCode ? (
+                <div className="flex flex-col gap-2">
+                  <p className="text-xs text-muted-foreground">
+                    Send this code to the xeref bot on Telegram: <strong>/start {pairingCode}</strong>
+                    <br />Valid for 10 minutes.
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <code className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs font-mono truncate">
+                      /start {pairingCode}
+                    </code>
+                    <Button size="icon" variant="ghost" className="h-8 w-8 shrink-0" onClick={handleCopyCode} aria-label="Copy pairing command">
+                      {codeCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+              <Button size="sm" variant={pairingCode ? 'outline' : 'default'} className="gap-2 w-fit" onClick={handleGeneratePairingCode} disabled={isPending}>
+                <RefreshCw className={`h-4 w-4 ${isPending ? 'animate-spin' : ''}`} />
+                {pairingCode ? 'Regenerate Code' : 'Generate Pairing Code'}
+              </Button>
+            </div>
           )}
         </div>
       </div>

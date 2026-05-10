@@ -67,7 +67,12 @@
       "Bash(curl -s http://localhost:3000 -o /dev/null -w \"%{http_code}\")",
       "Bash(curl -s -X POST http://localhost:3000/api/mcp -H 'Content-Type: application/json' -H 'Authorization: Bearer xmcp_c3fe6015f4b9a84e9ead329d7c514479d744d0d67af60c52' -d '{\"method\":\"initialize\",\"params\":{}}')",
       "Bash(python -m json.tool)",
-      "Bash(curl -s -X POST http://localhost:3000/api/mcp -H 'Content-Type: application/json' -H 'Authorization: Bearer xmcp_c3fe6015f4b9a84e9ead329d7c514479d744d0d67af60c52' -d '{\"method\":\"tools/list\",\"params\":{}}')"
+      "Bash(curl -s -X POST http://localhost:3000/api/mcp -H 'Content-Type: application/json' -H 'Authorization: Bearer xmcp_c3fe6015f4b9a84e9ead329d7c514479d744d0d67af60c52' -d '{\"method\":\"tools/list\",\"params\":{}}')",
+      "Bash(gemini --version)",
+      "Bash(qpdf --version)",
+      "Bash(gemini -p \"Extract key claims, data tables, and strategic findings. Page-numbered where possible. Cap at 1000 words. Output in English.\" @docs/doc/Architecting_the_Xeref_Moat.pdf)",
+      "Bash(gemini -p \"Timestamped transcript and 10-bullet thesis summary. Output in English. Cap at 800 words.\" @docs/doc/The_human_moat_for_AI_solopreneurs.m4a)",
+      "Bash(gemini -p \"Timestamped findings and thesis summary. Output in English. Cap at 800 words.\" @docs/doc/Tek_Girişimcinin_Hendeği.mp4)"
     ]
   }
 }
