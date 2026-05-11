@@ -5,13 +5,6 @@ import { redirect } from 'next/navigation'
 
 const CREEM_API_BASE = 'https://api.creem.io/v1'
 
-const PRODUCT_IDS = {
-  pro_monthly: process.env.NEXT_PUBLIC_CREEM_PRO_MONTHLY_ID!,
-  pro_annual: process.env.NEXT_PUBLIC_CREEM_PRO_ANNUAL_ID!,
-  ultra_monthly: process.env.NEXT_PUBLIC_CREEM_ULTRA_MONTHLY_ID!,
-  ultra_annual: process.env.NEXT_PUBLIC_CREEM_ULTRA_ANNUAL_ID!,
-} as const
-
 export async function createCheckout(plan: 'pro' | 'ultra', interval: 'monthly' | 'annual') {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -19,6 +12,13 @@ export async function createCheckout(plan: 'pro' | 'ultra', interval: 'monthly' 
 
   const apiKey = process.env.CREEM_API_KEY
   if (!apiKey) throw new Error('Payment is not configured yet. Please contact support.')
+
+  const PRODUCT_IDS = {
+    pro_monthly: process.env.NEXT_PUBLIC_CREEM_PRO_MONTHLY_ID,
+    pro_annual: process.env.NEXT_PUBLIC_CREEM_PRO_ANNUAL_ID,
+    ultra_monthly: process.env.NEXT_PUBLIC_CREEM_ULTRA_MONTHLY_ID,
+    ultra_annual: process.env.NEXT_PUBLIC_CREEM_ULTRA_ANNUAL_ID,
+  }
 
   const productKey = `${plan}_${interval}` as keyof typeof PRODUCT_IDS
   const productId = PRODUCT_IDS[productKey]

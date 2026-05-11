@@ -4,14 +4,19 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { changelogEntries, latestVersion } from '@/lib/changelog-entries'
 
-const CURRENT_VERSION = 'v1.7.0'
+const CURRENT_VERSION = latestVersion
 const STORAGE_KEY = 'xeref_dismissed_version'
 
-const highlights = [
-  'New Conversation view centered on screen',
-  'Icon, title, and input aligned as one unit',
-]
+const latestEntry = changelogEntries[0]
+const newSection = latestEntry.sections.find((s) => s.type === 'New')
+const highlights = (newSection?.items ?? latestEntry.sections[0]?.items ?? [])
+  .slice(0, 2)
+  .map((item) => {
+    const [head] = item.split(' — ')
+    return head.length > 80 ? head.slice(0, 77) + '…' : head
+  })
 
 export function WhatsNewToast() {
   const [visible, setVisible] = useState(() => {

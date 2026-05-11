@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
@@ -5,7 +6,25 @@ import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { MobileNav } from '@/components/mobile-nav';
-import { changelogEntries } from '@/lib/changelog-entries';
+import { changelogEntries, latestVersion } from '@/lib/changelog-entries';
+
+export const metadata: Metadata = {
+  title: 'Changelog',
+  description: `Release history for xeref.ai — latest ${latestVersion}.`,
+  alternates: { canonical: '/changelog' },
+  openGraph: {
+    title: 'Changelog — xeref.ai',
+    description: `Release history for xeref.ai — latest ${latestVersion}.`,
+    url: '/changelog',
+    images: ['/xeref-ai-og-image.jpg'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Changelog — xeref.ai',
+    description: `Release history for xeref.ai — latest ${latestVersion}.`,
+    images: ['/xeref-ai-og-image.jpg'],
+  },
+};
 
 const typeStyles: Record<string, string> = {
   New: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',

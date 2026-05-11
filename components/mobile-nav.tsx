@@ -53,6 +53,13 @@ export function MobileNav() {
           Docs
         </Link>
         <Link
+          href="/changelog"
+          className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+          onClick={() => setOpen(false)}
+        >
+          Changelog
+        </Link>
+        <Link
           href="/pricing"
           className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
           onClick={() => setOpen(false)}

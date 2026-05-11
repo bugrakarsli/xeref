@@ -38,6 +38,8 @@ Required in `.env.local` — see README.md for full list. Key vars:
 
 Magic link + Google OAuth → `/auth/callback` → `/` (dashboard). `app/page.tsx` calls `getUser()` and redirects to `/login` if unauthenticated. `/builder` works without auth — users can generate prompts but cannot save projects.
 
+**There is no marketing homepage.** `/` is the dashboard. Public-facing pages (`/changelog`, `/docs`, `/pricing`, `/faq`, `/about`) are flat siblings in the App Router — no `(marketing)` route group exists. Each embeds its own `<header>` + `<MobileNav>` inline. `SiteFooter` is the shared footer used by most public pages (not `/changelog`, which has its own inline footer).
+
 ### Chat & Model Routing
 
 All routing in `lib/ai/openrouter-config.ts` (server-only). Plan gating is server-enforced — client model IDs are validated before any upstream call.
@@ -104,6 +106,17 @@ Self-hosted, single-user. Transport: stdio. Auth: `SUPABASE_SERVICE_ROLE_KEY` + 
 Pinecone index. Two active namespaces:
 - `xeref_lessons` — Classroom lesson content.
 - `xeref_user_memory` — User-uploaded document chunks (OCR ingestion pipeline). Fields: `userId`, `documentId`, `documentName`, `chunkIndex`, `text`. Search is filtered by `userId`. Use `indexDocumentChunks` / `searchUserDocuments` / `deleteDocumentChunks` from `lib/pinecone.ts`.
+
+### Changelog (`lib/changelog-entries.ts`)
+
+Single source of truth for all release history. Exports `changelogEntries` (array, newest first) and `latestVersion = changelogEntries[0].version`.
+
+**To ship a new release:** prepend a new entry to `changelogEntries`. Everything else updates automatically:
+- `whats-new-toast.tsx` reads `latestVersion` and derives highlights from the latest entry's `New` section — do not edit it per release.
+- RHS sidebar badge (`components/dashboard/rhs-sidebar.tsx`) reads `latestVersion` directly.
+- `/changelog` page metadata description includes `latestVersion`.
+
+**Themed sonner `<Toaster />`** (`components/ui/sonner.tsx`) is defined but never mounted in any layout — it is dead code. Raw `import { toast } from 'sonner'` calls work via sonner's auto-mount. `whats-new-toast.tsx` is intentionally a custom persistent div (sonner toasts auto-dismiss, which is wrong for a "what's new" announcement).
 
 ### Three-Brain Skill (`docs/doc/three-brain-SKILL.md`)
 
