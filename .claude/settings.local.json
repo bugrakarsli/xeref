@@ -72,7 +72,12 @@
       "Bash(qpdf --version)",
       "Bash(gemini -p \"Extract key claims, data tables, and strategic findings. Page-numbered where possible. Cap at 1000 words. Output in English.\" @docs/doc/Architecting_the_Xeref_Moat.pdf)",
       "Bash(gemini -p \"Timestamped transcript and 10-bullet thesis summary. Output in English. Cap at 800 words.\" @docs/doc/The_human_moat_for_AI_solopreneurs.m4a)",
-      "Bash(gemini -p \"Timestamped findings and thesis summary. Output in English. Cap at 800 words.\" @docs/doc/Tek_Girişimcinin_Hendeği.mp4)"
+      "Bash(gemini -p \"Timestamped findings and thesis summary. Output in English. Cap at 800 words.\" @docs/doc/Tek_Girişimcinin_Hendeği.mp4)",
+      "Bash(Get-ChildItem -Path \"D:\\\\bugrakarsli\\\\02-projects\\\\xeref\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "PowerShell(Get-Process *)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import json,sys; tasks=json.load\\(sys.stdin\\); [print\\(t['id'], t['status'], t['title'][:50]\\) for t in tasks]\")"
     ]
   }
 }
