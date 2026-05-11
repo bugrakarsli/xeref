@@ -53,19 +53,19 @@ export function ChatInterface({
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const chatInputRef = useRef<ChatInputHandle>(null)
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<ModelId>(() => {
-    if (typeof window === 'undefined') return 'xeref-free'
+  const [selectedModel, setSelectedModel] = useState<ModelId>('xeref-free')
+
+  useEffect(() => {
     try {
       const saved = localStorage.getItem('xeref_selected_model')
       if (saved && MODELS.find((m) => m.id === saved)) {
         const savedModel = saved as ModelId
         // Haiku moved from free→pro; reset free users who had it saved
-        if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') return 'xeref-free'
-        return savedModel
+        if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') return
+        setSelectedModel(savedModel)
       }
     } catch {}
-    return 'xeref-free'
-  })
+  }, [userPlan])
   const [attachments, setAttachments] = useState<ChatAttachment[]>([])
   const [webSearchEnabled, setWebSearchEnabled] = useState(false)
   const greeting = useMemo(

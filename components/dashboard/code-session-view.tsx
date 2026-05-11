@@ -99,6 +99,13 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
           didAutoSendRef.current = true
           if (repo) { setSelectedRepo(repo); selectedRepoRef.current = repo }
           if (m) { setModel(m); modelRef.current = m }
+          if (repo) {
+            fetch(`/api/sessions/${id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ repo_full_name: repo }),
+            }).catch(() => {})
+          }
           sendMessage({ text: content })
         } catch {
           sessionStorage.removeItem(`code:initial:${id}`)

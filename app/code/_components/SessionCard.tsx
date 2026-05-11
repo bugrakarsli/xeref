@@ -49,7 +49,9 @@ export function SessionCard({ session, badge }: { session: CodeSession; badge: B
           </span>
         </div>
         {session.repo_full_name && (
-          <p className="text-xs text-white/40 truncate">{session.repo_full_name}</p>
+          <p className="text-xs text-white/40 truncate">
+            {session.repo_full_name.split('/')[1] ?? session.repo_full_name}
+          </p>
         )}
       </div>
       <div className="flex items-center gap-1 shrink-0 text-white/40 text-xs">
