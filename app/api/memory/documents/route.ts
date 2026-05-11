@@ -1,5 +1,9 @@
+import { after } from 'next/server';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { createClient as createAdminClient } from '@supabase/supabase-js';
+import { extractText } from '@/lib/ocr';
+import { indexDocumentChunks } from '@/lib/pinecone';
 
 export async function GET() {
   const supabase = await createClient();
@@ -8,7 +12,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('documents')
-    .select('id, name, size, mime_type, status, created_at')
+    .select('id, name, size, mime_type, status, extracted_text, processing_error, created_at')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -29,6 +33,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 });
   }
 
+  const ocr = formData.get('ocr') === '1';
+
   const safeName = file.name.replace(/[^a-zA-Z0-9._\-() ]/g, '_');
   const storagePath = `${user.id}/${Date.now()}-${safeName}`;
 
@@ -48,15 +54,46 @@ export async function POST(request: Request) {
       size: file.size,
       mime_type: file.type || 'application/octet-stream',
       storage_path: storagePath,
-      status: 'ready',
+      status: 'processing',
     })
-    .select('id, name, size, mime_type, status, created_at')
+    .select('id, name, size, mime_type, status, processing_error, created_at')
     .single();
 
   if (dbError) {
     await supabase.storage.from('documents').remove([storagePath]);
     return NextResponse.json({ error: dbError.message }, { status: 500 });
   }
+
+  // Run extraction in background — client gets the 'processing' row immediately
+  const documentId = doc.id;
+  const userId = user.id;
+  const fileName = file.name;
+  const mimeType = file.type || 'application/octet-stream';
+
+  after(async () => {
+    const admin = createAdminClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    );
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const text = await extractText(buffer, mimeType, ocr);
+      if (text.trim()) {
+        await indexDocumentChunks({ documentId, userId, documentName: fileName, text });
+      }
+      await admin.from('documents').update({
+        status: 'ready',
+        extracted_text: text || null,
+        processing_error: null,
+      }).eq('id', documentId);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Processing failed';
+      await admin.from('documents').update({
+        status: 'error',
+        processing_error: message,
+      }).eq('id', documentId);
+    }
+  });
 
   return NextResponse.json(doc, { status: 201 });
 }

@@ -101,7 +101,9 @@ Self-hosted, single-user. Transport: stdio. Auth: `SUPABASE_SERVICE_ROLE_KEY` + 
 
 ### Semantic Memory (`lib/pinecone.ts`)
 
-Pinecone index. Currently scoped to `xeref_lessons` namespace (classroom feature only). Planned: `xeref_user_memory` namespace for unified cross-entity search across tasks/projects/notes/chats.
+Pinecone index. Two active namespaces:
+- `xeref_lessons` — Classroom lesson content.
+- `xeref_user_memory` — User-uploaded document chunks (OCR ingestion pipeline). Fields: `userId`, `documentId`, `documentName`, `chunkIndex`, `text`. Search is filtered by `userId`. Use `indexDocumentChunks` / `searchUserDocuments` / `deleteDocumentChunks` from `lib/pinecone.ts`.
 
 ### Three-Brain Skill (`docs/doc/three-brain-SKILL.md`)
 

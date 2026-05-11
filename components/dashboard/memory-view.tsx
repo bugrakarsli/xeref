@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 import { Brain, Upload, FolderOpen, FileText, Scan, Trash2, File, FileType, MessageSquare, Plus } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,7 @@ interface Document {
   size: number
   mime_type: string
   status: 'processing' | 'ready' | 'error'
+  processing_error: string | null
   created_at: string
 }
 
@@ -42,7 +44,7 @@ export function MemoryView() {
   const [uploading, setUploading] = useState(0)
   const [uploadError, setUploadError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
-  const [ocrEnabled, setOcrEnabled] = useState(false)
+  const [ocrEnabled, setOcrEnabled] = useLocalStorage('memory:ocr-enabled', false)
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState<Tab>('documents')
   const [memoryDraft, setMemoryDraft] = useState('')
@@ -66,9 +68,18 @@ export function MemoryView() {
 
   useEffect(() => { fetchAll() }, [fetchAll])
 
+  // Poll every 3 s while any document is still processing
+  useEffect(() => {
+    if (docs.some(d => d.status === 'processing')) {
+      const t = setTimeout(() => fetchAll(), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [docs, fetchAll])
+
   const uploadFile = async (file: File) => {
     const form = new FormData()
     form.append('file', file)
+    form.append('ocr', ocrEnabled ? '1' : '0')
     const res = await fetch('/api/memory/documents', { method: 'POST', body: form })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error ?? 'Upload failed')
@@ -356,6 +367,9 @@ export function MemoryView() {
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {fmtSize(doc.size)} · {new Date(doc.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </p>
+                    {doc.status === 'error' && doc.processing_error && (
+                      <p className="text-xs text-destructive mt-0.5 truncate">{doc.processing_error}</p>
+                    )}
                   </div>
                   <Badge
                     variant="outline"

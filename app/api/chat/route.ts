@@ -53,6 +53,7 @@ import { createTask, getUserTasks, updateTask } from '@/app/actions/tasks'
 import { saveMemory, getUserMemories } from '@/app/actions/memories'
 import { renameProject } from '@/app/actions/projects'
 import { isMemoryWorkflowEnabled, runChatWorkflows } from '@/app/actions/workflows'
+import { searchUserDocuments } from '@/lib/pinecone'
 import {
   DEFAULT_MODEL,
   createOpenRouterForPlan,
@@ -275,6 +276,25 @@ export async function POST(req: Request) {
                 saved_at: m.created_at,
               })),
               count: filtered.length,
+            }
+          },
+        }),
+
+        recall_documents: tool({
+          description:
+            "Search the user's uploaded documents (PDFs, notes, files). Use when the user asks about something they may have uploaded, references their files, or wants to find information from their knowledge base.",
+          inputSchema: z.object({
+            query: z.string().describe('What to search for in the user documents'),
+          }),
+          execute: async ({ query }: { query: string }) => {
+            const hits = await searchUserDocuments(user.id, query)
+            return {
+              hits: hits.map(h => ({
+                document: h.documentName,
+                snippet: h.text,
+                score: h.score,
+              })),
+              count: hits.length,
             }
           },
         }),

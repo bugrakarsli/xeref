@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { deleteDocumentChunks } from '@/lib/pinecone';
 
 export async function DELETE(
   _request: Request,
@@ -19,7 +20,10 @@ export async function DELETE(
 
   if (!doc) return NextResponse.json({ error: 'not found' }, { status: 404 });
 
-  await supabase.storage.from('documents').remove([doc.storage_path]);
+  await Promise.all([
+    supabase.storage.from('documents').remove([doc.storage_path]),
+    deleteDocumentChunks(id),
+  ]);
 
   const { error } = await supabase
     .from('documents')
