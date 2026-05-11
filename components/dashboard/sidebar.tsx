@@ -52,6 +52,7 @@ import {
   Send,
   Brain,
   BookOpen,
+  Sparkles,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
@@ -1280,6 +1281,26 @@ export function Sidebar({
         )}
 
       </div>
+
+      {/* What's New */}
+      {!collapsed && (
+        <div className="px-2 pb-1 shrink-0">
+          <Link
+            href="/changelog"
+            className={cn(
+              'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+              'hover:bg-accent hover:text-accent-foreground',
+              focusRing
+            )}
+          >
+            <Sparkles className="h-4 w-4 shrink-0 text-primary" />
+            <span className="flex-1">What&apos;s New</span>
+            <span className="text-[10px] font-semibold uppercase tracking-wide bg-primary/15 text-primary px-1.5 py-0.5 rounded">
+              NEW
+            </span>
+          </Link>
+        </div>
+      )}
 
       {/* User navbar */}
       <div className="border-t shrink-0">

@@ -59,6 +59,13 @@ export function MobileNav() {
         >
           Pricing
         </Link>
+        <Link
+          href="/changelog"
+          className="block px-4 py-3 text-sm font-medium hover:bg-muted transition-colors"
+          onClick={() => setOpen(false)}
+        >
+          Changelog
+        </Link>
         <div className="border-t border-border p-3" onClick={() => setOpen(false)}>
           <StartBuildingButton size="sm" />
         </div>
