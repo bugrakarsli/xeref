@@ -5,8 +5,8 @@ import { DefaultChatTransport } from 'ai'
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ChatInputWithGitHub } from '@/app/code/_components/ChatInputWithGitHub'
+import { ChatMessage } from '@/components/dashboard/chat/chat-message'
 import { isSessionId } from '@/lib/ids'
-import { cn } from '@/lib/utils'
 import type { CodeSession } from '@/lib/types'
 import type { ModelId } from '@/components/dashboard/chat/chat-input'
 
@@ -26,6 +26,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
   const selectedRepoRef = useRef<string | null>(null)
   const modelRef = useRef<ModelId>('xeref-free')
   const didAutoSendRef = useRef(false)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
   const supabase = createClient()
 
   useEffect(() => { selectedRepoRef.current = selectedRepo }, [selectedRepo])
@@ -70,10 +71,16 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
 
     supabase
       .from('code_sessions')
-      .select('title')
+      .select('title, repo_full_name')
       .eq('id', id)
       .maybeSingle()
-      .then(({ data }) => { if (data?.title) setSessionTitle(data.title) })
+      .then(({ data }) => {
+        if (data?.title) setSessionTitle(data.title)
+        if (data?.repo_full_name) {
+          setSelectedRepo(data.repo_full_name)
+          selectedRepoRef.current = data.repo_full_name
+        }
+      })
 
     supabase
       .from('code_messages')
@@ -139,36 +146,63 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
 
   const isLoading = status === 'streaming' || status === 'submitted'
 
+  // Auto-scroll to bottom on new messages / streaming
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [messages])
+
+  function getMessageText(m: { parts: Array<{ type: string; text?: string }> }) {
+    return m.parts.filter(p => p.type === 'text').map(p => p.text ?? '').join('')
+  }
+
+  function handleEditMessage(messageId: string, newContent: string) {
+    const idx = messages.findIndex(m => m.id === messageId)
+    if (idx === -1) return
+    setMessages(messages.slice(0, idx))
+    sendMessage({ text: newContent })
+  }
+
+  function handleRetry(messageId: string) {
+    const idx = messages.findIndex(m => m.id === messageId)
+    if (idx === -1) return
+    const prevUser = [...messages.slice(0, idx)].reverse().find(m => m.role === 'user')
+    if (!prevUser) return
+    setMessages(messages.slice(0, idx - 1))
+    sendMessage({ text: getMessageText(prevUser) })
+  }
+
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
       <header className="px-6 py-4 border-b">
         <h1 className="text-lg font-medium">{sessionTitle}</h1>
       </header>
 
-      <div className="flex-1 overflow-y-auto px-6 py-8 flex flex-col gap-6">
+      <div className="flex-1 overflow-y-auto py-4">
         {messages.length === 0 ? (
           <div className="h-full flex items-center justify-center">
             <p className="text-muted-foreground text-sm">Start coding by selecting a repository or typing a message below.</p>
           </div>
         ) : (
-          messages.map((m) => (
-            <div key={m.id} className={cn(
-              'flex flex-col gap-1.5 max-w-[85%]',
-              m.role === 'user' ? 'ml-auto items-end' : 'mr-auto items-start',
-            )}>
-              <div className={cn(
-                'rounded-2xl px-4 py-2.5 text-sm whitespace-pre-wrap leading-relaxed shadow-sm',
-                m.role === 'user'
-                  ? 'bg-primary text-primary-foreground rounded-tr-none'
-                  : 'bg-muted border rounded-tl-none',
-              )}>
-                {m.parts.filter(p => p.type === 'text').map((p, i) => (
-                  <span key={i}>{'text' in p ? p.text : null}</span>
-                ))}
-              </div>
-            </div>
-          ))
+          messages
+            .filter(m => m.role === 'user' || m.role === 'assistant')
+            .map((m, i, arr) => {
+              const isLast = i === arr.length - 1
+              return (
+                <ChatMessage
+                  key={m.id}
+                  role={m.role as 'user' | 'assistant'}
+                  content={getMessageText(m)}
+                  parts={m.parts as Parameters<typeof ChatMessage>[0]['parts']}
+                  isStreaming={isLast && isLoading}
+                  messageId={m.id}
+                  isLast={isLast}
+                  onEdit={(newContent) => handleEditMessage(m.id, newContent)}
+                  onRetry={() => handleRetry(m.id)}
+                />
+              )
+            })
         )}
+        <div ref={messagesEndRef} />
       </div>
 
       <div className="border-t p-4 pb-6">

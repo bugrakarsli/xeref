@@ -254,10 +254,13 @@ export function ChatMessage({
         </div>
       )}
 
-      <div className={cn('flex flex-col gap-1', isUser ? 'items-end max-w-[80%]' : 'max-w-[80%]')}>
+      <div className={cn(
+        'flex flex-col gap-1',
+        isEditing ? cn('w-full', isUser && 'items-end') : isUser ? 'items-end max-w-[80%]' : 'max-w-[80%]',
+      )}>
         {/* Inline edit mode */}
         {isEditing ? (
-          <div className="flex flex-col gap-2 w-full min-w-[300px]">
+          <div className="flex flex-col gap-2 w-full">
             <textarea
               ref={editRef}
               value={editContent}

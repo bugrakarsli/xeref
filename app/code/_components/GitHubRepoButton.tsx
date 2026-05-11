@@ -94,7 +94,7 @@ export function GitHubRepoButton({ sessionId, selectedRepo: controlledSelected, 
         <span className="max-w-[160px] truncate">{selected ?? 'Select a repository'}</span>
       </button>
       {open && (
-        <div className="absolute bottom-full mb-2 left-0 z-50 w-72 max-h-72 overflow-y-auto rounded-md border border-black/10 dark:border-white/10 bg-[var(--color-surface)] shadow-lg">
+        <div className="absolute bottom-full mb-2 left-0 z-50 w-72 max-h-72 overflow-y-auto rounded-md border border-border bg-card shadow-xl">
           {error === 'unauthorized' ? (
             <div className="p-4 flex flex-col gap-2 items-center text-center">
               <p className="text-xs opacity-70">Connect your GitHub account to select a repository.</p>
