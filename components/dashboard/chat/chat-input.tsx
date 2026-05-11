@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, forwardRef, useImperativeHandle, type KeyboardEvent } from 'react'
+import { useRef, forwardRef, useImperativeHandle, useEffect, useState, type KeyboardEvent } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -9,8 +9,11 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowUp, ChevronDown, Bot, BrainCircuit, Cpu, Lock, Plus, Paperclip, Globe, X, FileText } from 'lucide-react'
+import { ArrowUp, ChevronDown, Bot, BrainCircuit, Cpu, Lock, Plus, Paperclip, Globe, X, FileText, Settings, PlusCircle } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Project, ChatAttachment } from '@/lib/types'
@@ -95,6 +98,20 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [connectedCards, setConnectedCards] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    fetch('/api/connections')
+      .then(r => r.ok ? r.json() : null)
+      .then(json => {
+        if (!json?.providers) return
+        const cards = (json.providers as { connected: boolean; uiCards: { id: string; name: string }[] }[])
+          .filter(p => p.connected)
+          .flatMap(p => p.uiCards)
+        setConnectedCards(cards)
+      })
+      .catch(() => {})
+  }, [])
 
   useImperativeHandle(ref, () => ({
     focus: () => {
@@ -299,6 +316,40 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                       <span className="ml-auto text-[10px] font-semibold text-primary">ON</span>
                     )}
                   </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger className="gap-2">
+                      <Settings className="h-4 w-4 text-muted-foreground" />
+                      <span>Connectors</span>
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent className="w-52">
+                      {connectedCards.length > 0 ? (
+                        connectedCards.map(card => (
+                          <DropdownMenuItem key={card.id} className="gap-2">
+                            <span className="h-2 w-2 rounded-full bg-blue-400 shrink-0" />
+                            {card.name}
+                          </DropdownMenuItem>
+                        ))
+                      ) : (
+                        <DropdownMenuItem disabled className="text-muted-foreground text-xs">
+                          No connectors active
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <a href="/customize/connectors" className="gap-2 flex items-center">
+                          <Settings className="h-3.5 w-3.5 text-muted-foreground" />
+                          Manage connectors
+                        </a>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <a href="/customize/connectors" className="gap-2 flex items-center">
+                          <PlusCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                          Add connectors
+                        </a>
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
                 </DropdownMenuContent>
               </DropdownMenu>
 
