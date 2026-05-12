@@ -1,8 +1,10 @@
 "use client";
 import { useDesignStore } from "@/store/design-store";
 import { Button } from "@/components/design/ui/button";
+import { ProjectsGrid } from "@/components/design/projects-grid";
+import { EXAMPLE_PROJECTS } from "@/components/design/example-projects";
 import { cn } from "@/lib/utils";
-import type { DesignSystem, ProjectTemplate } from "@/types/design";
+import type { DesignSystem, ProjectTemplate, DesignProject } from "@/types/design";
 
 type MainTab = "recent" | "your_designs" | "examples" | "design_systems";
 const TABS: { id: MainTab; label: string }[] = [
@@ -12,8 +14,19 @@ const TABS: { id: MainTab; label: string }[] = [
   { id: "design_systems", label: "Design systems" },
 ];
 
-export function MainContent({ orgName, designSystems, templates }: { orgName: string; designSystems: DesignSystem[]; templates: ProjectTemplate[] }) {
-  const { mainTab, setMainTab, openCreateDesignSystem } = useDesignStore();
+interface Props {
+  orgName: string;
+  designSystems: DesignSystem[];
+  templates: ProjectTemplate[];
+  projects: DesignProject[];
+  currentUserId: string;
+}
+
+export function MainContent({ orgName, designSystems, templates, projects, currentUserId }: Props) {
+  const { mainTab, setMainTab, openCreateDesignSystem, setActiveTab } = useDesignStore();
+
+  const myProjects = projects.filter((p) => p.owner_id === currentUserId);
+
   return (
     <main className="flex-1 overflow-y-auto p-8" id="main-content">
       <nav className="flex gap-2 flex-wrap mb-8" aria-label="Sections">
@@ -24,6 +37,34 @@ export function MainContent({ orgName, designSystems, templates }: { orgName: st
           </button>
         ))}
       </nav>
+
+      {mainTab === "recent" && (
+        <ProjectsGrid
+          items={projects.slice(0, 8)}
+          emptyLabel="No recent projects yet."
+          emptyAction={
+            <Button variant="accent" size="sm" onClick={() => { setActiveTab("prototype"); setMainTab("your_designs"); }}>
+              Start a prototype
+            </Button>
+          }
+        />
+      )}
+
+      {mainTab === "your_designs" && (
+        <ProjectsGrid
+          items={myProjects}
+          emptyLabel="You haven't created any projects yet."
+          emptyAction={
+            <Button variant="accent" size="sm" onClick={() => setActiveTab("prototype")}>
+              Start a prototype
+            </Button>
+          }
+        />
+      )}
+
+      {mainTab === "examples" && (
+        <ProjectsGrid items={EXAMPLE_PROJECTS} />
+      )}
 
       {mainTab === "design_systems" && (
         <>
@@ -79,9 +120,6 @@ export function MainContent({ orgName, designSystems, templates }: { orgName: st
           </section>
           <p className="text-xs text-muted">Everyone in your organization can view these settings.</p>
         </>
-      )}
-      {mainTab !== "design_systems" && (
-        <div className="flex items-center justify-center h-64 text-muted text-sm">This view is coming in the next release.</div>
       )}
     </main>
   );

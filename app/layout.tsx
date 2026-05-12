@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "sonner";
 import "./globals.css";
 import AgentGlobalShortcuts from "@/components/dashboard/AgentGlobalShortcuts";
 
@@ -73,6 +74,7 @@ export default function RootLayout({
         <TooltipProvider delayDuration={200}>
           {children}
           <AgentGlobalShortcuts />
+          <Toaster theme="dark" richColors position="top-right" closeButton />
         </TooltipProvider>
       </body>
     </html>

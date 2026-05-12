@@ -1,6 +1,7 @@
 'use client'
 
-import { Search, Archive } from 'lucide-react'
+import { Search, Archive, ArrowLeft } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import type { Artifact, ArtifactFilterType } from '@/lib/types'
@@ -56,6 +57,7 @@ export function ArtifactList({
   artifacts, selectedId, filterType, searchQuery, loading,
   onSearchChange, onFilterChange, onSelect, hidden,
 }: ArtifactListProps) {
+  const router = useRouter()
   return (
     <div className={cn(
       'flex flex-col shrink-0 border-r w-full md:w-80 min-h-0',
@@ -63,6 +65,13 @@ export function ArtifactList({
     )}>
       {/* Header */}
       <div className="flex items-center gap-2 px-4 py-3 border-b shrink-0">
+        <button
+          onClick={() => router.push('/')}
+          className="shrink-0 p-1 -ml-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          title="Back to dashboard"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </button>
         <Archive className="h-4 w-4 text-muted-foreground" />
         <span className="text-sm font-semibold">Artifacts</span>
         <span className="ml-auto text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">

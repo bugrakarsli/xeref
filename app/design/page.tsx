@@ -3,7 +3,8 @@ import { redirect } from "next/navigation";
 import { SidebarShell } from "@/components/design/sidebar-shell";
 import { MainContent } from "@/components/design/main-content";
 import { ModalRoot } from "@/components/design/modals/modal-root";
-import type { DesignSystem, ProjectTemplate } from "@/types/design";
+import { ensureOrgForUser } from "@/lib/design/ensure-org";
+import type { DesignSystem, ProjectTemplate, DesignProject } from "@/types/design";
 
 export const dynamic = "force-dynamic";
 
@@ -12,11 +13,15 @@ export default async function DesignPage() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  await ensureOrgForUser(user);
+
   const { data: member } = await supabase
     .from("org_members")
     .select("org_id, organizations(name)")
     .eq("user_id", user.id)
-    .single();
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .maybeSingle();
 
   const orgId = member?.org_id ?? null;
   const orgsField = member?.organizations;
@@ -25,17 +30,21 @@ export default async function DesignPage() {
     ? String(orgRecord.name)
     : "your organization";
 
-  const [dsResult, tplResult] = await Promise.all([
+  const [dsResult, tplResult, projResult] = await Promise.all([
     orgId
       ? supabase.from("design_systems").select("*").eq("org_id", orgId).order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as DesignSystem[] }),
     orgId
       ? supabase.from("project_templates").select("*").eq("org_id", orgId).order("created_at", { ascending: false })
       : Promise.resolve({ data: [] as ProjectTemplate[] }),
+    orgId
+      ? supabase.from("design_projects").select("*").eq("org_id", orgId).order("updated_at", { ascending: false })
+      : Promise.resolve({ data: [] as DesignProject[] }),
   ]);
 
   const designSystems = (dsResult.data ?? []) as DesignSystem[];
   const templates = (tplResult.data ?? []) as ProjectTemplate[];
+  const projects = (projResult.data ?? []) as DesignProject[];
 
   return (
     <div className="flex h-screen overflow-hidden bg-bg">
@@ -47,9 +56,11 @@ export default async function DesignPage() {
         />
       </div>
       <MainContent
-        orgName={orgId ? orgName + "'s Organization" : "your organization"}
+        orgName={orgId ? orgName : "your organization"}
         designSystems={designSystems}
         templates={templates}
+        projects={projects}
+        currentUserId={user.id}
       />
       <ModalRoot />
     </div>

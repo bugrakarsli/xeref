@@ -734,7 +734,7 @@ export function Sidebar({
                 <NavItem icon={<MessageSquare className="h-4 w-4" />} label="New Chat" active={activeView === 'chat'} collapsed={collapsed} onClick={() => onNewChat?.()} />
                 <NavItem icon={<FolderOpen className="h-4 w-4" />} label="Projects" active={activeView === 'home'} collapsed={collapsed} onClick={() => onViewChange('home')} />
                 <NavItem icon={<Settings className="h-4 w-4" />} label="Customize" active={activeView === 'customize'} collapsed={collapsed} onClick={() => onViewChange('customize')} />
-                <NavItem icon={<Box className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => onViewChange('code')} />
+                <NavItem icon={<Box className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => router.push('/artifacts')} />
                 <NavItem icon={<Paintbrush className="h-4 w-4" />} label="Design" active={isDesignActive} collapsed={collapsed} onClick={() => router.push('/design')} />
               </div>
             )}
@@ -790,7 +790,7 @@ export function Sidebar({
 
                 {/* Artifacts Link */}
                 <button
-                  onClick={() => onViewChange('code')}
+                  onClick={() => router.push('/artifacts')}
                   className={cn(
                     'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
                     'hover:bg-accent hover:text-accent-foreground',

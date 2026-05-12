@@ -1,4 +1,7 @@
 "use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { useDesignStore } from "@/store/design-store";
 import { Input } from "@/components/design/ui/input";
 import { Button } from "@/components/design/ui/button";
@@ -7,7 +10,41 @@ import { cn } from "@/lib/utils";
 const BUILTIN = [{ id: "animation", label: "Animation", desc: "Timeline-based motion design" }];
 
 export function TemplatePanelContent() {
-  const { templateName, setTemplateName, selectedTemplateId, setSelectedTemplateId } = useDesignStore();
+  const { templateName, setTemplateName, selectedTemplateId, setSelectedTemplateId, resetLauncher, setMainTab } = useDesignStore();
+  const router = useRouter();
+  const [loading, setLoading] = useState(false);
+
+  async function handleCreate() {
+    if (!templateName.trim() || !selectedTemplateId) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/projects", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: templateName,
+          project_type: "template",
+          prototype_mode: null,
+          use_speaker_notes: false,
+          template_id: selectedTemplateId,
+          design_system_id: null,
+          visibility: "org",
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        toast.error(body.error || "Couldn't create project");
+        return;
+      }
+      toast.success("Project created from template");
+      resetLauncher();
+      setMainTab("your_designs");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Network error");
+    } finally { setLoading(false); }
+  }
+
   return (
     <div className="space-y-4">
       <h2 className="text-xl font-bold tracking-tight">Start from a template</h2>
@@ -25,7 +62,9 @@ export function TemplatePanelContent() {
         ))}
       </div>
       <a className="block text-xs text-muted underline" href="#">How to create a template</a>
-      <Button variant="primary" fullWidth disabled={!templateName.trim() || !selectedTemplateId}>Create from template</Button>
+      <Button variant="primary" fullWidth disabled={!templateName.trim() || !selectedTemplateId || loading} onClick={handleCreate}>
+        {loading ? "Creating…" : "Create from template"}
+      </Button>
     </div>
   );
 }
