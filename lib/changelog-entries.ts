@@ -1,8 +1,37 @@
 export const changelogEntries = [
   {
+    version: 'v2.6',
+    date: 'May 13, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Skills System — Full implementation including database migration, server actions for CRUD operations, and new UI components (SkillsSection, SkillFileTree, SkillContentPane) under /customize/skills',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'MCP Server Memory Tools — Renamed and enhanced note tools to memory tools (list_memories, save_memory, recall_memories, delete_memory) to align with the CLAWS Archive methodology',
+          'MCP Server Project Tools — Updated update_project to rename_project for clarity and better intent matching',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'OAuth Redirects — Resolved the redirect_uri_mismatch error during Google, Notion, Slack, and Vercel OAuth authentication by standardizing the redirect URI generation logic across connector routes',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.5',
     date: 'May 10, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

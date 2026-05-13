@@ -148,21 +148,17 @@ server.tool(
 )
 
 server.tool(
-  'update_project',
-  'Update a project name or description.',
+  'rename_project',
+  'Rename an existing project. Use when the user wants to change a project name.',
   {
     id: z.string().uuid(),
-    name: z.string().optional(),
-    description: z.string().optional(),
+    new_name: z.string().min(1),
   },
-  async ({ id, name, description }) => {
+  async ({ id, new_name }) => {
     const sb = getSupabase()
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
-    if (name !== undefined) updates.name = name
-    if (description !== undefined) updates.description = description
     const { data, error } = await sb
       .from('projects')
-      .update(updates)
+      .update({ name: new_name, updated_at: new Date().toISOString() })
       .eq('id', id)
       .eq('user_id', getUserId())
       .select()
@@ -184,33 +180,33 @@ server.tool(
   }
 )
 
-// ── Note tools ───────────────────────────────────────────────────────────────
+// ── Memory tools (CLAWS Archive) ─────────────────────────────────────────────
 
 server.tool(
-  'list_notes',
-  'List all notes for the user.',
+  'list_memories',
+  'List all memories for the user.',
   {},
   async () => {
     const sb = getSupabase()
     const { data, error } = await sb
-      .from('notes')
+      .from('memories')
       .select('*')
       .eq('user_id', getUserId())
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
   }
 )
 
 server.tool(
-  'create_note',
-  'Create a new note.',
-  { title: z.string().optional().default('Untitled'), content: z.string().optional().default('') },
-  async ({ title, content }) => {
+  'save_memory',
+  'Save information to the user long-term memory (Archive). Call this to remember ideas, research, or preferences.',
+  { content: z.string().min(1), tags: z.array(z.string()).optional().default([]) },
+  async ({ content, tags }) => {
     const sb = getSupabase()
     const { data, error } = await sb
-      .from('notes')
-      .insert({ user_id: getUserId(), title, content })
+      .from('memories')
+      .insert({ user_id: getUserId(), content, source: 'mcp', tags })
       .select()
       .single()
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
@@ -219,35 +215,31 @@ server.tool(
 )
 
 server.tool(
-  'update_note',
-  'Update a note title or content.',
-  { id: z.string().uuid(), title: z.string().optional(), content: z.string().optional() },
-  async ({ id, title, content }) => {
+  'recall_memories',
+  'Search or recall memories by query.',
+  { query: z.string().optional() },
+  async ({ query }) => {
     const sb = getSupabase()
-    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
-    if (title !== undefined) updates.title = title
-    if (content !== undefined) updates.content = content
-    const { data, error } = await sb
-      .from('notes')
-      .update(updates)
-      .eq('id', id)
-      .eq('user_id', getUserId())
-      .select()
-      .single()
+    let q = sb.from('memories').select('*').eq('user_id', getUserId()).order('created_at', { ascending: false })
+    if (query) {
+      // Basic text search simulation using ilike on content
+      q = q.ilike('content', `%${query}%`)
+    }
+    const { data, error } = await q
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
     return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
   }
 )
 
 server.tool(
-  'delete_note',
-  'Delete a note by ID.',
+  'delete_memory',
+  'Delete a memory by ID.',
   { id: z.string().uuid() },
   async ({ id }) => {
     const sb = getSupabase()
-    const { error } = await sb.from('notes').delete().eq('id', id).eq('user_id', getUserId())
+    const { error } = await sb.from('memories').delete().eq('id', id).eq('user_id', getUserId())
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
-    return { content: [{ type: 'text', text: `Note ${id} deleted.` }] }
+    return { content: [{ type: 'text', text: `Memory ${id} deleted.` }] }
   }
 )
 
