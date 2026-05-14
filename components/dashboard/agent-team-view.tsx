@@ -44,7 +44,7 @@ const STORAGE_KEY = 'xeref_dynamic_agents'
 // ─── Static agent data ────────────────────────────────────────────────────────
 
 const STATIC_AGENTS: Agent[] = [
-  { id: 'bugra',   name: 'Bugra',   emoji: '🧭', role: 'Commander · Founder',          team: 'Top-Level',   tools: 'n8n, LangChain, Make',                         status: 'CONTROL PANEL'   },
+  { id: 'bugra',   name: 'Bugra',   emoji: '🧭', role: 'Commander · Founder',          team: 'Top-Level',   tools: 'Claude Code, Antigravity, Gemini CLI',          status: 'CONTROL PANEL'   },
   { id: 'xeref',   name: 'Xeref',   emoji: '🧠', role: 'Second Brain · AI Orchestrator', team: 'Orchestrator', tools: 'LangGraph, n8n, Supabase Memory, GPT-4.1 mini', status: 'ALWAYS THINKING' },
   { id: 'dan',     name: 'Dan',     emoji: '♟️', role: 'Chief Strategy',               team: 'Top-Level',   tools: 'GPT-4.1 mini, Notion API, Airtable',           status: 'AT WORK'         },
   { id: 'chase',   name: 'Chase',   emoji: '📥', role: 'Inbox Ops',                   team: 'Top-Level',   tools: 'Gmail API, GPT-4.1 mini, Superhuman',          status: 'IDLE'            },

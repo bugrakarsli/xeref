@@ -1,6 +1,6 @@
 
 export type SidebarTab = 'chat' | 'tasks' | 'code'
-export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code' | 'customize' | 'code_session' | 'code_routines' | 'projects' | 'deploy' | 'memory' | 'classroom'
+export type ViewKey = 'home' | 'tasks' | 'stats' | 'calendar' | 'workflows' | 'inbox' | 'chat' | 'settings' | 'referral' | 'agents' | 'code' | 'customize' | 'code_session' | 'code_routines' | 'projects' | 'deploy' | 'memory' | 'classroom' | 'plans'
 
 export type CategoryId = 'connect' | 'listen' | 'archive' | 'wire' | 'sense' | 'agent-architecture';
 
@@ -220,4 +220,108 @@ export interface Artifact {
   updatedAt: string;
   imageUrl?: string;
   language?: string;
+}
+
+// ── User preferences (stored in profiles.preferences JSONB) ──────────────────
+
+export interface SidebarPreferences {
+  visible_tabs: string[];
+  order: string[];
+}
+
+export interface CapabilitiesSettings {
+  memory_search_enabled: boolean;
+  memory_generate_from_history: boolean;
+  import_from_other_ai: boolean;
+  tool_access_mode: 'load_tools_when_needed' | 'ask_before_using_tools' | 'never_use_tools';
+  connector_discovery_enabled: boolean;
+  visuals_artifacts_enabled: boolean;
+  visuals_inline_charts_enabled: boolean;
+  code_execution_enabled: boolean;
+  network_egress_enabled: boolean;
+  domain_allowlist_mode: 'none' | 'package_managers_only' | 'all_domains';
+  additional_allowed_domains: string[];
+}
+
+export interface XerefCodeAppearanceSettings {
+  code_font: string | null;
+}
+
+export interface XerefCodeGeneralSettings {
+  classify_session_states: boolean;
+  auto_create_pull_requests: boolean;
+  auto_fix_pull_requests: boolean;
+}
+
+export interface XerefCodeWebSettings {
+  require_repo_access_for_shared_sessions: boolean;
+  show_name_on_shared_sessions: boolean;
+}
+
+export interface UserPreferences {
+  sidebar?: SidebarPreferences;
+  capabilities?: Partial<CapabilitiesSettings>;
+  xeref_code?: Partial<XerefCodeAppearanceSettings & XerefCodeGeneralSettings & XerefCodeWebSettings>;
+}
+
+export const DEFAULT_CAPABILITIES: CapabilitiesSettings = {
+  memory_search_enabled: true,
+  memory_generate_from_history: true,
+  import_from_other_ai: false,
+  tool_access_mode: 'load_tools_when_needed',
+  connector_discovery_enabled: true,
+  visuals_artifacts_enabled: true,
+  visuals_inline_charts_enabled: true,
+  code_execution_enabled: false,
+  network_egress_enabled: false,
+  domain_allowlist_mode: 'none',
+  additional_allowed_domains: [],
+}
+
+// ── Execution Plan entities ───────────────────────────────────────────────────
+
+export interface PlanTask {
+  id: string;
+  title: string;
+  skill: string;
+  description: string;
+  role: string;
+  timeline: string;
+  deliverables: string;
+}
+
+export interface PlanPhase {
+  id: string;
+  title: string;
+  subtitle: string;
+  tasks: PlanTask[];
+}
+
+export interface PlanKpi {
+  category: string;
+  metrics: string[];
+}
+
+export interface PlanContent {
+  phases: PlanPhase[];
+  kpis: PlanKpi[];
+}
+
+export interface Plan {
+  id: string;
+  user_id: string;
+  title: string;
+  goal: string;
+  content: PlanContent;
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_XEREF_CODE: XerefCodeAppearanceSettings & XerefCodeGeneralSettings & XerefCodeWebSettings = {
+  code_font: null,
+  classify_session_states: true,
+  auto_create_pull_requests: false,
+  auto_fix_pull_requests: false,
+  require_repo_access_for_shared_sessions: false,
+  show_name_on_shared_sessions: true,
 }
