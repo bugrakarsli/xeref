@@ -1236,8 +1236,8 @@ export function Sidebar({
 
             {/* Routines */}
             <div>
-              <button
-                onClick={() => onViewChange('code_routines')}
+              <Link
+                href="/code/routines"
                 className={cn(
                   'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors',
                   focusRing
@@ -1245,7 +1245,7 @@ export function Sidebar({
               >
                 <Zap className="h-3 w-3" />
                 Routines
-              </button>
+              </Link>
             </div>
 
             {/* Customize */}
