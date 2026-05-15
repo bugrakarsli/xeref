@@ -1,6 +1,6 @@
 # xeref
 
-**xeref** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. Users configure custom agents via the CLAWS methodology, chat with them in-app, manage projects, tasks, artifacts, and memories, deploy to channels (Telegram, Slack, Notion), and automate workflows.
+**xeref** is the web app for [xeref.ai](https://xeref.ai) — an AI agent builder and productivity dashboard. → See **XEREF.md** for the full product story, CLAWS methodology definition, and brand voice. This file covers technical setup, architecture, and API reference.
 
 ## Quick Start
 

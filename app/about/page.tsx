@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Cpu, LayoutDashboard, Send, Github, Youtube, Globe } from 'lucide-react';
+import { ArrowLeft, Cpu, LayoutDashboard, Send, Github, Youtube, Users, GraduationCap, Calendar, UserCircle, Map, Trophy, Info } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 import { SiteFooter } from '@/components/site-footer';
 
@@ -72,9 +72,14 @@ export default function AboutPage() {
                 <p className="text-sm text-muted-foreground leading-relaxed">
                   Connect your agents to Telegram, Discord, WhatsApp, or a web chat widget. Set up cron workflows that run your agent on a schedule and deliver output wherever you need it.
                 </p>
-                <Link href="/docs#dashboard" className="text-sm text-primary hover:underline underline-offset-4 mt-auto">
-                  Learn more →
-                </Link>
+                <div className="flex flex-col gap-1 mt-auto">
+                  <Link href="/docs#dashboard" className="text-sm text-primary hover:underline underline-offset-4">
+                    Learn more →
+                  </Link>
+                  <Link href="/code/routines" className="text-sm text-primary hover:underline underline-offset-4">
+                    Manage Routines →
+                  </Link>
+                </div>
               </div>
             </div>
           </section>
@@ -104,19 +109,41 @@ export default function AboutPage() {
 
           <section>
             <h2 className="text-2xl font-bold mb-6">Connect with the Community</h2>
-            <div className="grid gap-4 md:grid-cols-3">
-              <Link href="https://github.com/BugraKarsli" target="_blank" className="flex items-center justify-center p-6 border rounded-lg hover:bg-accent hover:border-primary transition-all group">
-                <Github className="w-8 h-8 mb-2 group-hover:text-primary transition-colors" />
+            <div className="grid gap-4 md:grid-cols-2">
+              <Link href="https://github.com/BugraKarsli" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-6 border rounded-lg hover:bg-accent hover:border-primary transition-all group">
+                <Github className="w-8 h-8 group-hover:text-primary transition-colors" />
                 <span className="font-semibold ml-3">GitHub</span>
               </Link>
-              <Link href="https://youtube.com/@BugraKarsli1" target="_blank" className="flex items-center justify-center p-6 border rounded-lg hover:bg-accent hover:border-red-500 transition-all group">
-                <Youtube className="w-8 h-8 mb-2 group-hover:text-red-500 transition-colors" />
+              <Link href="https://youtube.com/@BugraKarsli1" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center p-6 border rounded-lg hover:bg-accent hover:border-red-500 transition-all group">
+                <Youtube className="w-8 h-8 group-hover:text-red-500 transition-colors" />
                 <span className="font-semibold ml-3">YouTube</span>
               </Link>
-              <Link href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" className="flex items-center justify-center p-6 border rounded-lg hover:bg-accent hover:border-blue-500 transition-all group">
-                <Globe className="w-8 h-8 mb-2 group-hover:text-blue-500 transition-colors" />
-                <span className="font-semibold ml-3">Skool Community</span>
-              </Link>
+            </div>
+
+            <div className="mt-6">
+              <p className="text-sm text-muted-foreground mb-3 font-mono">Skool — bugrakarsli-ai-automations</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+                {([
+                  { label: 'Community', path: '', Icon: Users },
+                  { label: 'Classroom', path: '/classroom', Icon: GraduationCap },
+                  { label: 'Calendar', path: '/calendar', Icon: Calendar },
+                  { label: 'Members', path: '/members', Icon: UserCircle },
+                  { label: 'Map', path: '/map', Icon: Map },
+                  { label: 'Leaderboards', path: '/leaderboards', Icon: Trophy },
+                  { label: 'About', path: '/about', Icon: Info },
+                ] as const).map(({ label, path, Icon }) => (
+                  <Link
+                    key={label}
+                    href={`https://www.skool.com/bugrakarsli-ai-automations${path}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex flex-col items-center gap-1.5 p-3 border rounded-lg hover:bg-accent hover:border-blue-500 transition-all group text-center"
+                  >
+                    <Icon className="h-5 w-5 group-hover:text-blue-500 transition-colors" />
+                    <span className="text-xs font-medium">{label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </section>
 

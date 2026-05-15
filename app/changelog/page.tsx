@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, GraduationCap } from 'lucide-react';
 import { XerefLogo } from '@/components/xeref-logo';
 import { StartBuildingButton } from '@/components/start-building-button';
 import { Badge } from '@/components/ui/badge';
@@ -118,8 +118,9 @@ export default function ChangelogPage() {
           <div className="text-center mt-16 space-y-3">
             <p className="text-sm text-muted-foreground">AI Automations by Bugra Karsli</p>
             <Button variant="outline" asChild>
-              <a href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" rel="noopener noreferrer">
-                Learn More
+              <a href="https://www.skool.com/bugrakarsli-ai-automations/classroom" target="_blank" rel="noopener noreferrer" className="gap-2">
+                <GraduationCap className="h-4 w-4" />
+                Open Classroom
               </a>
             </Button>
           </div>

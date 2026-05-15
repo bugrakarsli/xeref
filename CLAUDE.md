@@ -6,7 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This App Is
 
-**xeref** is the web app for xeref.ai — an AI agent builder and productivity dashboard. Users configure agents via the CLAWS methodology, chat with them in-app, manage tasks/workflows/artifacts, and upgrade via Creem payments.
+→ See **XEREF.md** for the full product identity, CLAWS methodology, target user, and brand voice.
+
+In brief: xeref is an AI agent builder + productivity dashboard. Users configure agents via CLAWS, chat in-app, manage tasks/workflows/artifacts, and deploy to channels.
 
 ## Commands
 

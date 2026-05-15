@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>xeref.ai — Recent Changes Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            border: '#27272a',
+            background: '#09090b',
+            foreground: '#fafafa',
+            card: '#18181b',
+            muted: '#27272a',
+            'muted-foreground': '#a1a1aa',
+            primary: '#e4e4e7',
+            accent: '#27272a',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #09090b; color: #fafafa; font-family: ui-sans-serif, system-ui, sans-serif; }
+    .section-label { font-family: ui-monospace, monospace; font-size: 0.7rem; color: #71717a; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body class="min-h-screen p-8 space-y-16 max-w-4xl mx-auto">
+
+  <header class="border-b border-zinc-800 pb-6">
+    <h1 class="text-2xl font-extrabold tracking-tight">xeref.ai — Recent Changes Preview</h1>
+    <p class="text-sm text-zinc-400 mt-1">Static snapshot of UI changes shipped 2026-05-15 / 2026-05-16. Open the real dev server at <code class="text-xs bg-zinc-800 px-1 py-0.5 rounded">localhost:3000</code> for the full interactive experience.</p>
+  </header>
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- CHANGE 1: /about — Connect with Community  -->
+  <!-- ─────────────────────────────────────────── -->
+  <section>
+    <p class="section-label">Change 1 · app/about/page.tsx → "Connect with the Community" section</p>
+    <h2 class="text-2xl font-bold mb-6">Connect with the Community</h2>
+
+    <div class="grid gap-4 md:grid-cols-2">
+      <!-- GitHub -->
+      <a href="https://github.com/BugraKarsli" target="_blank" rel="noopener noreferrer"
+         class="flex items-center justify-center p-6 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-zinc-500 transition-all group">
+        <!-- Github icon -->
+        <svg class="w-8 h-8 group-hover:text-zinc-200 text-zinc-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+        </svg>
+        <span class="font-semibold ml-3">GitHub</span>
+      </a>
+
+      <!-- YouTube -->
+      <a href="https://youtube.com/@BugraKarsli1" target="_blank" rel="noopener noreferrer"
+         class="flex items-center justify-center p-6 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-red-500 transition-all group">
+        <!-- Youtube icon -->
+        <svg class="w-8 h-8 group-hover:text-red-500 text-zinc-400 transition-colors" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.96C18.88 4 12 4 12 4s-6.88 0-8.59.46A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58 2.78 2.78 0 0 0 1.95 1.96C5.12 20 12 20 12 20s6.88 0 8.59-.46a2.78 2.78 0 0 0 1.95-1.96A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/>
+          <polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/>
+        </svg>
+        <span class="font-semibold ml-3">YouTube</span>
+      </a>
+    </div>
+
+    <!-- NEW: Skool 7-tile block -->
+    <div class="mt-6">
+      <p class="text-sm text-zinc-500 mb-3 font-mono">Skool — bugrakarsli-ai-automations</p>
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
+
+        <!-- Community -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+          <span class="text-xs font-medium">Community</span>
+        </a>
+
+        <!-- Classroom -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/classroom" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+          </svg>
+          <span class="text-xs font-medium">Classroom</span>
+        </a>
+
+        <!-- Calendar -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/calendar" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          <span class="text-xs font-medium">Calendar</span>
+        </a>
+
+        <!-- Members -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/members" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+          <span class="text-xs font-medium">Members</span>
+        </a>
+
+        <!-- Map -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/map" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/><line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+          </svg>
+          <span class="text-xs font-medium">Map</span>
+        </a>
+
+        <!-- Leaderboards -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/leaderboards" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/>
+            <path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+            <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+            <path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/>
+          </svg>
+          <span class="text-xs font-medium">Leaderboards</span>
+        </a>
+
+        <!-- About -->
+        <a href="https://www.skool.com/bugrakarsli-ai-automations/about" target="_blank" rel="noopener noreferrer"
+           class="flex flex-col items-center gap-1.5 p-3 border border-zinc-800 rounded-lg hover:bg-zinc-800 hover:border-blue-500 transition-all group text-center">
+          <svg class="h-5 w-5 group-hover:text-blue-500 transition-colors text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <span class="text-xs font-medium">About</span>
+        </a>
+
+      </div>
+    </div>
+  </section>
+
+  <hr class="border-zinc-800" />
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- CHANGE 2: /about — Deploy card             -->
+  <!-- ─────────────────────────────────────────── -->
+  <section>
+    <p class="section-label">Change 2 · app/about/page.tsx → "Deploy — Ship" card (added Routines link)</p>
+
+    <div class="grid gap-5 md:grid-cols-3">
+      <div class="flex flex-col gap-3 p-5 border border-zinc-800 rounded-xl bg-zinc-900">
+        <div class="w-10 h-10 bg-amber-500/10 text-amber-500 rounded-lg flex items-center justify-center">
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+          </svg>
+        </div>
+        <h3 class="font-semibold">Deploy — Ship</h3>
+        <p class="text-sm text-zinc-400 leading-relaxed">
+          Connect your agents to Telegram, Discord, WhatsApp, or a web chat widget. Set up cron workflows that run your agent on a schedule and deliver output wherever you need it.
+        </p>
+        <!-- NEW: two links stacked -->
+        <div class="flex flex-col gap-1 mt-auto">
+          <a href="/docs#dashboard" class="text-sm text-zinc-300 hover:underline underline-offset-4">
+            Learn more →
+          </a>
+          <a href="/code/routines" class="text-sm text-zinc-300 hover:underline underline-offset-4">
+            Manage Routines →  <span class="text-xs text-zinc-500 ml-1">(new)</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="border-zinc-800" />
+
+  <!-- ─────────────────────────────────────────── -->
+  <!-- CHANGE 3: /changelog — AI Automations card -->
+  <!-- ─────────────────────────────────────────── -->
+  <section>
+    <p class="section-label">Change 3 · app/changelog/page.tsx → AI Automations card (Open Classroom button)</p>
+
+    <div class="text-center space-y-3">
+      <p class="text-sm text-zinc-400">AI Automations by Bugra Karsli</p>
+      <a href="https://www.skool.com/bugrakarsli-ai-automations/classroom" target="_blank" rel="noopener noreferrer"
+         class="inline-flex items-center gap-2 px-4 py-2 border border-zinc-700 rounded-md text-sm font-medium hover:bg-zinc-800 transition-colors">
+        <!-- GraduationCap icon -->
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+        </svg>
+        Open Classroom
+      </a>
+    </div>
+  </section>
+
+  <footer class="border-t border-zinc-800 pt-6 text-xs text-zinc-600 font-mono">
+    preview-recent-changes.html · not for production · delete when done reviewing
+  </footer>
+
+</body>
+</html>
