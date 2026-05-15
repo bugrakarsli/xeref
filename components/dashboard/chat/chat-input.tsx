@@ -13,7 +13,7 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
-import { ArrowUp, ChevronDown, Bot, BrainCircuit, Cpu, Lock, Plus, Paperclip, Globe, X, FileText, Settings, PlusCircle } from 'lucide-react'
+import { ArrowUp, ChevronDown, Bot, BrainCircuit, Cpu, Lock, Plus, Paperclip, Globe, X, FileText, Settings, PlusCircle, Square } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Project, ChatAttachment } from '@/lib/types'
@@ -53,6 +53,7 @@ interface ChatInputProps {
   onInputChange: (value: string) => void
   onSubmit: (e: React.FormEvent) => void
   isLoading: boolean
+  onStop?: () => void
   projects: Project[]
   selectedAgent: AgentSelection
   onAgentSelect: (agent: AgentSelection) => void
@@ -79,6 +80,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   onInputChange,
   onSubmit,
   isLoading,
+  onStop,
   projects,
   selectedAgent,
   onAgentSelect,
@@ -473,15 +475,27 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button
-                type="submit"
-                size="icon"
-                className="h-7 w-7 rounded-full bg-primary hover:bg-primary/90"
-                disabled={(!input.trim() && attachments.length === 0) || isLoading}
-                aria-label="Send message"
-              >
-                <ArrowUp className="h-3.5 w-3.5" />
-              </Button>
+              {isLoading && onStop ? (
+                <Button
+                  type="button"
+                  size="icon"
+                  onClick={onStop}
+                  className="h-7 w-7 rounded-full bg-primary hover:bg-primary/90"
+                  aria-label="Stop generation"
+                >
+                  <Square className="h-3 w-3 fill-current" />
+                </Button>
+              ) : (
+                <Button
+                  type="submit"
+                  size="icon"
+                  className="h-7 w-7 rounded-full bg-primary hover:bg-primary/90"
+                  disabled={(!input.trim() && attachments.length === 0) || isLoading}
+                  aria-label="Send message"
+                >
+                  <ArrowUp className="h-3.5 w-3.5" />
+                </Button>
+              )}
             </div>
           </div>
         </div>

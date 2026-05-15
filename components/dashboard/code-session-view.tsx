@@ -63,7 +63,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
     [],
   )
 
-  const { messages, sendMessage, setMessages, status } = useChat({ transport })
+  const { messages, sendMessage, setMessages, status, stop } = useChat({ transport })
 
   // Load history when we already have a session ID on mount or when sessionId changes
   useEffect(() => {
@@ -222,6 +222,7 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
               onInputChange={setInput}
               onSubmit={handleSubmit}
               isLoading={isLoading}
+              onStop={stop}
               selectedRepo={selectedRepo}
               onRepoSelect={setSelectedRepo}
               selectedModel={model}

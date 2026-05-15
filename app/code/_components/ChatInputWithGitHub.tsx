@@ -9,6 +9,7 @@ export function ChatInputWithGitHub({
   onInputChange: externalOnInputChange,
   onSubmit: externalOnSubmit,
   isLoading: externalIsLoading,
+  onStop,
   selectedRepo: externalSelectedRepo,
   onRepoSelect: externalOnRepoSelect,
   selectedModel: externalModel,
@@ -19,6 +20,7 @@ export function ChatInputWithGitHub({
   onInputChange?: (value: string) => void;
   onSubmit?: (e: React.FormEvent) => void;
   isLoading?: boolean;
+  onStop?: () => void;
   selectedRepo?: string | null;
   onRepoSelect?: (repo: string) => void;
   selectedModel?: ModelId;
@@ -92,6 +94,7 @@ export function ChatInputWithGitHub({
         }}
         onSubmit={handleSubmit}
         isLoading={isLoading}
+        onStop={onStop}
         projects={[]}
         selectedAgent={null}
         onAgentSelect={() => {}}
