@@ -4,6 +4,7 @@ import React, { useRef, useEffect } from 'react';
 import { Plus, ChevronDown, ArrowUp, File, Image as ImageIcon, Code, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { AVAILABLE_MODELS } from '@/lib/models-config';
+import { MicButton } from '@/components/dashboard/MicButton';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -218,8 +219,13 @@ const ChatInput: React.FC<ChatInputProps> = ({
               Planning
             </button>
             
+            <MicButton
+              onTranscribed={(text) => onChange((value ?? '') + (value ? ' ' : '') + text)}
+              disabled={isLoading}
+            />
+
             <div ref={menuRef} className="relative">
-                <button 
+                <button
                     onClick={() => setShowModelMenu(!showModelMenu)}
                     className="flex items-center gap-1 px-2 py-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-md text-xs text-gray-600 dark:text-gray-400 transition-colors font-medium"
                     title="Select AI Model"

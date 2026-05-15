@@ -53,7 +53,7 @@ const plans = [
     featured: false,
     features: [
       { text: 'Everything in Pro', included: true },
-      { text: 'Claude Code workspace (/code)', included: true },
+      { text: 'Xeref Code workspace (/code)', included: true },
       { text: 'Unlimited deploy channels', included: true },
       { text: 'Unlimited workflows & automation', included: true },
       { text: 'OCR Document Brain (18 file types)', included: true },

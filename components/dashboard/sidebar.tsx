@@ -52,15 +52,19 @@ import {
   Send,
   Brain,
   BookOpen,
+  Map,
 } from 'lucide-react'
 
 import { renameProject, deleteProject } from '@/app/actions/projects'
 import { updateChatTitle, deleteChat, removeChatFromProject } from '@/app/actions/chats'
 import { renameCodeSession, deleteCodeSession } from '@/app/actions/code-sessions'
 import { toast } from 'sonner'
-import { MoreVertical } from 'lucide-react'
+import { MoreVertical, SlidersHorizontal } from 'lucide-react'
 import { AddChatToProjectDialog } from '@/components/dashboard/add-chat-to-project-dialog'
 import { CreateProjectDialog } from '@/components/dashboard/create-project-dialog'
+import { SidebarCustomizeModal } from '@/components/dashboard/sidebar-customize-modal'
+import { SIDEBAR_NAV_ITEMS, DEFAULT_VISIBLE_IDS } from '@/lib/sidebar/items'
+import type { SidebarPreferences } from '@/lib/types'
 
 const SIDEBAR_PROJECT_LIMIT = 5
 
@@ -115,9 +119,9 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-        'hover:bg-accent hover:text-accent-foreground',
+        'text-muted-foreground hover:bg-accent hover:text-white',
         focusRing,
-        active && 'bg-accent text-accent-foreground',
+        active && 'bg-accent text-white',
         collapsed && 'justify-center px-2'
       )}
     >
@@ -598,15 +602,47 @@ export function Sidebar({
   const [addProjectDialogOpen, setAddProjectDialogOpen] = useState(false)
   const [selectedChatForProject, setSelectedChatForProject] = useState<Chat | null>(null)
   const [createProjectDialogOpen, setCreateProjectDialogOpen] = useState(false)
+  const [customizeModalOpen, setCustomizeModalOpen] = useState(false)
+  const [moreOpen, setMoreOpen] = useState(false)
+  const [sidebarPrefs, setSidebarPrefs] = useState<SidebarPreferences>({
+    visible_tabs: DEFAULT_VISIBLE_IDS,
+    order: DEFAULT_VISIBLE_IDS,
+  })
   const pathname = usePathname()
   const router = useRouter()
   const isBuilderActive = pathname === '/builder'
   const isDesignActive = pathname === '/design'
 
+  // Icon map for config-driven nav items (all already imported above)
+  const ICON_MAP: Record<string, React.ReactNode> = {
+    FolderOpen: <FolderOpen className="h-4 w-4" />,
+    Settings: <Settings className="h-4 w-4" />,
+    Box: <Box className="h-4 w-4" />,
+    Paintbrush: <Paintbrush className="h-4 w-4" />,
+    Mail: <Mail className="h-4 w-4" />,
+    BookOpen: <BookOpen className="h-4 w-4" />,
+    Brain: <Brain className="h-4 w-4" />,
+    BarChart2: <BarChart2 className="h-4 w-4" />,
+    CalendarDays: <CalendarDays className="h-4 w-4" />,
+    GitFork: <GitFork className="h-4 w-4" />,
+    BrainCircuit: <BrainCircuit className="h-4 w-4" />,
+    Users: <Users className="h-4 w-4" />,
+    Map: <Map className="h-4 w-4" />,
+  }
+
   useEffect(() => {
     if (!isHydrated) return
     localStorage.setItem('xeref_pinned_chats', JSON.stringify(pinnedChats))
   }, [pinnedChats, isHydrated])
+
+  useEffect(() => {
+    fetch('/api/settings/sidebar')
+      .then(r => r.ok ? r.json() : null)
+      .then((prefs: SidebarPreferences | null) => {
+        if (prefs) setSidebarPrefs(prefs)
+      })
+      .catch(() => {/* keep defaults */})
+  }, [])
 
   const emailUsername = userEmail.split('@')[0]
   const displayName = userName || (emailUsername.charAt(0).toUpperCase() + emailUsername.slice(1))
@@ -699,8 +735,8 @@ export function Sidebar({
                 className={cn(
                   'group relative flex items-center justify-center gap-1.5 rounded-md text-xs font-medium transition-all duration-150 px-2 py-1.5',
                   isActive
-                    ? 'text-primary bg-primary/10'
-                    : 'text-muted-foreground hover:text-foreground hover:bg-accent',
+                    ? 'text-white bg-accent'
+                    : 'text-muted-foreground hover:text-white hover:bg-accent',
                   focusRing
                 )}
               >
@@ -728,27 +764,48 @@ export function Sidebar({
         {/* ── CHAT TAB ─────────────────────────────────────── */}
         {(collapsed || activeTab === 'chat') && (
           <>
-            {/* Collapsed quick-nav icons */}
+            {/* Collapsed quick-nav icons — derived from sidebar prefs */}
             {collapsed && (
               <div className="flex flex-col gap-1 mb-1">
                 <NavItem icon={<MessageSquare className="h-4 w-4" />} label="New Chat" active={activeView === 'chat'} collapsed={collapsed} onClick={() => onNewChat?.()} />
-                <NavItem icon={<FolderOpen className="h-4 w-4" />} label="Projects" active={activeView === 'home'} collapsed={collapsed} onClick={() => onViewChange('home')} />
-                <NavItem icon={<Settings className="h-4 w-4" />} label="Customize" active={activeView === 'customize'} collapsed={collapsed} onClick={() => onViewChange('customize')} />
-                <NavItem icon={<Box className="h-4 w-4" />} label="Artifacts" active={activeView === 'code'} collapsed={collapsed} onClick={() => router.push('/artifacts')} />
-                <NavItem icon={<Paintbrush className="h-4 w-4" />} label="Design" active={isDesignActive} collapsed={collapsed} onClick={() => router.push('/design')} />
+                {sidebarPrefs.order
+                  .filter(id => sidebarPrefs.visible_tabs.includes(id))
+                  .map(id => {
+                    const item = SIDEBAR_NAV_ITEMS.find(i => i.id === id)
+                    if (!item) return null
+                    const isActive = item.viewKey
+                      ? activeView === item.viewKey
+                      : item.href === '/design' ? isDesignActive : pathname?.startsWith(item.href ?? '__') ?? false
+                    return (
+                      <NavItem
+                        key={id}
+                        icon={ICON_MAP[item.icon]}
+                        label={item.label}
+                        active={isActive}
+                        collapsed={collapsed}
+                        onClick={() => item.viewKey ? onViewChange(item.viewKey) : router.push(item.href!)}
+                      />
+                    )
+                  })}
+                <NavItem
+                  icon={<SlidersHorizontal className="h-4 w-4" />}
+                  label="Customize Sidebar"
+                  collapsed={collapsed}
+                  onClick={() => setCustomizeModalOpen(true)}
+                />
               </div>
             )}
 
-            {/* Attached sections - replaces Home */}
+            {/* Config-driven nav items (expanded only) */}
             {!collapsed && (
               <div className="flex flex-col gap-1 mb-2">
-                {/* New Chat Button with Shortcut */}
+                {/* New Chat — always first */}
                 <div className="group relative">
                   <button
                     onClick={() => onNewChat?.()}
                     className={cn(
                       'flex items-center justify-between w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                      'hover:bg-accent hover:text-accent-foreground',
+                      'text-muted-foreground hover:bg-accent hover:text-white',
                       focusRing
                     )}
                   >
@@ -760,79 +817,82 @@ export function Sidebar({
                   </button>
                 </div>
 
-                {/* Projects Link */}
-                <button
-                  onClick={() => onViewChange('home')}
-                  className={cn(
-                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    focusRing,
-                    activeView === 'home' && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <FolderOpen className="h-4 w-4" />
-                  Projects
-                </button>
+                {/* Visible items in user-defined order */}
+                {sidebarPrefs.order
+                  .filter(id => sidebarPrefs.visible_tabs.includes(id))
+                  .map(id => {
+                    const item = SIDEBAR_NAV_ITEMS.find(i => i.id === id)
+                    if (!item) return null
+                    const isActive = item.viewKey
+                      ? activeView === item.viewKey
+                      : item.href === '/design' ? isDesignActive : pathname?.startsWith(item.href ?? '__') ?? false
+                    return (
+                      <NavItem
+                        key={id}
+                        icon={ICON_MAP[item.icon]}
+                        label={item.label}
+                        active={isActive}
+                        collapsed={false}
+                        onClick={() => item.viewKey ? onViewChange(item.viewKey) : router.push(item.href!)}
+                      />
+                    )
+                  })}
 
-                {/* Customize Link */}
-                <button
-                  onClick={() => onViewChange('customize')}
-                  className={cn(
-                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    focusRing,
-                    activeView === 'customize' && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <Settings className="h-4 w-4" />
-                  Customize
-                </button>
+                {/* More section — hidden items */}
+                {(() => {
+                  const hiddenItems = SIDEBAR_NAV_ITEMS.filter(
+                    item => !sidebarPrefs.visible_tabs.includes(item.id)
+                  )
+                  if (hiddenItems.length === 0) return null
+                  return (
+                    <div>
+                      <button
+                        onClick={() => setMoreOpen(o => !o)}
+                        className={cn(
+                          'flex items-center gap-2 w-full px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-muted-foreground hover:text-white transition-colors rounded-lg',
+                          focusRing
+                        )}
+                      >
+                        <ChevronDown className={cn('h-3 w-3 transition-transform duration-150', moreOpen && 'rotate-180')} />
+                        More
+                      </button>
+                      {moreOpen && (
+                        <div className="flex flex-col gap-0.5 mt-0.5">
+                          {hiddenItems.map(item => {
+                            const isActive = item.viewKey
+                              ? activeView === item.viewKey
+                              : item.href === '/design' ? isDesignActive : pathname?.startsWith(item.href ?? '__') ?? false
+                            return (
+                              <NavItem
+                                key={item.id}
+                                icon={ICON_MAP[item.icon]}
+                                label={item.label}
+                                active={isActive}
+                                collapsed={false}
+                                onClick={() => item.viewKey ? onViewChange(item.viewKey) : router.push(item.href!)}
+                              />
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })()}
 
-                {/* Artifacts Link */}
+                {/* Customize Sidebar button */}
                 <button
-                  onClick={() => router.push('/artifacts')}
+                  onClick={() => setCustomizeModalOpen(true)}
                   className={cn(
-                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    focusRing,
-                    activeView === 'code' && 'bg-accent text-accent-foreground'
+                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+                    'text-muted-foreground/60 hover:text-muted-foreground hover:bg-accent/50',
+                    focusRing
                   )}
                 >
-                  <Box className="h-4 w-4" />
-                  Artifacts
-                </button>
-
-                {/* Design Link */}
-                <button
-                  onClick={() => router.push('/design')}
-                  className={cn(
-                    'flex items-center gap-3 w-full rounded-lg px-3 py-2 text-sm font-medium transition-colors',
-                    'hover:bg-accent hover:text-accent-foreground',
-                    focusRing,
-                    isDesignActive && 'bg-accent text-accent-foreground'
-                  )}
-                >
-                  <Paintbrush className="h-4 w-4" />
-                  Design
+                  <SlidersHorizontal className="h-3.5 w-3.5" />
+                  Customize Sidebar
                 </button>
               </div>
             )}
-
-            <NavItem
-              icon={<Mail className="h-4 w-4" />}
-              label="Inbox"
-              active={activeView === 'inbox'}
-              collapsed={collapsed}
-              onClick={() => onViewChange('inbox')}
-            />
-
-            <NavItem
-              icon={<BookOpen className="h-4 w-4" />}
-              label="Classroom"
-              active={activeView === 'classroom'}
-              collapsed={collapsed}
-              onClick={() => onViewChange('classroom')}
-            />
 
             {/* ── Pinned Chats + Recents section ── */}
             {!collapsed && isHydrated && (
@@ -1364,6 +1424,28 @@ export function Sidebar({
         projects={projects}
         onProjectAdded={(chatId, projectId) => {
           onChatProjectAdded?.(chatId, projectId)
+        }}
+      />
+
+      {/* Sidebar Customize Modal */}
+      <SidebarCustomizeModal
+        open={customizeModalOpen}
+        onOpenChange={setCustomizeModalOpen}
+        current={sidebarPrefs}
+        onSave={async (prefs) => {
+          const res = await fetch('/api/settings/sidebar', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(prefs),
+          })
+          if (res.ok) {
+            const saved = await res.json() as SidebarPreferences
+            setSidebarPrefs(saved)
+            toast.success('Sidebar saved')
+          } else {
+            const msg = (await res.json().catch(() => ({}))).error ?? 'unknown'
+            toast.error(`Failed to save sidebar: ${msg}`)
+          }
         }}
       />
     </aside>

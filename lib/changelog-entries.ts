@@ -1,8 +1,40 @@
 export const changelogEntries = [
   {
+    version: 'v2.7',
+    date: 'May 14, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Customizable Sidebar — Nav items (Projects, Customize, Artifacts, Design, Inbox, and 7 more) are now user-configurable: toggle visibility, reorder with ↑/↓ controls, and persist preferences to your profile. Hidden items collect under a "More" group; a "Customize Sidebar" button at the bottom opens the configuration modal.',
+          'Settings Foundation — profiles.preferences JSONB column provides the data layer for per-user sidebar config, capabilities settings, and Xeref Code settings across all future settings tabs.',
+          '/customize keeps sidebar — navigating to /customize now renders the dashboard sidebar in collapsed mode alongside the customize sub-nav, maintaining spatial context instead of replacing the shell.',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Sidebar typography — default nav text is now muted gray; hover and active states use white text with a subtle background highlight for clearer visual hierarchy.',
+        ],
+      },
+      {
+        type: 'Fixed',
+        color: 'text-amber-400',
+        items: [
+          'Memory upload 413 errors — file bytes now go directly to Supabase Storage via signed upload URL, bypassing Vercel\'s 4.5 MB serverless payload limit. Files up to 50 MB upload without error.',
+          'Memory ingestion on production — aligned env var naming (PINECONE_INDEX) and switched to name-based Pinecone index lookup; the "apiKey" initialization error on xeref.ai is resolved.',
+          'Documents INSERT policy — added missing RLS policy so authenticated users can create document rows via the browser client.',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.6',
     date: 'May 13, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

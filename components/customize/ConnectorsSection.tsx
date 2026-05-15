@@ -197,7 +197,7 @@ const FS_GROUPS: FsGroup[] = [
   {
     label: 'Other tools',
     tools: [
-      { id: 'copy_file_to_claude', label: 'Copy file to Claude' },
+      { id: 'copy_file_to_xeref', label: 'Copy file to Xeref' },
     ],
   },
 ]
@@ -215,7 +215,7 @@ const FS_TOOL_DESCRIPTIONS: Record<string, string> = {
   edit_file: 'Apply targeted edits to an existing file',
   create_directory: 'Create a new folder at the specified path',
   move_file: 'Move or rename a file or folder',
-  copy_file_to_claude: 'Upload a local file into the Claude conversation context',
+  copy_file_to_xeref: 'Upload a local file into the Xeref conversation context',
 }
 
 const DEFAULT_FS_PERMISSIONS: Record<string, ToolPermission> = Object.fromEntries(

@@ -23,6 +23,7 @@ import { ProjectsView } from './projects-view'
 import { DeployView } from './deploy-view'
 import { MemoryView } from './memory-view'
 import { ClassroomView } from './classroom-view'
+import { PlansView } from './plans-view'
 import { AgentPanel } from './AgentPanel'
 import { RhsSidebar } from './rhs-sidebar'
 import { SearchPopup } from './search-popup'
@@ -53,20 +54,30 @@ interface DashboardShellProps {
   children?: React.ReactNode
   initialTab?: SidebarTab
   initialView?: ViewKey
+  forceCollapsed?: boolean
 }
 
-export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted, children, initialTab = 'chat', initialView = 'home' }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted, children, initialTab = 'chat', initialView = 'home', forceCollapsed }: DashboardShellProps) {
   const router = useRouter()
   const pathname = usePathname()
 
   // Compute actual initial state based on pathname
   const isCodeRoute = pathname?.startsWith('/code')
+  const isCustomizeRoute = pathname?.startsWith('/customize')
+  const isSettingsRoute = pathname?.startsWith('/settings')
+  const isInboxRoute = pathname?.startsWith('/inbox')
   const actualInitialTab = isCodeRoute ? 'code' : initialTab
-  const actualInitialView = isCodeRoute 
-    ? (pathname.includes('/session') ? 'code_session' : pathname.includes('/routines') ? 'code_routines' : 'code') 
-    : initialView
+  const actualInitialView: ViewKey = isCustomizeRoute
+    ? 'customize'
+    : isSettingsRoute
+      ? 'settings'
+      : isInboxRoute
+        ? 'inbox'
+        : isCodeRoute
+          ? (pathname.includes('/session') ? 'code_session' : pathname.includes('/routines') ? 'code_routines' : 'code')
+          : initialView
 
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(forceCollapsed ?? false)
   const [activeView, setActiveView] = useState<ViewKey>(actualInitialView)
   const [activeTab, setActiveTab] = useState<SidebarTab>(actualInitialTab)
 
@@ -78,6 +89,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }
 
   function handleTabChange(tab: SidebarTab) {
+    // On /customize, /settings, or /inbox, any tab click exits back to the dashboard
+    if (isCustomizeRoute || isSettingsRoute || isInboxRoute) {
+      if (tab === 'code') { router.push('/code'); return }
+      localStorage.setItem('xeref_pending_tab', tab)
+      router.push('/')
+      return
+    }
     if (tab === 'code' && activeTab !== 'code') {
       router.push('/code')
       return
@@ -146,7 +164,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
       const defaultView = TAB_DEFAULT_VIEW[pendingTab]
       setActiveView(defaultView)
       localStorage.setItem('xeref_active_view', defaultView)
-    } else if (initialTab === 'chat') {
+    } else if (initialTab === 'chat' && !isCustomizeRoute && !isCodeRoute && !isSettingsRoute && !isInboxRoute) {
       const savedView = localStorage.getItem('xeref_active_view') as ViewKey | null
       if (savedView) setActiveView(savedView)
     }
@@ -325,6 +343,14 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         onTabChange={handleTabChange}
         onViewChange={(view) => {
           if (view === 'customize') { router.push('/customize'); return }
+          if (view === 'settings') { router.push('/settings/general'); return }
+          if (view === 'inbox') { router.push('/inbox'); return }
+          // On /customize, /settings, or /inbox, any other view navigates back to the dashboard
+          if (isCustomizeRoute || isSettingsRoute || isInboxRoute) {
+            localStorage.setItem('xeref_active_view', view)
+            router.push('/')
+            return
+          }
           setActiveView(view)
           localStorage.setItem('xeref_active_view', view)
           window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))
@@ -416,6 +442,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                   />
                 )
               case 'settings':
+                if (isSettingsRoute) return children || null
                 return (
                 <SettingsView
                     userEmail={userEmail}
@@ -440,6 +467,8 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
                 return <MemoryView />
               case 'classroom':
                 return <ClassroomView userEmail={userEmail} userId={user.id} />
+              case 'plans':
+                return <PlansView />
             }
           })()}
         </main>
@@ -487,6 +516,11 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
           }}
           onViewChange={(view) => {
             if (view === 'customize') { router.push('/customize'); return }
+            if (isCustomizeRoute) {
+              localStorage.setItem('xeref_active_view', view)
+              router.push('/')
+              return
+            }
             setActiveView(view)
             localStorage.setItem('xeref_active_view', view)
             window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: view }))

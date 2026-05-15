@@ -4,11 +4,6 @@ import crypto from 'crypto'
 import { createOpenRouterForPlan, resolveModelId } from '@/lib/ai/openrouter-config'
 import { generateText } from 'ai'
 
-const supabaseAdmin = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
-
 interface TelegramMessage {
   message_id: number
   chat: { id: number }
@@ -46,6 +41,11 @@ export async function POST(
   { params }: { params: Promise<{ userId: string }> }
 ) {
   const { userId } = await params
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
 
   // Fetch user's bot token and plan
   const { data: profile } = await supabaseAdmin

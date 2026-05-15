@@ -31,6 +31,18 @@ export const AVAILABLE_MODELS: ModelOption[] = [
     tier: 'PRO',
   },
   {
+    id: 'grok-3-mini',
+    name: 'Grok 3 Mini',
+    description: 'Fast and sharp — xAI\'s efficient model',
+    tier: 'PRO',
+  },
+  {
+    id: 'grok-3',
+    name: 'Grok 3',
+    description: 'xAI\'s flagship — powerful reasoning and real-time knowledge',
+    tier: 'ULTRA',
+  },
+  {
     id: 'best',
     name: 'Best (Auto)',
     description: 'Dynamically routes your query to the best model',

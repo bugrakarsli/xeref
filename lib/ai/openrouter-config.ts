@@ -11,6 +11,8 @@ export type ModelId =
   | 'claude-opus-4-7'
   | 'deepseek-v4-pro'
   | 'deepseek-v4-flash'
+  | 'grok-3'
+  | 'grok-3-mini'
   | 'opus-plan'
   | 'best'
 
@@ -42,6 +44,8 @@ const MODEL_MAP: Record<string, string> = {
   'claude-opus-4-7': 'anthropic/claude-opus-4-7',
   'deepseek-v4-pro': 'deepseek/deepseek-v4-pro',
   'deepseek-v4-flash': 'deepseek/deepseek-v4-flash',
+  'grok-3': 'x-ai/grok-3',
+  'grok-3-mini': 'x-ai/grok-3-mini',
 }
 
 const OPUS_PLAN_REGEX = /plan|roadmap|decompose|break down|architecture|goals|agent/i
@@ -61,7 +65,7 @@ export function resolveModelId(modelId: string, lastUserMessage?: string): strin
 
 const PLAN_MODELS: Record<UserPlan, Set<string>> = {
   free: new Set(['xeref-free']),
-  pro: new Set(['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'deepseek-v4-flash']),
+  pro: new Set(['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'deepseek-v4-flash', 'grok-3-mini']),
   ultra: new Set([
     'xeref-free',
     'claude-haiku-4-5-20251001',
@@ -69,6 +73,8 @@ const PLAN_MODELS: Record<UserPlan, Set<string>> = {
     'deepseek-v4-flash',
     'claude-opus-4-7',
     'deepseek-v4-pro',
+    'grok-3',
+    'grok-3-mini',
     'opus-plan',
     'best',
   ]),

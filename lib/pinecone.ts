@@ -6,7 +6,7 @@ const USER_MEMORY_NS = 'xeref_user_memory'
 
 function getIndex() {
   const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! })
-  return pc.index({ host: process.env.PINECONE_INDEX_NAME! })
+  return pc.index(process.env.PINECONE_INDEX!)
 }
 
 export async function upsertLesson(lesson: Lesson, courseId: string): Promise<void> {

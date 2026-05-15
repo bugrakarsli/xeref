@@ -87,13 +87,15 @@ export async function POST(req: Request) {
     }
   }
 
-  // Fetch user plan alongside auth — reuses the same supabase client, no extra round-trip
+  // Fetch user plan + preferences alongside auth — reuses the same supabase client
   const { data: profile } = await supabase
     .from('profiles')
-    .select('plan')
+    .select('plan, preferences')
     .eq('id', user.id)
     .single()
   const userPlan = (profile?.plan ?? 'free') as UserPlan
+  const capabilityPrefs = (profile?.preferences as { capabilities?: { tool_access_mode?: string } } | null)?.capabilities
+  const toolsDisabled = capabilityPrefs?.tool_access_mode === 'never_use_tools'
 
   const body = await req.json()
   const { messages, projectId, systemAgentId, model, webSearchEnabled, legacyMode } = body
@@ -299,7 +301,7 @@ export async function POST(req: Request) {
           },
         }),
 
-        ...(webSearchEnabled && process.env.TAVILY_API_KEY ? {
+        ...(webSearchEnabled && process.env.TAVILY_API_KEY && !toolsDisabled ? {
           web_search: tool({
             description: 'Search the web for current, up-to-date information. Use when the user asks about recent events, news, live data, or anything that may have changed after your training cutoff.',
             inputSchema: z.object({

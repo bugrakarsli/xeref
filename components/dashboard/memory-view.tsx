@@ -77,13 +77,35 @@ export function MemoryView() {
   }, [docs, fetchAll])
 
   const uploadFile = async (file: File) => {
-    const form = new FormData()
-    form.append('file', file)
-    form.append('ocr', ocrEnabled ? '1' : '0')
-    const res = await fetch('/api/memory/documents', { method: 'POST', body: form })
-    const data = await res.json()
-    if (!res.ok) throw new Error(data.error ?? 'Upload failed')
-    setDocs(prev => [data, ...prev])
+    // Step 1: get a signed upload URL and create the DB row
+    const initRes = await fetch('/api/memory/documents/upload-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: file.name, size: file.size, mimeType: file.type || 'application/octet-stream', ocr: ocrEnabled }),
+    })
+    const initData = await initRes.json()
+    if (!initRes.ok) throw new Error(initData.error ?? 'Upload initialisation failed')
+
+    // Step 2: PUT file bytes directly to Supabase Storage (bypasses Vercel payload limit)
+    const putRes = await fetch(initData.signedUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': file.type || 'application/octet-stream' },
+      body: file,
+    })
+    if (!putRes.ok) throw new Error('Storage upload failed')
+
+    // Step 3: trigger background extraction + indexing
+    const finalRes = await fetch('/api/memory/documents/finalize', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ documentId: initData.documentId, ocr: ocrEnabled }),
+    })
+    if (!finalRes.ok) {
+      const fd = await finalRes.json()
+      throw new Error(fd.error ?? 'Finalize failed')
+    }
+
+    setDocs(prev => [initData.doc, ...prev])
   }
 
   const ACCEPTED_EXTS = new Set(['.pdf', '.docx', '.txt', '.md'])

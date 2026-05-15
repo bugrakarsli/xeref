@@ -445,11 +445,14 @@ export function PlansView() {
               </div>
             )}
             {plans.map(plan => (
-              <button
+              <div
                 key={plan.id}
+                role="button"
+                tabIndex={0}
                 onClick={() => setSelected(plan)}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(plan) } }}
                 className={cn(
-                  'flex items-start gap-2 px-4 py-3 border-b text-left hover:bg-accent/50 transition-colors group',
+                  'flex items-start gap-2 px-4 py-3 border-b text-left hover:bg-accent/50 transition-colors group cursor-pointer',
                   selected?.id === plan.id && 'bg-accent'
                 )}
               >
@@ -464,7 +467,7 @@ export function PlansView() {
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
-              </button>
+              </div>
             ))}
           </>
         )}
