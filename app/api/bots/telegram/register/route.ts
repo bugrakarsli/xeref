@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
+import { parseBody, TelegramRegisterSchema } from '@/lib/validation'
 
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await req.json().catch(() => ({}))
-  const { token } = body as { token?: string }
-
-  if (!token || typeof token !== 'string' || !token.includes(':')) {
-    return NextResponse.json({ error: 'Invalid bot token format' }, { status: 400 })
-  }
+  const rawBody = await req.json().catch(() => ({}))
+  const { data: body, error: bodyError } = parseBody(TelegramRegisterSchema, rawBody)
+  if (bodyError) return bodyError
+  const { token } = body
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'
 

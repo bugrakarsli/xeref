@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_CAPABILITIES } from '@/lib/types'
 import type { CapabilitiesSettings } from '@/lib/types'
+import { parseBody, UpdateCapabilitiesSchema } from '@/lib/validation'
 
 export async function GET() {
   const supabase = await createClient()
@@ -23,13 +24,9 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = await request.json() as Partial<CapabilitiesSettings>
-
-  // Validate tool_access_mode if provided
-  const validModes = ['load_tools_when_needed', 'ask_before_using_tools', 'never_use_tools']
-  if (body.tool_access_mode && !validModes.includes(body.tool_access_mode)) {
-    return NextResponse.json({ error: 'invalid tool_access_mode' }, { status: 400 })
-  }
+  const rawBody = await request.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(UpdateCapabilitiesSchema, rawBody)
+  if (bodyError) return bodyError
 
   const { data: current } = await supabase
     .from('profiles')

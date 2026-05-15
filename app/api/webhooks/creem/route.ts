@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { parseBody, CreemEventSchema } from '@/lib/validation'
 
 function verifySignature(rawBody: string, signature: string): boolean {
   const secret = process.env.CREEM_WEBHOOK_SECRET
@@ -75,7 +76,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 
-  const event = JSON.parse(rawBody) as Record<string, unknown>
+  const parsed = JSON.parse(rawBody)
+  const { data: event, error: eventError } = parseBody(CreemEventSchema, parsed)
+  if (eventError) return NextResponse.json({ error: 'Invalid event payload' }, { status: 400 })
+  const fullEvent = parsed as Record<string, unknown>
   console.log('[Creem] Event received:', event.eventType)
 
   // Service role client to bypass RLS
@@ -88,7 +92,7 @@ export async function POST(req: NextRequest) {
     case 'checkout.completed':
     case 'subscription.active':
     case 'subscription.paid': {
-      const obj = (event.object ?? (event.data as Record<string, unknown>)?.object) as Record<string, unknown> | undefined
+      const obj = (fullEvent.object ?? (fullEvent.data as Record<string, unknown>)?.object) as Record<string, unknown> | undefined
       const product = obj?.product as { name: string } | undefined
       const plan = product ? determinePlan(product) : null
 
@@ -97,7 +101,7 @@ export async function POST(req: NextRequest) {
         break
       }
 
-      const userId = await resolveUserId(supabase, event)
+      const userId = await resolveUserId(supabase, fullEvent)
       if (userId) {
         const { error } = await supabase.from('profiles').update({ plan }).eq('id', userId)
         if (error) {
@@ -111,7 +115,7 @@ export async function POST(req: NextRequest) {
 
     case 'subscription.canceled':
     case 'subscription.expired': {
-      const userId = await resolveUserId(supabase, event)
+      const userId = await resolveUserId(supabase, fullEvent)
       if (userId) {
         const { error } = await supabase.from('profiles').update({ plan: 'free' }).eq('id', userId)
         if (error) {

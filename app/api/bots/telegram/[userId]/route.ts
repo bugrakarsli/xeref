@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 import { createOpenRouterForPlan, resolveModelId } from '@/lib/ai/openrouter-config'
 import { generateText } from 'ai'
+import { parseBody, TelegramUpdateSchema } from '@/lib/validation'
 
 interface TelegramMessage {
   message_id: number
@@ -80,7 +81,8 @@ export async function POST(
     return NextResponse.json({ ok: false }, { status: 401 })
   }
 
-  const update = await req.json().catch(() => null) as TelegramUpdate | null
+  const rawUpdate = await req.json().catch(() => null)
+  const { data: update } = parseBody(TelegramUpdateSchema, rawUpdate)
   const message = update?.message
   if (!message?.text) return NextResponse.json({ ok: true })
 

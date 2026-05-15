@@ -61,6 +61,7 @@ import {
   resolveModelId,
   type UserPlan,
 } from '@/lib/ai/openrouter-config'
+import { parseBody, ChatBodySchema } from '@/lib/validation'
 
 function getTextFromParts(parts?: Array<{ type: string; text?: string }>): string {
   if (!parts) return ''
@@ -97,9 +98,12 @@ export async function POST(req: Request) {
   const capabilityPrefs = (profile?.preferences as { capabilities?: { tool_access_mode?: string } } | null)?.capabilities
   const toolsDisabled = capabilityPrefs?.tool_access_mode === 'never_use_tools'
 
-  const body = await req.json()
+  const rawBody = await req.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(ChatBodySchema, rawBody)
+  if (bodyError) return bodyError
+
   const { messages, projectId, systemAgentId, model, webSearchEnabled, legacyMode } = body
-  const requestedModel = typeof model === 'string' && model ? model : DEFAULT_MODEL
+  const requestedModel = model || DEFAULT_MODEL
 
   // Server-side plan enforcement — never trust the client model ID
   if (!isModelAllowedForPlan(requestedModel, userPlan)) {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { DEFAULT_VISIBLE_IDS, ALL_ITEM_IDS } from '@/lib/sidebar/items'
 import type { SidebarPreferences } from '@/lib/types'
+import { parseBody, UpdateSidebarSchema } from '@/lib/validation'
 
 function defaults(): SidebarPreferences {
   return { visible_tabs: DEFAULT_VISIBLE_IDS, order: DEFAULT_VISIBLE_IDS }
@@ -27,7 +28,9 @@ export async function PATCH(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = await request.json() as Partial<SidebarPreferences>
+  const rawBody = await request.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(UpdateSidebarSchema, rawBody)
+  if (bodyError) return bodyError
 
   // Sanitise: only allow known item ids
   const visibleTabs = (body.visible_tabs ?? DEFAULT_VISIBLE_IDS).filter(id => ALL_ITEM_IDS.includes(id))
