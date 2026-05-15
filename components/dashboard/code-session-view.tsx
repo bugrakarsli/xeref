@@ -97,7 +97,9 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
           setMessages(data.map(m => ({
             id: m.id,
             role: m.role as 'user' | 'assistant' | 'system',
-            parts: [{ type: 'text' as const, text: m.content }],
+            parts: Array.isArray(m.parts) && m.parts.length > 0
+              ? m.parts
+              : [{ type: 'text' as const, text: m.content }],
           })))
           return
         }
