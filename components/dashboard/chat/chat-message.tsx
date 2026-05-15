@@ -7,6 +7,7 @@ import { XerefLogo } from '@/components/xeref-logo'
 import { cn } from '@/lib/utils'
 import { CheckCircle, ListTodo, Brain, AlertCircle } from 'lucide-react'
 import { UserMessageActions, AssistantMessageActions } from './message-actions'
+import { AgentStepRow } from '@/components/code/agent-step-row'
 
 interface ToolResult {
   success?: boolean
@@ -247,6 +248,11 @@ export function ChatMessage({
     (p) => p.type === 'tool-invocation' && p.state === 'result' && p.result
   )
 
+  // Agent step summary — any tool-invocation parts (regardless of completion state)
+  const toolInvocations = (parts ?? []).filter((p) => p.type === 'tool-invocation')
+  // TODO: thread real model through ChatMessage props in a later slice
+  const agentName = 'Claude Haiku 4.5'
+
   return (
     <div className={cn('flex gap-3 px-4 py-3 group/message', isUser && 'justify-end')}>
       {!isUser && (
@@ -343,6 +349,11 @@ export function ChatMessage({
                 </div>
               )}
             </div>
+
+            {/* Agent step summary (collapsible) */}
+            {!isUser && toolInvocations.length > 0 && (
+              <AgentStepRow agentName={agentName} parts={toolInvocations} />
+            )}
 
             {/* Tool result cards */}
             {toolResults.map((part, i) => (
