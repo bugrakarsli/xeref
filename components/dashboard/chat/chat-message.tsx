@@ -197,6 +197,7 @@ export function ChatMessage({
 
   // Sync editContent if content prop changes externally
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!isEditing) setEditContent(content)
   }, [content, isEditing])
 

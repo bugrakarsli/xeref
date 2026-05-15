@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { parseBody, WorkflowWebhookPayloadSchema } from '@/lib/validation'
 
 /**
  * Webhook receiver for workflow triggers.
@@ -37,18 +38,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Workflow is disabled' }, { status: 403 })
   }
 
-  let payload: Record<string, unknown> = {}
-  try { payload = await request.json() } catch { /* empty body ok */ }
+  let rawPayload: unknown = {}
+  try { rawPayload = await request.json() } catch { /* empty body ok */ }
+  const { data: payload } = parseBody(WorkflowWebhookPayloadSchema, rawPayload)
 
   const runAt = new Date().toISOString()
   let result = `Action "${workflow.action}" acknowledged`
 
   if (workflow.action === 'create_task') {
-    const title = typeof payload.title === 'string' ? payload.title : `Task from webhook: ${workflow.name}`
+    const title = payload?.title ?? `Task from webhook: ${workflow.name}`
     const { error } = await sb.from('tasks').insert({ user_id: workflow.user_id, title, priority: 'medium', status: 'todo' })
     result = error ? `Failed to create task: ${error.message}` : `Task created: "${title}"`
   } else if (workflow.action === 'save_memory') {
-    const content = typeof payload.content === 'string' ? payload.content : JSON.stringify(payload)
+    const content = payload?.content ?? JSON.stringify(rawPayload)
     const { error } = await sb.from('memories').insert({ user_id: workflow.user_id, content, source: 'manual', tags: ['workflow'] })
     result = error ? `Failed to save memory: ${error.message}` : 'Memory saved'
   }

@@ -1,6 +1,7 @@
 import { after } from 'next/server'
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { parseBody, FinalizeDocumentSchema } from '@/lib/validation'
 import { createClient as createAdminClient } from '@supabase/supabase-js'
 import { extractText } from '@/lib/ocr'
 import { indexDocumentChunks } from '@/lib/pinecone'
@@ -10,10 +11,11 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = await request.json() as { documentId?: string; ocr?: boolean }
-  const { documentId, ocr = false } = body
+  const rawBody = await request.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(FinalizeDocumentSchema, rawBody)
+  if (bodyError) return bodyError
 
-  if (!documentId) return NextResponse.json({ error: 'documentId is required' }, { status: 400 })
+  const { documentId, ocr = false } = body
 
   // Verify the document belongs to this user
   const { data: doc, error: fetchError } = await supabase

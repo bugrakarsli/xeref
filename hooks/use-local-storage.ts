@@ -10,6 +10,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
   useEffect(() => {
     try {
       const stored = window.localStorage.getItem(key)
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (stored) setValue(JSON.parse(stored) as T)
     } catch {
       // corrupt storage — ignore

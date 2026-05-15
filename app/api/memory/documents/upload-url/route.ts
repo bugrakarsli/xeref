@@ -1,33 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { parseBody, UploadUrlSchema } from '@/lib/validation'
 
-const ALLOWED_MIME_TYPES = new Set([
-  'application/pdf',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'text/plain',
-  'text/markdown',
-  'application/msword',
-])
 
 export async function POST(request: Request) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
 
-  const body = await request.json() as { name?: string; size?: number; mimeType?: string; ocr?: boolean }
-  const { name, size, mimeType = 'application/octet-stream', ocr = false } = body
+  const rawBody = await request.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(UploadUrlSchema, rawBody)
+  if (bodyError) return bodyError
 
-  if (!name || typeof size !== 'number') {
-    return NextResponse.json({ error: 'name and size are required' }, { status: 400 })
-  }
-
-  if (size > 50 * 1024 * 1024) {
-    return NextResponse.json({ error: 'File too large (max 50 MB)' }, { status: 413 })
-  }
-
-  if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-    return NextResponse.json({ error: 'File type not allowed' }, { status: 415 })
-  }
+  const { name, size, mimeType, ocr = false } = body
 
   const safeName = name.replace(/[^a-zA-Z0-9._\-() ]/g, '_')
   const storagePath = `${user.id}/${Date.now()}-${safeName}`

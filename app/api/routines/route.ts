@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { newTriggerId } from '@/lib/ids';
+import { parseBody, CreateRoutineSchema } from '@/lib/validation';
 
 export async function GET() {
   const supabase = await createClient();
@@ -15,7 +16,10 @@ export async function POST(req: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const body = await req.json();
+  const rawBody = await req.json().catch(() => null);
+  const { data: body, error: bodyError } = parseBody(CreateRoutineSchema, rawBody);
+  if (bodyError) return bodyError;
+
   const id = newTriggerId();
   const { error } = await supabase.from('routines').insert({
     id, user_id: user.id,

@@ -62,6 +62,7 @@ export function ChatInterface({
         const savedModel = saved as ModelId
         // Haiku moved from free→pro; reset free users who had it saved
         if (savedModel === 'claude-haiku-4-5-20251001' && userPlan === 'free') return
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setSelectedModel(savedModel)
       }
     } catch {}

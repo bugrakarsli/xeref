@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createOpenRouterForPlan } from '@/lib/ai/openrouter-config'
 import { generateText } from 'ai'
 import type { Plan, PlanContent } from '@/lib/types'
+import { parseBody, CreatePlanSchema } from '@/lib/validation'
 
 export async function GET() {
   const supabase = await createClient()
@@ -24,10 +25,11 @@ export async function POST(req: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { goal } = await req.json()
-  if (!goal || typeof goal !== 'string' || goal.trim().length < 5) {
-    return NextResponse.json({ error: 'goal is required' }, { status: 400 })
-  }
+  const rawBody = await req.json().catch(() => null)
+  const { data: body, error: bodyError } = parseBody(CreatePlanSchema, rawBody)
+  if (bodyError) return bodyError
+
+  const { goal } = body
 
   const { data: profile } = await supabase
     .from('profiles')
