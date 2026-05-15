@@ -1,8 +1,30 @@
 export const changelogEntries = [
   {
+    version: 'v2.8',
+    date: 'May 16, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Branch Protection — xeref repo is now public and protected: main requires a PR with 1 approval, passing CI (Lint, Type Check, Tests), and blocks force pushes and branch deletion via a GitHub Ruleset.',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'CI Reliability — excluded agent/ from the root tsconfig so the root tsc --noEmit no longer picks up agent/src files whose dependencies live in a separate node_modules. Bumped actions/checkout and actions/setup-node to v5 ahead of the June 2026 Node.js 24 runner default.',
+          'Repo hygiene — removed 2,832 tracked files from agent/node_modules/ (root .gitignore only excluded /node_modules at repo root). Updated to **/node_modules/ to cover all nested workspaces.',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.7',
     date: 'May 14, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',
