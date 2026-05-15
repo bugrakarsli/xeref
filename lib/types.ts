@@ -133,6 +133,7 @@ export interface LessonProgress {
 export interface Memory {
   id: string;
   user_id: string;
+  project_id: string | null;
   content: string;
   source: 'chat' | 'manual';
   tags: string[];

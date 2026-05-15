@@ -200,13 +200,17 @@ server.tool(
 
 server.tool(
   'save_memory',
-  'Save information to the user long-term memory (Archive). Call this to remember ideas, research, or preferences.',
-  { content: z.string().min(1), tags: z.array(z.string()).optional().default([]) },
-  async ({ content, tags }) => {
+  'Save information to the user long-term memory (Archive). Optionally scope it to a project.',
+  {
+    content: z.string().min(1),
+    tags: z.array(z.string()).optional().default([]),
+    project_id: z.string().uuid().optional(),
+  },
+  async ({ content, tags, project_id }) => {
     const sb = getSupabase()
     const { data, error } = await sb
       .from('memories')
-      .insert({ user_id: getUserId(), content, source: 'mcp', tags })
+      .insert({ user_id: getUserId(), content, source: 'mcp', tags, project_id: project_id ?? null })
       .select()
       .single()
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
@@ -216,13 +220,18 @@ server.tool(
 
 server.tool(
   'recall_memories',
-  'Search or recall memories by query.',
-  { query: z.string().optional() },
-  async ({ query }) => {
+  'Search memories by query. If project_id is given, returns project-scoped memories plus global ones.',
+  {
+    query: z.string().optional(),
+    project_id: z.string().uuid().optional(),
+  },
+  async ({ query, project_id }) => {
     const sb = getSupabase()
     let q = sb.from('memories').select('*').eq('user_id', getUserId()).order('created_at', { ascending: false })
+    if (project_id) {
+      q = q.or(`project_id.eq.${project_id},project_id.is.null`)
+    }
     if (query) {
-      // Basic text search simulation using ilike on content
       q = q.ilike('content', `%${query}%`)
     }
     const { data, error } = await q
@@ -240,6 +249,215 @@ server.tool(
     const { error } = await sb.from('memories').delete().eq('id', id).eq('user_id', getUserId())
     if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
     return { content: [{ type: 'text', text: `Memory ${id} deleted.` }] }
+  }
+)
+
+// ── Notes tools ──────────────────────────────────────────────────────────────
+
+server.tool(
+  'list_notes',
+  'List all notes for the user, most recently updated first.',
+  {},
+  async () => {
+    const sb = getSupabase()
+    const { data, error } = await sb
+      .from('notes')
+      .select('id, title, content, created_at, updated_at')
+      .eq('user_id', getUserId())
+      .order('updated_at', { ascending: false })
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'create_note',
+  'Create a new note.',
+  {
+    title: z.string().optional().default('Untitled'),
+    content: z.string().optional().default(''),
+  },
+  async ({ title, content }) => {
+    const sb = getSupabase()
+    const { data, error } = await sb
+      .from('notes')
+      .insert({ user_id: getUserId(), title, content })
+      .select()
+      .single()
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'update_note',
+  'Update a note by ID.',
+  {
+    id: z.string().uuid(),
+    title: z.string().optional(),
+    content: z.string().optional(),
+  },
+  async ({ id, title, content }) => {
+    const sb = getSupabase()
+    const updates: Record<string, string> = { updated_at: new Date().toISOString() }
+    if (title !== undefined) updates.title = title
+    if (content !== undefined) updates.content = content
+    const { data, error } = await sb
+      .from('notes')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', getUserId())
+      .select()
+      .single()
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'delete_note',
+  'Delete a note by ID.',
+  { id: z.string().uuid() },
+  async ({ id }) => {
+    const sb = getSupabase()
+    const { error } = await sb.from('notes').delete().eq('id', id).eq('user_id', getUserId())
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: `Note ${id} deleted.` }] }
+  }
+)
+
+// ── Skills tools ─────────────────────────────────────────────────────────────
+
+server.tool(
+  'list_skills',
+  'List all skills — built-in skills visible to everyone plus the user\'s own custom skills.',
+  {},
+  async () => {
+    const sb = getSupabase()
+    const { data, error } = await sb
+      .from('skills')
+      .select('id, name, description, endpoint_url, tools, source, created_at')
+      .or(`source.eq.built-in,user_id.eq.${getUserId()}`)
+      .order('source', { ascending: false })
+      .order('name', { ascending: true })
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'create_skill',
+  'Create a new custom skill for the user.',
+  {
+    name: z.string().min(1),
+    description: z.string().optional(),
+    endpoint_url: z.string().url().optional(),
+    tools: z.array(z.string()).optional().default([]),
+  },
+  async ({ name, description, endpoint_url, tools }) => {
+    const sb = getSupabase()
+    const { data, error } = await sb
+      .from('skills')
+      .insert({
+        user_id: getUserId(),
+        name,
+        description: description ?? null,
+        endpoint_url: endpoint_url ?? null,
+        tools,
+        source: 'user',
+      })
+      .select()
+      .single()
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'update_skill',
+  'Update a custom skill by ID. Built-in skills are read-only.',
+  {
+    id: z.string().uuid(),
+    name: z.string().optional(),
+    description: z.string().optional(),
+    endpoint_url: z.string().url().optional(),
+    tools: z.array(z.string()).optional(),
+  },
+  async ({ id, name, description, endpoint_url, tools }) => {
+    const sb = getSupabase()
+    const { data: existing } = await sb.from('skills').select('source').eq('id', id).single()
+    if (existing?.source === 'built-in') {
+      return { content: [{ type: 'text', text: 'Error: Built-in skills are read-only.' }], isError: true }
+    }
+    const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
+    if (name !== undefined) updates.name = name
+    if (description !== undefined) updates.description = description
+    if (endpoint_url !== undefined) updates.endpoint_url = endpoint_url
+    if (tools !== undefined) updates.tools = tools
+    const { data, error } = await sb
+      .from('skills')
+      .update(updates)
+      .eq('id', id)
+      .eq('user_id', getUserId())
+      .select()
+      .single()
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] }
+  }
+)
+
+server.tool(
+  'delete_skill',
+  'Delete a custom skill by ID. Built-in skills cannot be deleted.',
+  { id: z.string().uuid() },
+  async ({ id }) => {
+    const sb = getSupabase()
+    const { data: existing } = await sb.from('skills').select('source').eq('id', id).single()
+    if (existing?.source === 'built-in') {
+      return { content: [{ type: 'text', text: 'Error: Built-in skills cannot be deleted.' }], isError: true }
+    }
+    const { error } = await sb.from('skills').delete().eq('id', id).eq('user_id', getUserId())
+    if (error) return { content: [{ type: 'text', text: `Error: ${error.message}` }], isError: true }
+    return { content: [{ type: 'text', text: `Skill ${id} deleted.` }] }
+  }
+)
+
+// ── Global search ─────────────────────────────────────────────────────────────
+
+server.tool(
+  'global_search',
+  'Search across all content types — tasks, notes, skills, and memories — simultaneously. Returns merged results ranked by recency.',
+  { query: z.string().min(1) },
+  async ({ query }) => {
+    const sb = getSupabase()
+    const uid = getUserId()
+    const like = `%${query}%`
+
+    const [tasks, notes, skills, memories] = await Promise.all([
+      sb.from('tasks').select('id, title, description, status, priority, created_at')
+        .eq('user_id', uid).or(`title.ilike.${like},description.ilike.${like}`).limit(10),
+      sb.from('notes').select('id, title, content, created_at')
+        .eq('user_id', uid).or(`title.ilike.${like},content.ilike.${like}`).limit(10),
+      sb.from('skills').select('id, name, description, source, created_at')
+        .or(`source.eq.built-in,user_id.eq.${uid}`)
+        .or(`name.ilike.${like},description.ilike.${like}`).limit(10),
+      sb.from('memories').select('id, content, tags, project_id, created_at')
+        .eq('user_id', uid).ilike('content', like).limit(10),
+    ])
+
+    const results = [
+      ...(tasks.data ?? []).map(r => ({ type: 'task', ...r })),
+      ...(notes.data ?? []).map(r => ({ type: 'note', ...r })),
+      ...(skills.data ?? []).map(r => ({ type: 'skill', ...r })),
+      ...(memories.data ?? []).map(r => ({ type: 'memory', ...r })),
+    ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
+    const errors = [tasks.error, notes.error, skills.error, memories.error].filter(Boolean)
+    if (errors.length === 4) {
+      return { content: [{ type: 'text', text: `Error: ${errors[0]?.message}` }], isError: true }
+    }
+
+    return { content: [{ type: 'text', text: JSON.stringify({ query, count: results.length, results }, null, 2) }] }
   }
 )
 

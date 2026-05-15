@@ -256,7 +256,7 @@ export async function POST(req: Request) {
             if (!memoryEnabled) {
               return { success: false, message: 'Memory saving is currently disabled. Enable the "Save Memories from Chat" workflow in Workflows settings.' }
             }
-            await saveMemory(content, 'chat', tags ?? [])
+            await saveMemory(content, 'chat', tags ?? [], projectId)
             return { success: true, message: `Saved to memory: "${content}"` }
           },
         }),
@@ -268,7 +268,7 @@ export async function POST(req: Request) {
             query: z.string().optional(),
           }),
           execute: async ({ query }: { query?: string }) => {
-            const memories = await getUserMemories()
+            const memories = await getUserMemories(projectId)
             const filtered = query
               ? memories.filter((m) =>
                   m.content.toLowerCase().includes(query.toLowerCase()) ||
