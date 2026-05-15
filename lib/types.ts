@@ -249,8 +249,6 @@ export interface XerefCodeAppearanceSettings {
 
 export interface XerefCodeGeneralSettings {
   classify_session_states: boolean;
-  auto_create_pull_requests: boolean;
-  auto_fix_pull_requests: boolean;
 }
 
 export interface XerefCodeWebSettings {
@@ -320,8 +318,6 @@ export interface Plan {
 export const DEFAULT_XEREF_CODE: XerefCodeAppearanceSettings & XerefCodeGeneralSettings & XerefCodeWebSettings = {
   code_font: null,
   classify_session_states: true,
-  auto_create_pull_requests: false,
-  auto_fix_pull_requests: false,
   require_repo_access_for_shared_sessions: false,
   show_name_on_shared_sessions: true,
 }

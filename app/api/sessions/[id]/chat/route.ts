@@ -73,6 +73,7 @@ export async function POST(
         user_id: user.id,
         role: 'user',
         content: userContent,
+        parts: lastUserMsg?.parts ?? [{ type: 'text', text: userContent }],
       });
 
       // Set session title from first user message if still default
@@ -114,11 +115,15 @@ export async function POST(
       system: systemPrompt,
       messages: modelMessages,
       onFinish: async ({ text }) => {
+        // Until tool calls are wired into this route, parts is just the text.
+        // The column exists now so the future tool-call slice can write real
+        // tool-invocation parts without another migration.
         await supabase.from('code_messages').insert({
           session_id: sessionId,
           user_id: user.id,
           role: 'assistant',
           content: text,
+          parts: [{ type: 'text', text }],
         });
       },
     });

@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ChevronDown, Check } from 'lucide-react';
+import { Sparkles, ChevronDown, Check, Settings2 } from 'lucide-react';
 import { ChatInputWithGitHub } from './ChatInputWithGitHub';
 import { SessionCard } from './SessionCard';
 import type { CodeSession } from '@/lib/types';
@@ -16,6 +16,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 type EditMode = 'default' | 'accept-edits' | 'plan';
 type Effort = 'low' | 'medium' | 'high';
@@ -140,33 +146,60 @@ export function CodeLanding({
           </DropdownMenu>
 
           {/* Model + effort picker */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="ml-auto flex items-center gap-1.5 hover:text-white/60 transition-colors focus:outline-none">
-                <span>{MODELS.find(m => m.id === model)?.label ?? 'Xeref'} · {EFFORT_LABELS[effort]}</span>
-                <ChevronDown size={11} className="opacity-50" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-44">
-              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Model</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {MODELS.map((m) => (
-                <DropdownMenuItem key={m.id} onSelect={() => setModel(m.id)} className="flex items-center gap-2 text-xs">
-                  <Check size={12} className={model === m.id ? 'opacity-100' : 'opacity-0'} />
-                  {m.label}
-                </DropdownMenuItem>
-              ))}
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Reasoning effort</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              {(Object.entries(EFFORT_LABELS) as [Effort, string][]).map(([id, label]) => (
-                <DropdownMenuItem key={id} onSelect={() => setEffort(id)} className="flex items-center gap-2 text-xs">
-                  <Check size={12} className={effort === id ? 'opacity-100' : 'opacity-0'} />
-                  {label}
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {(() => {
+            const modelMenuContent = (
+              <DropdownMenuContent align="end" className="min-w-44">
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Model</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {MODELS.map((m) => (
+                  <DropdownMenuItem key={m.id} onSelect={() => setModel(m.id)} className="flex items-center gap-2 text-xs">
+                    <Check size={12} className={model === m.id ? 'opacity-100' : 'opacity-0'} />
+                    {m.label}
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel className="text-xs font-medium text-muted-foreground">Reasoning effort</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {(Object.entries(EFFORT_LABELS) as [Effort, string][]).map(([id, label]) => (
+                  <DropdownMenuItem key={id} onSelect={() => setEffort(id)} className="flex items-center gap-2 text-xs">
+                    <Check size={12} className={effort === id ? 'opacity-100' : 'opacity-0'} />
+                    {label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            );
+            return (
+              <div className="ml-auto flex items-center gap-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-1.5 hover:text-white/60 transition-colors focus:outline-none">
+                      <span>{MODELS.find(m => m.id === model)?.label ?? 'Xeref'} · {EFFORT_LABELS[effort]}</span>
+                      <ChevronDown size={11} className="opacity-50" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  {modelMenuContent}
+                </DropdownMenu>
+                <TooltipProvider delayDuration={200}>
+                  <Tooltip>
+                    <DropdownMenu>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            aria-label="Model & reasoning settings"
+                            className="flex items-center justify-center rounded-md p-1 text-white/30 hover:text-white hover:bg-white/10 transition-colors focus:outline-none"
+                          >
+                            <Settings2 size={12} />
+                          </button>
+                        </DropdownMenuTrigger>
+                      </TooltipTrigger>
+                      {modelMenuContent}
+                    </DropdownMenu>
+                    <TooltipContent side="top">Model & reasoning settings</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+            );
+          })()}
         </div>
       </div>
     </div>

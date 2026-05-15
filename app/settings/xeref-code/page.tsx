@@ -128,12 +128,6 @@ export default function XerefCodeSettingsPage() {
         <Row label="Classify session states" description="Automatically tag sessions as active, idle, or stale.">
           <Toggle checked={settings.classify_session_states} onChange={v => save({ classify_session_states: v })} />
         </Row>
-        <Row label="Auto-create pull requests" description="Automatically open a pull request when a session completes.">
-          <Toggle checked={settings.auto_create_pull_requests} onChange={v => save({ auto_create_pull_requests: v })} />
-        </Row>
-        <Row label="Auto-fix pull requests" description="Apply AI-suggested fixes to failing pull requests automatically.">
-          <Toggle checked={settings.auto_fix_pull_requests} onChange={v => save({ auto_fix_pull_requests: v })} />
-        </Row>
       </Section>
 
       <Section title="Xeref Code on the Web">
