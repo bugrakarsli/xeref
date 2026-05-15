@@ -6,6 +6,11 @@ import { useState, useEffect, useRef, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { ChatInputWithGitHub } from '@/app/code/_components/ChatInputWithGitHub'
 import { ChatMessage } from '@/components/dashboard/chat/chat-message'
+import {
+  SessionRightPanels,
+  SessionViewsMenu,
+  useSessionPanels,
+} from '@/app/code/_components/SessionPanels'
 import { isSessionId } from '@/lib/ids'
 import type { CodeSession } from '@/lib/types'
 import type { ModelId } from '@/components/dashboard/chat/chat-input'
@@ -171,52 +176,60 @@ export function CodeSessionView({ sessionId, onSessionCreated }: CodeSessionView
     sendMessage({ text: getMessageText(prevUser) })
   }
 
+  const { selected: openPanels, togglePanel, closePanel } = useSessionPanels()
+
   return (
     <div className="flex flex-col h-full bg-background text-foreground">
-      <header className="px-6 py-4 border-b">
-        <h1 className="text-lg font-medium">{sessionTitle}</h1>
+      <header className="px-6 py-4 border-b flex items-center justify-between gap-3">
+        <h1 className="text-lg font-medium truncate">{sessionTitle}</h1>
+        <SessionViewsMenu selected={openPanels} onToggle={togglePanel} />
       </header>
 
-      <div className="flex-1 overflow-y-auto py-4">
-        {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center">
-            <p className="text-muted-foreground text-sm">Start coding by selecting a repository or typing a message below.</p>
+      <div className="flex-1 flex min-h-0 overflow-hidden">
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="flex-1 overflow-y-auto py-4">
+            {messages.length === 0 ? (
+              <div className="h-full flex items-center justify-center">
+                <p className="text-muted-foreground text-sm">Start coding by selecting a repository or typing a message below.</p>
+              </div>
+            ) : (
+              messages
+                .filter(m => m.role === 'user' || m.role === 'assistant')
+                .map((m, i, arr) => {
+                  const isLast = i === arr.length - 1
+                  return (
+                    <ChatMessage
+                      key={m.id}
+                      role={m.role as 'user' | 'assistant'}
+                      content={getMessageText(m)}
+                      parts={m.parts as Parameters<typeof ChatMessage>[0]['parts']}
+                      isStreaming={isLast && isLoading}
+                      messageId={m.id}
+                      isLast={isLast}
+                      onEdit={(newContent) => handleEditMessage(m.id, newContent)}
+                      onRetry={() => handleRetry(m.id)}
+                    />
+                  )
+                })
+            )}
+            <div ref={messagesEndRef} />
           </div>
-        ) : (
-          messages
-            .filter(m => m.role === 'user' || m.role === 'assistant')
-            .map((m, i, arr) => {
-              const isLast = i === arr.length - 1
-              return (
-                <ChatMessage
-                  key={m.id}
-                  role={m.role as 'user' | 'assistant'}
-                  content={getMessageText(m)}
-                  parts={m.parts as Parameters<typeof ChatMessage>[0]['parts']}
-                  isStreaming={isLast && isLoading}
-                  messageId={m.id}
-                  isLast={isLast}
-                  onEdit={(newContent) => handleEditMessage(m.id, newContent)}
-                  onRetry={() => handleRetry(m.id)}
-                />
-              )
-            })
-        )}
-        <div ref={messagesEndRef} />
-      </div>
 
-      <div className="border-t p-4 pb-6">
-        <ChatInputWithGitHub
-          sessionId={sessionIdRef.current || undefined}
-          input={input}
-          onInputChange={setInput}
-          onSubmit={handleSubmit}
-          isLoading={isLoading}
-          selectedRepo={selectedRepo}
-          onRepoSelect={setSelectedRepo}
-          selectedModel={model}
-          onModelSelect={setModel}
-        />
+          <div className="border-t p-4 pb-6">
+            <ChatInputWithGitHub
+              sessionId={sessionIdRef.current || undefined}
+              input={input}
+              onInputChange={setInput}
+              onSubmit={handleSubmit}
+              isLoading={isLoading}
+              selectedRepo={selectedRepo}
+              onRepoSelect={setSelectedRepo}
+              selectedModel={model}
+              onModelSelect={setModel}
+            />
+          </div>
+        </div>
+        <SessionRightPanels selected={openPanels} onClose={closePanel} />
       </div>
     </div>
   )
