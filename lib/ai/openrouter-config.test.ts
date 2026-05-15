@@ -62,9 +62,9 @@ describe('openrouter-config', () => {
       expect(isModelAllowedForPlan('claude-sonnet-4-6', 'free')).toBe(false)
     })
 
-    it('blocks claude-opus-4-6 for free plan', async () => {
+    it('blocks claude-opus-4-7 for free plan', async () => {
       const { isModelAllowedForPlan } = await import('./openrouter-config')
-      expect(isModelAllowedForPlan('claude-opus-4-6', 'free')).toBe(false)
+      expect(isModelAllowedForPlan('claude-opus-4-7', 'free')).toBe(false)
     })
 
     it('blocks best for free plan', async () => {
@@ -87,9 +87,9 @@ describe('openrouter-config', () => {
       expect(isModelAllowedForPlan('claude-sonnet-4-6', 'pro')).toBe(true)
     })
 
-    it('blocks claude-opus-4-6 for pro plan', async () => {
+    it('blocks claude-opus-4-7 for pro plan', async () => {
       const { isModelAllowedForPlan } = await import('./openrouter-config')
-      expect(isModelAllowedForPlan('claude-opus-4-6', 'pro')).toBe(false)
+      expect(isModelAllowedForPlan('claude-opus-4-7', 'pro')).toBe(false)
     })
 
     it('blocks best for pro plan', async () => {
@@ -99,7 +99,7 @@ describe('openrouter-config', () => {
 
     it('allows all models for ultra plan', async () => {
       const { isModelAllowedForPlan } = await import('./openrouter-config')
-      for (const m of ['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-6', 'opus-plan', 'best']) {
+      for (const m of ['xeref-free', 'claude-haiku-4-5-20251001', 'claude-sonnet-4-6', 'claude-opus-4-7', 'opus-plan', 'best']) {
         expect(isModelAllowedForPlan(m, 'ultra')).toBe(true)
       }
     })
@@ -128,9 +128,9 @@ describe('openrouter-config', () => {
       expect(resolveModelId('claude-sonnet-4-6')).toBe('anthropic/claude-sonnet-4-6')
     })
 
-    it('resolves claude-opus-4-6 to anthropic/claude-opus-4-6', async () => {
+    it('resolves claude-opus-4-7 to anthropic/claude-opus-4-7', async () => {
       const { resolveModelId } = await import('./openrouter-config')
-      expect(resolveModelId('claude-opus-4-6')).toBe('anthropic/claude-opus-4-6')
+      expect(resolveModelId('claude-opus-4-7')).toBe('anthropic/claude-opus-4-7')
     })
 
     it('resolves best to openrouter/auto (not opus)', async () => {
@@ -143,11 +143,11 @@ describe('openrouter-config', () => {
     // opus-plan dynamic routing
     it('resolves opus-plan to opus when message contains planning keyword', async () => {
       const { resolveModelId } = await import('./openrouter-config')
-      expect(resolveModelId('opus-plan', 'help me plan this project')).toBe('anthropic/claude-opus-4-6')
-      expect(resolveModelId('opus-plan', 'create a roadmap for Q3')).toBe('anthropic/claude-opus-4-6')
-      expect(resolveModelId('opus-plan', 'decompose this into tasks')).toBe('anthropic/claude-opus-4-6')
-      expect(resolveModelId('opus-plan', 'break down the architecture')).toBe('anthropic/claude-opus-4-6')
-      expect(resolveModelId('opus-plan', 'set agent goals')).toBe('anthropic/claude-opus-4-6')
+      expect(resolveModelId('opus-plan', 'help me plan this project')).toBe('anthropic/claude-opus-4-7')
+      expect(resolveModelId('opus-plan', 'create a roadmap for Q3')).toBe('anthropic/claude-opus-4-7')
+      expect(resolveModelId('opus-plan', 'decompose this into tasks')).toBe('anthropic/claude-opus-4-7')
+      expect(resolveModelId('opus-plan', 'break down the architecture')).toBe('anthropic/claude-opus-4-7')
+      expect(resolveModelId('opus-plan', 'set agent goals')).toBe('anthropic/claude-opus-4-7')
     })
 
     it('resolves opus-plan to sonnet when message has no planning keywords', async () => {

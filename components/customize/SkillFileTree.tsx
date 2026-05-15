@@ -31,8 +31,8 @@ export function SkillFileTree({ skillId, onSelectFile, selectedPath }: SkillFile
         if (!res.ok) throw new Error('Failed to load files')
         const data = await res.json()
         setFiles(data.files || [])
-      } catch (err: any) {
-        setError(err.message)
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Unknown error')
       } finally {
         setIsLoading(false)
       }

@@ -5,7 +5,9 @@ import { getSkillById } from '@/app/actions/skills'
 // In a real implementation, this would interact with a storage bucket or local file system
 // For now, we mock a basic file structure for the given skill
 
-const MOCK_FILES: Record<string, any[]> = {
+type FileNode = { name: string; type: 'file' | 'directory'; path: string; children?: FileNode[] }
+
+const MOCK_FILES: Record<string, FileNode[]> = {
   'a1b2c3d4-e5f6-7890-abcd-ef1234567890': [ // skill-creator
     { name: 'README.md', type: 'file', path: 'README.md' },
     { name: 'src', type: 'directory', path: 'src', children: [
