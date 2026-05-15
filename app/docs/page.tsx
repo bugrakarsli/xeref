@@ -86,7 +86,19 @@ const sections = [
       },
       {
         heading: 'AI Chat',
-        body: 'Chat with any of your saved agents. The conversation uses the agent\'s generated system prompt as context, so each chat session is specialized to a specific agent you built in XerefClaw. Model access depends on your plan (see Pricing).',
+        body: 'Chat with any of your saved agents. The conversation uses the agent\'s generated system prompt as context, so each chat session is specialized to a specific agent you built in XerefClaw. Model access depends on your plan (see Plans & Model Access).',
+      },
+      {
+        heading: 'Memory',
+        body: 'Upload documents (PDF, text, images) and xeref chunks and embeds them into your personal Pinecone vector store. During AI Chat, relevant memory chunks are retrieved and injected as context automatically. You can also add manual memory entries and search across everything you\'ve stored.',
+      },
+      {
+        heading: 'Artifacts',
+        body: 'A versioned store for outputs your agents produce: code snippets, documents, prompts, data files, images, and workflows. Each artifact tracks its full version history and can be published with a share URL.',
+      },
+      {
+        heading: 'Plans',
+        body: 'Generate structured execution plans from a single goal. xeref breaks it into phases, tasks, roles, and KPIs — giving you a ready-to-execute project blueprint you can track in the Tasks view.',
       },
       {
         heading: 'Calendar',
@@ -107,12 +119,42 @@ const sections = [
     ],
   },
   {
+    id: 'customize',
+    title: 'Customize — /customize',
+    content: [
+      {
+        heading: 'Connectors',
+        body: 'Manage OAuth connections and local integrations at /customize/connectors. The connector panel is organized into three groups: Web (GitHub, Gmail, Google Calendar, Notion, Slack, Supabase, Custom Webhook, Vercel), Channels (Telegram Bot), and Desktop (Filesystem). Connected services show a blue dot. Click any connector to view its detail panel, manage scopes, or disconnect.',
+      },
+      {
+        heading: 'Web connectors',
+        body: 'GitHub, Gmail, Google Calendar, Notion, Slack, and Vercel use OAuth — click Connect and authorize in the provider\'s window. The connection token is stored encrypted (AES-256-GCM) server-side. Supabase and Custom Webhook are configured manually via token/URL entry.',
+      },
+      {
+        heading: 'Telegram Bot',
+        body: 'Connect a Telegram bot by pasting your bot token in Dashboard → Deploy. Once connected, messages sent to your bot are routed to your configured xeref agent and replies are sent back through Telegram. The connector shows your masked token and a Disconnect action.',
+      },
+      {
+        heading: 'Filesystem (Desktop)',
+        body: 'Give your agents local file access via the built-in MCP Filesystem server. Add allowed directories by path, then configure per-tool permissions (Always allow / Ask each time / Never allow) for read, write, and delete operations. Settings persist in your browser\'s local storage.',
+      },
+      {
+        heading: 'Skills',
+        body: 'Browse and manage agent skills at /customize/skills. Skills are reusable instruction sets that extend what your agents can do — search for a skill, view its source, and add it to a project. Skills are stored in your profile and can be attached to any agent project.',
+      },
+      {
+        heading: 'Sidebar customization',
+        body: 'Control which views appear in your dashboard sidebar via the "Customize Sidebar" button at the bottom of the nav. Toggle visibility, reorder items with ↑/↓, and hide items you don\'t use — they collect under a "More" group. Preferences are saved to your profile and persist across devices.',
+      },
+    ],
+  },
+  {
     id: 'mcp',
     title: 'MCP Server',
     content: [
       {
         heading: 'What is the MCP backend?',
-        body: 'Every piece of data in xeref.ai — projects, tasks, notes, memory, daily targets — is exposed as an MCP (Model Context Protocol) tool. Your Claude or Antigravity agent can connect to this server and read, write, and reason over your workspace directly.',
+        body: 'Every piece of data in xeref.ai — projects, tasks, memories, daily targets — is exposed as an MCP (Model Context Protocol) tool. Your Claude or Antigravity agent can connect to this server and read, write, and reason over your workspace directly.',
       },
       {
         heading: 'Connecting your agent',
@@ -120,7 +162,7 @@ const sections = [
       },
       {
         heading: 'Available tools',
-        body: 'list_projects, create_task, update_task, search_memory, set_daily_targets, suggest_next_task, create_project_with_plan, list_routines, and more. Full tool reference is in the API tab of your Dashboard settings.',
+        body: 'list_projects, create_task, update_task, list_memories, save_memory, recall_memories, delete_memory, set_daily_targets, suggest_next_task, create_project_with_plan, rename_project, list_routines, and more. Full tool reference is in the API tab of your Dashboard settings.',
       },
     ],
   },
@@ -134,11 +176,11 @@ const sections = [
       },
       {
         heading: 'Pro — $17/mo or $170/yr',
-        body: 'Everything in Basic, plus Claude Haiku and Claude Sonnet model access in AI Chat, higher workflow run limits, and priority support.',
+        body: 'Everything in Basic, plus Claude Haiku 4.5, Claude Sonnet 4.6, and DeepSeek V4 Flash model access in AI Chat, higher workflow run limits, and priority support.',
       },
       {
         heading: 'Ultra — $77/mo or $770/yr',
-        body: 'Everything in Pro, plus all available models, unlimited workflow runs, and full memory/embedding storage.',
+        body: 'Everything in Pro, plus all available models (including DeepSeek V4 Pro), unlimited workflow runs, and full memory/embedding storage.',
       },
       {
         heading: 'Upgrading',

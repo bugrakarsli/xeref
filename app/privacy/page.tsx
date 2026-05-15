@@ -45,6 +45,12 @@ export default function PrivacyPage() {
                 <strong>Usage Data:</strong> Feature interactions, model selections, agent configurations, and chat history generated while using the platform.
               </li>
               <li>
+                <strong>Connected Account Tokens:</strong> When you connect a third-party service (GitHub, Gmail, Google Calendar, Notion, Slack, Vercel, or Telegram), we receive and store an OAuth access token or bot token issued by that provider. Tokens are encrypted at rest using AES-256-GCM and are used only to call the provider&apos;s API on your behalf. You can revoke any token at any time by disconnecting the service in /customize/connectors.
+              </li>
+              <li>
+                <strong>Uploaded Content &amp; Memory:</strong> Files you upload to the Memory view (PDFs, text, images — up to 50 MB per file) are stored in Supabase Storage. Their text content is chunked, embedded, and stored as vectors in Pinecone to enable semantic search during AI Chat. Manual memory entries are stored in the same index.
+              </li>
+              <li>
                 <strong>Payment Data:</strong> Subscription and billing transactions are handled entirely by <strong>Creem</strong>. We never store your credit card or payment card details on our servers.
               </li>
               <li>
@@ -60,6 +66,8 @@ export default function PrivacyPage() {
               <li>Provide, operate, and maintain the xeref.ai platform and its features</li>
               <li>Process your subscription and manage billing through Creem</li>
               <li>Authenticate your identity and secure your account</li>
+              <li>Connect to and interact with third-party services you have explicitly authorized (GitHub, Gmail, Google Calendar, Notion, Slack, Vercel, Telegram)</li>
+              <li>Enable semantic memory search by embedding your uploaded content into a personal vector index</li>
               <li>Respond to support requests and communicate service-related updates</li>
               <li>Analyze aggregate usage patterns to improve product features</li>
               <li>Comply with our legal obligations under Turkish law</li>
@@ -85,13 +93,18 @@ export default function PrivacyPage() {
               xeref.ai integrates with the following third-party services to deliver its functionality. Each is subject to their own privacy policies:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
-              <li><strong>Supabase</strong> — authentication and database storage</li>
+              <li><strong>Supabase</strong> — authentication, database storage, and file storage for uploaded documents</li>
               <li><strong>Creem</strong> — subscription billing and payment processing</li>
-              <li><strong>OpenRouter</strong> — AI model routing (your messages are processed by AI providers via OpenRouter)</li>
+              <li><strong>OpenRouter</strong> — routing of AI chat messages to underlying model providers (Anthropic, OpenAI, Google, DeepSeek). Your chat messages are transmitted to these providers when you use AI Chat.</li>
+              <li><strong>Pinecone</strong> — vector storage for semantic memory and document embeddings</li>
               <li><strong>Vercel</strong> — hosting, CDN, and edge functions</li>
+              <li><strong>GitHub, Google (Gmail / Calendar), Notion, Slack, Vercel API, Telegram</strong> — only when you explicitly connect them via /customize/connectors. We store only the access token needed to act on your behalf; we do not mirror or retain the content from those services beyond what is required to fulfill your request.</li>
             </ul>
             <p className="leading-7 mt-4">
-              When you use AI features, the content of your messages is transmitted to AI model providers through OpenRouter. Do not send sensitive personal information in AI chat sessions.
+              When you use AI features, the content of your messages is transmitted to AI model providers (Anthropic, OpenAI, Google, DeepSeek) through OpenRouter. Do not send sensitive personal information in AI chat sessions.
+            </p>
+            <p className="leading-7 mt-4">
+              When you enable the Filesystem connector, agents can read and write files in directories you explicitly allow on your local machine. File contents are not uploaded to xeref.ai servers unless you choose to copy them into a chat or upload them to Memory.
             </p>
           </section>
 
@@ -127,6 +140,9 @@ export default function PrivacyPage() {
             <p className="leading-7 mt-4">
               We retain your personal data for as long as your account is active. If you delete your account, we will delete or anonymize your personal data within <strong>30 days</strong>, except where we are required to retain it for legal or financial compliance purposes (e.g., transaction records).
             </p>
+            <p className="leading-7 mt-4">
+              Disconnecting a third-party connector immediately revokes the stored token and deletes it from our database. Deleting a memory item removes its record from Supabase and its corresponding vector chunks from Pinecone.
+            </p>
           </section>
 
           <section>
@@ -160,7 +176,7 @@ export default function PrivacyPage() {
             </p>
           </section>
 
-          <p className="mt-12 pt-8 border-t text-sm text-muted-foreground italic">Last updated: April 25, 2026</p>
+          <p className="mt-12 pt-8 border-t text-sm text-muted-foreground italic">Last updated: May 15, 2026</p>
         </div>
       </div>
       <SiteFooter />

@@ -40,9 +40,15 @@ export default function TermsPage() {
               xeref.ai is an AI agent builder and productivity platform. The Service includes:
             </p>
             <ul className="list-disc pl-6 space-y-2 mt-2">
-              <li>The <strong>CLAWS Builder</strong> — a structured methodology for designing custom AI agents</li>
-              <li><strong>AI Chat</strong> — conversational interface powered by large language models</li>
-              <li><strong>Task &amp; Workflow Management</strong> — tools for organizing and automating work</li>
+              <li><strong>XerefClaw (CLAWS Builder)</strong> — a structured methodology for designing and generating custom AI agent system prompts</li>
+              <li><strong>AI Chat</strong> — conversational interface powered by large language models (model access varies by plan)</li>
+              <li><strong>Task &amp; Workflow Management</strong> — tools for organizing, automating, and scheduling work</li>
+              <li><strong>Memory</strong> — upload documents and semantically search across stored content during AI sessions</li>
+              <li><strong>Connectors</strong> — OAuth-based integrations with GitHub, Gmail, Google Calendar, Notion, Slack, Vercel, and Telegram, plus a local Filesystem connector via MCP</li>
+              <li><strong>Skills</strong> — reusable instruction sets that extend agent capabilities</li>
+              <li><strong>Artifacts</strong> — versioned outputs (code, documents, prompts, data, images, workflows) with optional public share URLs</li>
+              <li><strong>Plans</strong> — AI-generated execution plans broken into phases, tasks, and KPIs</li>
+              <li><strong>MCP Server</strong> — programmatic access to your xeref workspace for use with external AI agents such as Claude or Antigravity</li>
               <li><strong>Agent Dashboard</strong> — a unified interface for managing your agents and productivity</li>
             </ul>
             <p className="leading-7 mt-4">
@@ -96,6 +102,9 @@ export default function TermsPage() {
               <li>Scrape, crawl, or use automated means to access the Service beyond normal use</li>
               <li>Circumvent rate limits, plan restrictions, or access controls</li>
               <li>Impersonate any person or entity or misrepresent your affiliation</li>
+              <li>Only connect third-party accounts (GitHub, Gmail, Google Calendar, Notion, Slack, Vercel, Telegram) that you own or are explicitly authorized to use; do not connect accounts on behalf of others without their consent</li>
+              <li>When enabling the Filesystem connector, only grant access to directories on machines and under accounts you control; you are solely responsible for the files agents can read or modify</li>
+              <li>Publish Artifact share URLs only for content you own or have rights to share; do not publish content containing third-party personal data, credentials, or confidential material — share URLs are publicly accessible to anyone with the link</li>
               <li>Violate any applicable local, national, or international law or regulation</li>
             </ul>
           </section>
@@ -168,7 +177,7 @@ export default function TermsPage() {
             </p>
           </section>
 
-          <p className="mt-12 pt-8 border-t text-sm text-muted-foreground italic">Last updated: April 25, 2026</p>
+          <p className="mt-12 pt-8 border-t text-sm text-muted-foreground italic">Last updated: May 15, 2026</p>
         </div>
       </div>
       <SiteFooter />
