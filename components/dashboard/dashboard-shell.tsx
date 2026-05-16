@@ -177,6 +177,17 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   }, [])
   /* eslint-enable react-hooks/set-state-in-effect */
 
+  // Redirect to login when the session is invalidated (e.g. expired refresh token)
+  useEffect(() => {
+    const supabase = createClient()
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') {
+        router.push('/login')
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [router])
+
   useEffect(() => {
     window.dispatchEvent(new CustomEvent('xeref_active_view_changed', { detail: activeView }))
   }, [activeView])
