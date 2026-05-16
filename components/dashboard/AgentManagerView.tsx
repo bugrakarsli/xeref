@@ -23,7 +23,7 @@ const Toggle = ({ active, onChange }: { active: boolean; onChange: () => void })
     </div>
 );
 
-export type ViewType = 'tasks' | 'workflows' | 'settings' | 'new_conversation' | 'knowledge';
+export type ViewType = 'tasks' | 'workflows' | 'settings' | 'new_conversation' | 'knowledge' | 'workspace_detail';
 
 interface AgentManagerViewProps {
     onOpenEditor?: () => void;
@@ -42,6 +42,7 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
 
     const [workspaceDropdownOpen, setWorkspaceDropdownOpen] = useState(false);
     const [selectedWorkspace, setSelectedWorkspace] = useState('xeref-claw');
+    const [activeWorkspaceView, setActiveWorkspaceView] = useState<string | null>(null);
     const [contextDropdownOpen, setContextDropdownOpen] = useState(false);
     const [modeDropdownOpen, setModeDropdownOpen] = useState(false);
     const [selectedMode, setSelectedMode] = useState('Planning');
@@ -208,8 +209,12 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
                         </div>
                         <div className="space-y-0.5 relative">
                             {['portfolio', 'xeref-claw', 'XerefWhisper-desktop'].map(ws => (
-                                <button key={ws} className="w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200 transition-colors">
-                                    <ChevronRight size={12} className="text-gray-600 ml-1" />
+                                <button
+                                    key={ws}
+                                    onClick={() => { setActiveWorkspaceView(ws); setActiveView('workspace_detail'); }}
+                                    className={`w-full flex items-center gap-2 px-3 py-1.5 rounded-md text-sm transition-colors ${activeView === 'workspace_detail' && activeWorkspaceView === ws ? 'bg-[#1e1e1e] text-gray-100 font-medium border border-[#2d2d2d]/30' : 'text-gray-400 hover:bg-[#1e1e1e] hover:text-gray-200'}`}
+                                >
+                                    <ChevronRight size={12} className={`ml-1 transition-colors ${activeView === 'workspace_detail' && activeWorkspaceView === ws ? 'text-blue-400' : 'text-gray-600'}`} />
                                     <span className="truncate">{ws}</span>
                                 </button>
                             ))}
@@ -482,6 +487,10 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
                     </div>
                 )}
 
+                {activeView === 'workspace_detail' && activeWorkspaceView && (
+                    <WorkspaceDetailView workspace={activeWorkspaceView} />
+                )}
+
                 {activeView === 'knowledge' && (
                     <div className="w-full h-full flex animate-in fade-in duration-300">
                         <div className="w-[300px] border-r border-[#2d2d2d]/60 flex flex-col bg-[#09090b]">
@@ -732,5 +741,87 @@ export const AgentManagerView: React.FC<AgentManagerViewProps> = ({ onOpenEditor
         </div>
     );
 };
+
+const WORKSPACE_META: Record<string, { description: string; type: string; agents: string[]; status: string }> = {
+    'portfolio': {
+        description: 'Personal portfolio website and project showcase.',
+        type: 'Website',
+        agents: ['Content Agent', 'SEO Agent'],
+        status: 'Active',
+    },
+    'xeref-claw': {
+        description: 'Xeref CLAWS agent builder and productivity dashboard.',
+        type: 'Web App',
+        agents: ['CLAWS Agent', 'Task Agent', 'Chat Agent'],
+        status: 'Active',
+    },
+    'XerefWhisper-desktop': {
+        description: 'Desktop voice transcription app powered by Whisper.',
+        type: 'Desktop App',
+        agents: ['Transcription Agent'],
+        status: 'In Development',
+    },
+};
+
+function WorkspaceDetailView({ workspace }: { workspace: string }) {
+    const meta = WORKSPACE_META[workspace] ?? {
+        description: 'No description available.',
+        type: 'Unknown',
+        agents: [],
+        status: 'Unknown',
+    };
+
+    return (
+        <div className="w-full h-full flex flex-col bg-[#09090b] animate-in fade-in duration-200 overflow-y-auto">
+            <div className="px-8 py-6 border-b border-[#2d2d2d]/60">
+                <div className="flex items-center gap-3 mb-1">
+                    <FolderOpen size={18} className="text-blue-400 shrink-0" />
+                    <h2 className="text-lg font-semibold text-gray-100 truncate">{workspace}</h2>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${meta.status === 'Active' ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' : 'bg-amber-500/15 text-amber-400 border border-amber-500/25'}`}>
+                        {meta.status}
+                    </span>
+                </div>
+                <p className="text-sm text-gray-500 ml-7">{meta.description}</p>
+            </div>
+
+            <div className="flex-1 px-8 py-6 space-y-6 max-w-2xl">
+                {/* Overview */}
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-[#131316] border border-[#27272a] rounded-xl p-4">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Type</p>
+                        <p className="text-sm font-medium text-gray-200">{meta.type}</p>
+                    </div>
+                    <div className="bg-[#131316] border border-[#27272a] rounded-xl p-4">
+                        <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold mb-1">Agents</p>
+                        <p className="text-sm font-medium text-gray-200">{meta.agents.length}</p>
+                    </div>
+                </div>
+
+                {/* Agents */}
+                {meta.agents.length > 0 && (
+                    <div>
+                        <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold mb-3">Active Agents</p>
+                        <div className="space-y-2">
+                            {meta.agents.map(agent => (
+                                <div key={agent} className="flex items-center gap-3 bg-[#131316] border border-[#27272a] rounded-lg px-4 py-3">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                                    <span className="text-sm text-gray-300">{agent}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
+                {/* Conversations placeholder */}
+                <div>
+                    <p className="text-[11px] text-gray-500 uppercase tracking-wider font-semibold mb-3">Recent Conversations</p>
+                    <div className="bg-[#131316] border border-[#27272a] rounded-xl p-6 flex items-center justify-center">
+                        <p className="text-xs text-gray-600">No conversations yet in this workspace.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // Exported as named export above
