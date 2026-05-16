@@ -12,7 +12,7 @@ export interface SidebarNavItemDef {
 export const SIDEBAR_NAV_ITEMS: SidebarNavItemDef[] = [
   { id: 'projects',  label: 'Projects',  icon: 'FolderOpen',   viewKey: 'home',      configurable: true,  },
   { id: 'customize', label: 'Customize', icon: 'Settings',     viewKey: 'customize', configurable: true,  },
-  { id: 'artifacts', label: 'Artifacts', icon: 'Box',          href: '/artifacts',   configurable: true,  },
+  { id: 'artifacts', label: 'Artifacts', icon: 'Box',          href: '/artifacts/my', configurable: true,  },
   { id: 'design',    label: 'Design',    icon: 'Paintbrush',   href: '/design',      configurable: true,  },
   { id: 'inbox',     label: 'Inbox',     icon: 'Mail',         href: '/inbox',       configurable: true,  },
   { id: 'classroom', label: 'Classroom', icon: 'BookOpen',     viewKey: 'classroom', configurable: true,  },

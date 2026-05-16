@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Copy, Check, Download, Trash2, Share2 } from 'lucide-react'
+import { ArrowLeft, Copy, Check, Download, Trash2, Share2, BookmarkPlus } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
@@ -21,6 +21,8 @@ interface ArtifactDetailProps {
   onVersionChange: (index: number) => void
   onBack: () => void
   onDelete: () => void
+  onSaveCopy: () => void
+  readOnly: boolean
   visible: boolean
 }
 
@@ -38,8 +40,12 @@ function NoSelection() {
   )
 }
 
+function shareUrl(artifact: Artifact) {
+  return artifact.shareUrl ?? `https://xeref.ai/artifacts/share/${artifact.id}`
+}
+
 export function ArtifactDetail({
-  artifact, selectedVersionIndex, onVersionChange, onBack, onDelete, visible,
+  artifact, selectedVersionIndex, onVersionChange, onBack, onDelete, onSaveCopy, readOnly, visible,
 }: ArtifactDetailProps) {
   const [activeTab, setActiveTab] = useState<'preview' | 'versions'>('preview')
   const [published, setPublished] = useState(false)
@@ -55,7 +61,7 @@ export function ArtifactDetail({
   function handlePublishToggle(checked: boolean) {
     setPublished(checked)
     if (checked) {
-      const url = artifact?.shareUrl ?? `https://xeref.ai/artifacts/my?id=${artifact?.id}`
+      const url = artifact ? shareUrl(artifact) : ''
       navigator.clipboard.writeText(url).catch(() => {})
       toast.success('Artifact published — share link copied!')
     } else {
@@ -64,7 +70,8 @@ export function ArtifactDetail({
   }
 
   function handleCopyLink() {
-    const url = artifact?.shareUrl ?? `https://xeref.ai/artifacts/my?id=${artifact?.id}`
+    if (!artifact) return
+    const url = shareUrl(artifact)
     navigator.clipboard.writeText(url).then(() => {
       setLinkCopied(true)
       toast.success('Share link copied')
@@ -128,57 +135,78 @@ export function ArtifactDetail({
               <div className="flex items-center gap-1.5 flex-wrap mt-1.5">
                 <ArtifactStatusBadge status={artifact.status} />
                 <ArtifactCapabilitiesBadges capabilities={artifact.capabilities} />
+                {readOnly && (
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                    read-only
+                  </span>
+                )}
               </div>
             </div>
 
             <div className="flex items-center gap-1 shrink-0">
-              <Button
-                variant="ghost" size="icon" className="h-8 w-8"
-                onClick={handleDownload}
-                title="Download"
-              >
-                <Download className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                variant="ghost" size="icon"
-                className="h-8 w-8 text-destructive/60 hover:text-destructive"
-                onClick={handleDelete}
-                title="Delete"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
+              {readOnly ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={onSaveCopy}
+                >
+                  <BookmarkPlus className="h-3.5 w-3.5" />
+                  Save a copy
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost" size="icon" className="h-8 w-8"
+                    onClick={handleDownload}
+                    title="Download"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost" size="icon"
+                    className="h-8 w-8 text-destructive/60 hover:text-destructive"
+                    onClick={handleDelete}
+                    title="Delete"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 
-          {/* Publish bar */}
-          <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/20 shrink-0">
-            <div className="flex items-center gap-2">
-              <Switch
-                checked={published}
-                onCheckedChange={handlePublishToggle}
-                id="publish-toggle"
-                className="scale-90"
-              />
-              <label
-                htmlFor="publish-toggle"
-                className="text-xs text-muted-foreground cursor-pointer select-none"
-              >
-                {published ? 'Public' : 'Private'}
-              </label>
+          {/* Publish bar — only for owned artifacts */}
+          {!readOnly && (
+            <div className="flex items-center gap-3 px-4 py-2 border-b bg-muted/20 shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={published}
+                  onCheckedChange={handlePublishToggle}
+                  id="publish-toggle"
+                  className="scale-90"
+                />
+                <label
+                  htmlFor="publish-toggle"
+                  className="text-xs text-muted-foreground cursor-pointer select-none"
+                >
+                  {published ? 'Public' : 'Private'}
+                </label>
+              </div>
+              {published && (
+                <Button
+                  variant="outline" size="sm"
+                  className="h-6 text-xs gap-1 ml-auto"
+                  onClick={handleCopyLink}
+                >
+                  {linkCopied
+                    ? <Check className="h-3 w-3 text-emerald-400" />
+                    : <Copy className="h-3 w-3" />}
+                  Copy link
+                </Button>
+              )}
             </div>
-            {published && (
-              <Button
-                variant="outline" size="sm"
-                className="h-6 text-xs gap-1 ml-auto"
-                onClick={handleCopyLink}
-              >
-                {linkCopied
-                  ? <Check className="h-3 w-3 text-emerald-400" />
-                  : <Copy className="h-3 w-3" />}
-                Copy link
-              </Button>
-            )}
-          </div>
+          )}
 
           {/* Error banner */}
           {artifact.status === 'error' && (

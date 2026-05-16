@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { X, Sparkles } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -19,14 +19,17 @@ const highlights = (newSection?.items ?? latestEntry.sections[0]?.items ?? [])
   })
 
 export function WhatsNewToast() {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === 'undefined') return false
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
     try {
-      return localStorage.getItem(STORAGE_KEY) !== CURRENT_VERSION
+      if (localStorage.getItem(STORAGE_KEY) !== CURRENT_VERSION) {
+        setVisible(true)
+      }
     } catch {
-      return false
+      // ignore
     }
-  })
+  }, [])
 
   function dismiss() {
     try {

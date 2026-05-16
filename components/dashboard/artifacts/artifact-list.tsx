@@ -1,10 +1,10 @@
 'use client'
 
-import { Search, Archive, ArrowLeft } from 'lucide-react'
+import { Search, Archive, ArrowLeft, Plus, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import type { Artifact, ArtifactFilterType } from '@/lib/types'
+import type { Artifact, ArtifactFilterType, ArtifactType } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { ArtifactListItem } from './artifact-list-item'
 import { ArtifactEmptyState } from './artifact-empty-state'
@@ -19,43 +19,23 @@ const FILTER_OPTIONS: { value: ArtifactFilterType; label: string }[] = [
   { value: 'workflow', label: 'Workflows' },
 ]
 
-function SkeletonItem() {
-  return (
-    <div className="px-3 py-3 animate-pulse">
-      <div className="flex items-start gap-3">
-        <div className="shrink-0 mt-0.5 rounded-md w-8 h-8 bg-muted/60" />
-        <div className="flex-1 min-w-0 space-y-2">
-          <div className="flex justify-between gap-2">
-            <div className="h-3 bg-muted/60 rounded w-2/3" />
-            <div className="h-3 bg-muted/40 rounded w-10" />
-          </div>
-          <div className="h-3 bg-muted/40 rounded w-full" />
-          <div className="h-3 bg-muted/40 rounded w-3/4" />
-          <div className="flex gap-1.5">
-            <div className="h-5 bg-muted/50 rounded w-16" />
-            <div className="h-5 bg-muted/30 rounded w-10" />
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 interface ArtifactListProps {
   artifacts: Artifact[]
   selectedId: string | null
   filterType: ArtifactFilterType
   searchQuery: string
   loading: boolean
+  creating: boolean
   onSearchChange: (q: string) => void
   onFilterChange: (type: ArtifactFilterType) => void
   onSelect: (artifact: Artifact) => void
+  onCreate: (type?: ArtifactType) => void
   hidden: boolean
 }
 
 export function ArtifactList({
-  artifacts, selectedId, filterType, searchQuery, loading,
-  onSearchChange, onFilterChange, onSelect, hidden,
+  artifacts, selectedId, filterType, searchQuery, loading, creating,
+  onSearchChange, onFilterChange, onSelect, onCreate, hidden,
 }: ArtifactListProps) {
   const router = useRouter()
   return (
@@ -77,6 +57,14 @@ export function ArtifactList({
         <span className="ml-auto text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full">
           {loading ? '…' : artifacts.length}
         </span>
+        <button
+          onClick={() => onCreate()}
+          disabled={creating}
+          className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+          title="Create artifact"
+        >
+          {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Search */}
@@ -114,9 +102,9 @@ export function ArtifactList({
       <ScrollArea className="flex-1 min-h-0">
         <div className="flex flex-col gap-0.5 p-2">
           {loading
-            ? Array.from({ length: 4 }).map((_, i) => <SkeletonItem key={i} />)
+            ? null
             : artifacts.length === 0
-            ? <ArtifactEmptyState filterType={filterType} searchQuery={searchQuery} />
+            ? <ArtifactEmptyState filterType={filterType} searchQuery={searchQuery} onCreate={onCreate} creating={creating} />
             : artifacts.map((a) => (
               <ArtifactListItem
                 key={a.id}

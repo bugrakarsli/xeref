@@ -1,49 +1,34 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import { toast } from 'sonner'
-import type { Artifact, ArtifactFilterType } from '@/lib/types'
-import { MOCK_ARTIFACTS } from './artifacts/mock-artifacts'
+import type { Artifact, ArtifactFilterType, ArtifactType } from '@/lib/types'
+import { createArtifact, deleteArtifact, duplicateArtifact } from '@/app/actions/artifacts'
 import { ArtifactList } from './artifacts/artifact-list'
 import { ArtifactDetail } from './artifacts/artifact-detail'
 
-export function ArtifactsView() {
-  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null)
-  const [selectedVersionIndex, setSelectedVersionIndex] = useState(0)
-  const [filterType, setFilterType] = useState<ArtifactFilterType>(() => {
-    if (typeof window === 'undefined') return 'all'
-    return (new URLSearchParams(window.location.search).get('filter') as ArtifactFilterType) || 'all'
+interface ArtifactsViewProps {
+  initialArtifacts: Artifact[]
+  initialSelectedId?: string
+  previewArtifact?: Artifact | null
+}
+
+export function ArtifactsView({ initialArtifacts, initialSelectedId, previewArtifact }: ArtifactsViewProps) {
+  const [artifacts, setArtifacts] = useState<Artifact[]>(initialArtifacts)
+  const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(() => {
+    if (!initialSelectedId) return null
+    const owned = initialArtifacts.some((a) => a.id === initialSelectedId)
+    return owned || previewArtifact?.id === initialSelectedId ? initialSelectedId : null
   })
+  const [selectedVersionIndex, setSelectedVersionIndex] = useState<number>(() => {
+    if (!initialSelectedId) return 0
+    const art = initialArtifacts.find((a) => a.id === initialSelectedId) ?? previewArtifact
+    return art?.currentVersion ?? 0
+  })
+  const [filterType, setFilterType] = useState<ArtifactFilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
-  const [showingDetail, setShowingDetail] = useState(false)
-  const [artifacts, setArtifacts] = useState<Artifact[]>(MOCK_ARTIFACTS)
-  const [loading, setLoading] = useState(true)
-
-  // Simulate async fetch and restore URL state on mount
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const artifactId = params.get('artifact')
-    const version = params.get('version')
-
-    const timer = setTimeout(() => {
-      setLoading(false)
-      if (artifactId) {
-        const art = MOCK_ARTIFACTS.find((a) => a.id === artifactId)
-        if (art) {
-          setSelectedArtifactId(art.id)
-          setShowingDetail(true)
-          if (version) {
-            const vIdx = art.versions.findIndex((v) => String(v.version) === version)
-            setSelectedVersionIndex(vIdx >= 0 ? vIdx : art.currentVersion)
-          } else {
-            setSelectedVersionIndex(art.currentVersion)
-          }
-        }
-      }
-    }, 600)
-
-    return () => clearTimeout(timer)
-  }, [])
+  const [showingDetail, setShowingDetail] = useState(!!initialSelectedId)
+  const [creating, setCreating] = useState(false)
 
   const filteredArtifacts = useMemo(() => {
     return artifacts
@@ -59,18 +44,17 @@ export function ArtifactsView() {
       })
   }, [artifacts, filterType, searchQuery])
 
-  const selectedArtifact = artifacts.find((a) => a.id === selectedArtifactId) ?? null
+  // The artifact shown in the detail pane — could be owned or a preview
+  const allAccessible = previewArtifact
+    ? [...artifacts, previewArtifact]
+    : artifacts
+  const selectedArtifact = allAccessible.find((a) => a.id === selectedArtifactId) ?? null
+  const isPreview = selectedArtifact?.id === previewArtifact?.id && !!previewArtifact
 
-  function updateUrl(
-    artifactId: string | null,
-    versionNum: number | null,
-    filter: ArtifactFilterType,
-  ) {
+  function updateUrl(artifactId: string | null, filter: ArtifactFilterType) {
     const params = new URLSearchParams(window.location.search)
-    if (artifactId) params.set('artifact', artifactId)
-    else params.delete('artifact')
-    if (versionNum != null) params.set('version', String(versionNum))
-    else params.delete('version')
+    if (artifactId) params.set('id', artifactId)
+    else params.delete('id')
     if (filter && filter !== 'all') params.set('filter', filter)
     else params.delete('filter')
     const qs = params.toString()
@@ -78,11 +62,10 @@ export function ArtifactsView() {
   }
 
   function handleSelectArtifact(artifact: Artifact) {
-    const vIdx = artifact.currentVersion
     setSelectedArtifactId(artifact.id)
-    setSelectedVersionIndex(vIdx)
+    setSelectedVersionIndex(artifact.currentVersion)
     setShowingDetail(true)
-    updateUrl(artifact.id, artifact.versions[vIdx]?.version ?? null, filterType)
+    updateUrl(artifact.id, filterType)
   }
 
   function handleVersionChange(index: number) {
@@ -90,27 +73,58 @@ export function ArtifactsView() {
     setSelectedVersionIndex(index)
     const v = selectedArtifact.versions[index]
     toast.success(`Viewing v${v.version}: "${v.label ?? `Version ${v.version}`}"`)
-    updateUrl(selectedArtifact.id, v.version, filterType)
   }
 
   function handleFilterChange(type: ArtifactFilterType) {
     setFilterType(type)
-    const vNum = selectedArtifact
-      ? selectedArtifact.versions[selectedVersionIndex]?.version ?? null
-      : null
-    updateUrl(selectedArtifactId, vNum, type)
+    updateUrl(selectedArtifactId, type)
   }
 
   function handleBack() {
     setShowingDetail(false)
     setSelectedArtifactId(null)
-    updateUrl(null, null, filterType)
+    updateUrl(null, filterType)
   }
 
-  function handleDelete() {
+  async function handleCreate(type?: ArtifactType) {
+    setCreating(true)
+    try {
+      const artifact = await createArtifact({ type })
+      setArtifacts((prev) => [artifact, ...prev])
+      setSelectedArtifactId(artifact.id)
+      setSelectedVersionIndex(0)
+      setShowingDetail(true)
+      updateUrl(artifact.id, filterType)
+    } catch {
+      toast.error('Failed to create artifact')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  async function handleDelete() {
     if (!selectedArtifactId) return
-    setArtifacts((prev) => prev.filter((a) => a.id !== selectedArtifactId))
-    handleBack()
+    try {
+      await deleteArtifact(selectedArtifactId)
+      setArtifacts((prev) => prev.filter((a) => a.id !== selectedArtifactId))
+      handleBack()
+      toast.success('Artifact deleted')
+    } catch {
+      toast.error('Failed to delete artifact')
+    }
+  }
+
+  async function handleSaveCopy() {
+    if (!previewArtifact) return
+    try {
+      const copy = await duplicateArtifact(previewArtifact.id)
+      setArtifacts((prev) => [copy, ...prev])
+      setSelectedArtifactId(copy.id)
+      setSelectedVersionIndex(copy.currentVersion)
+      toast.success(`"${copy.title}" saved to your library`)
+    } catch {
+      toast.error('Failed to save copy')
+    }
   }
 
   return (
@@ -123,10 +137,12 @@ export function ArtifactsView() {
         selectedId={selectedArtifactId}
         filterType={filterType}
         searchQuery={searchQuery}
-        loading={loading}
+        loading={false}
+        creating={creating}
         onSearchChange={setSearchQuery}
         onFilterChange={handleFilterChange}
         onSelect={handleSelectArtifact}
+        onCreate={handleCreate}
         hidden={showingDetail}
       />
       <ArtifactDetail
@@ -135,6 +151,8 @@ export function ArtifactsView() {
         onVersionChange={handleVersionChange}
         onBack={handleBack}
         onDelete={handleDelete}
+        onSaveCopy={handleSaveCopy}
+        readOnly={isPreview}
         visible={showingDetail}
       />
     </section>

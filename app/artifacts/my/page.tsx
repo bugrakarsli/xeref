@@ -1,24 +1,40 @@
-// TODO: Internal prototype — not linked from the UI yet.
-// When the public sharing feature ships, replace MOCK_ARTIFACTS with a real
-// server action (e.g. getPublishedArtifact(id)) and remove this mock import.
-
 import type { Metadata } from 'next'
-import { MOCK_ARTIFACTS } from '@/components/dashboard/artifacts/mock-artifacts'
-import { ArtifactPublicView } from '@/components/dashboard/artifacts/artifact-public-view'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getUserArtifacts, getArtifactById } from '@/app/actions/artifacts'
+import { ArtifactsView } from '@/components/dashboard/artifacts-view'
 
 export const metadata: Metadata = {
-  title: 'Shared Artifact — xeref.ai',
-  description: 'View a shared artifact from xeref.ai',
+  title: 'Artifacts — xeref.ai',
 }
 
 interface Props {
   searchParams: Promise<{ id?: string }>
 }
 
-export default async function ArtifactPublicPage({ searchParams }: Props) {
+export default async function ArtifactsMyPage({ searchParams }: Props) {
   const { id } = await searchParams
-  const artifact = id
-    ? (MOCK_ARTIFACTS.find((a) => a.id === id && a.published) ?? null)
-    : null
-  return <ArtifactPublicView artifact={artifact} />
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    if (id) redirect(`/artifacts/share/${id}`)
+    redirect('/login')
+  }
+
+  const userArtifacts = await getUserArtifacts()
+
+  // If ?id= is set but the artifact isn't in the user's list, try to load it as a preview
+  const isOwned = id ? userArtifacts.some((a) => a.id === id) : false
+  const previewArtifact = id && !isOwned ? await getArtifactById(id) : null
+
+  return (
+    <div className="flex h-screen bg-background text-foreground">
+      <ArtifactsView
+        initialArtifacts={userArtifacts}
+        initialSelectedId={id}
+        previewArtifact={previewArtifact}
+      />
+    </div>
+  )
 }
