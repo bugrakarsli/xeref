@@ -161,9 +161,12 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
     if (pendingTab) {
       localStorage.removeItem('xeref_pending_tab')
       setActiveTab(pendingTab)
-      const defaultView = TAB_DEFAULT_VIEW[pendingTab]
-      setActiveView(defaultView)
-      localStorage.setItem('xeref_active_view', defaultView)
+      // If an explicit view was requested via URL, honour it; otherwise use the tab's default
+      const targetView = initialView !== 'home' ? initialView : TAB_DEFAULT_VIEW[pendingTab]
+      setActiveView(targetView)
+      localStorage.setItem('xeref_active_view', targetView)
+    } else if (initialView !== 'home') {
+      // Explicit ?view= in URL — trust it, don't let localStorage override
     } else if (initialTab === 'chat' && !isCustomizeRoute && !isCodeRoute && !isSettingsRoute && !isInboxRoute) {
       const savedView = localStorage.getItem('xeref_active_view') as ViewKey | null
       if (savedView) setActiveView(savedView)

@@ -474,7 +474,10 @@ export function ConnectorsSection() {
             token={telegramToken}
             disconnecting={telegramDisconnecting}
             onDisconnect={disconnectTelegram}
-            onConfigure={() => router.push('/?view=deploy')}
+            onConfigure={() => {
+              localStorage.setItem('xeref_pending_tab', 'tasks')
+              router.push('/?view=deploy')
+            }}
           />
         ) : selected.type === 'filesystem' ? (
           <FilesystemDetail
