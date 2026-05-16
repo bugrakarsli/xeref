@@ -4,7 +4,8 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Plan, PlanPhase, PlanTask, PlanKpi } from '@/lib/types'
-import { ChevronDown, ChevronRight, Plus, Trash2, Sparkles, Loader2, FileText } from 'lucide-react'
+import { ChevronDown, ChevronRight, Plus, Trash2, Sparkles, Loader2, FileText, Lock } from 'lucide-react'
+import type { UserPlan } from '@/app/actions/profile'
 
 // ── Inline editable cell ────────────────────────────────────────────────────
 
@@ -334,7 +335,8 @@ function PlanDetail({ plan, onUpdate }: { plan: Plan; onUpdate: (updated: Plan) 
 
 // ── Generate form ─────────────────────────────────────────────────────────────
 
-function GenerateForm({ onGenerated }: { onGenerated: (plan: Plan) => void }) {
+function GenerateForm({ onGenerated, userPlan }: { onGenerated: (plan: Plan) => void; userPlan: UserPlan }) {
+  const canGenerate = userPlan === 'pro' || userPlan === 'ultra'
   const [goal, setGoal] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -376,21 +378,29 @@ function GenerateForm({ onGenerated }: { onGenerated: (plan: Plan) => void }) {
         disabled={loading}
         className="rounded-md border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
       />
-      <button
-        type="submit"
-        disabled={!goal.trim() || loading}
-        className="flex items-center justify-center gap-2 self-end px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 transition-colors"
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        {loading ? 'Generating…' : 'Generate plan'}
-      </button>
+      <div className="flex items-center gap-3 self-end">
+        {!canGenerate && (
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Lock className="h-3 w-3" /> Pro feature
+          </span>
+        )}
+        <button
+          type="submit"
+          disabled={!goal.trim() || loading || !canGenerate}
+          title={!canGenerate ? 'Upgrade to Pro or Ultra to generate plans' : undefined}
+          className="flex items-center justify-center gap-2 px-4 py-2 rounded-md bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+          {loading ? 'Generating…' : 'Generate plan'}
+        </button>
+      </div>
     </form>
   )
 }
 
 // ── Main view ─────────────────────────────────────────────────────────────────
 
-export function PlansView() {
+export function PlansView({ userPlan }: { userPlan: UserPlan }) {
   const [plans, setPlans] = useState<Plan[]>([])
   const [selected, setSelected] = useState<Plan | null>(null)
   const [loadingList, setLoadingList] = useState(true)
@@ -485,14 +495,14 @@ export function PlansView() {
                 Describe a goal and let Xeref generate a phased execution plan you can edit and track.
               </p>
             </div>
-            <GenerateForm onGenerated={handleGenerated} />
+            <GenerateForm onGenerated={handleGenerated} userPlan={userPlan} />
           </div>
         )}
 
         {/* Generate form pinned at bottom when a plan is selected */}
         {selected && (
           <div className="max-w-2xl mx-auto px-6 pb-8">
-            <GenerateForm onGenerated={handleGenerated} />
+            <GenerateForm onGenerated={handleGenerated} userPlan={userPlan} />
           </div>
         )}
       </div>

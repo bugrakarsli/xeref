@@ -496,7 +496,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
               case 'classroom':
                 return <ClassroomView userEmail={userEmail} userId={user.id} />
               case 'plans':
-                return <PlansView />
+                return <PlansView userPlan={userPlan} />
             }
           })()}
         </main>
