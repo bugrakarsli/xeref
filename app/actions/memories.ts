@@ -35,7 +35,7 @@ export async function getUserMemories(): Promise<Memory[]> {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as Memory[]
 }
 

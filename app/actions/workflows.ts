@@ -26,7 +26,7 @@ export async function getUserWorkflows(): Promise<Workflow[]> {
     .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as Workflow[]
 }
 
@@ -157,7 +157,7 @@ export async function getWorkflowExecutions(limit = 50): Promise<WorkflowExecuti
     .order('created_at', { ascending: false })
     .limit(limit)
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as WorkflowExecution[]
 }
 

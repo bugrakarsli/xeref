@@ -21,8 +21,8 @@ export async function getCourses(): Promise<Course[]> {
     .from('courses')
     .select('*')
     .order('created_at', { ascending: true })
-  if (error) throw error
-  return data as Course[]
+  if (error) return []
+  return (data ?? []) as Course[]
 }
 
 export async function getCourseWithModules(courseId: string): Promise<{
