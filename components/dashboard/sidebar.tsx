@@ -764,8 +764,8 @@ export function Sidebar({
         {/* ── CHAT TAB ─────────────────────────────────────── */}
         {(collapsed || activeTab === 'chat') && (
           <>
-            {/* Collapsed quick-nav icons — derived from sidebar prefs */}
-            {collapsed && (
+            {/* Collapsed quick-nav icons — chat tab */}
+            {collapsed && activeTab !== 'code' && (
               <div className="flex flex-col gap-1 mb-1">
                 <NavItem icon={<MessageSquare className="h-4 w-4" />} label="New Chat" active={activeView === 'chat'} collapsed={collapsed} onClick={() => onNewChat?.()} />
                 {sidebarPrefs.order
@@ -1197,6 +1197,13 @@ export function Sidebar({
         )}
 
         {/* ── CODE TAB ─────────────────────────────────────── */}
+        {collapsed && activeTab === 'code' && (
+          <div className="flex flex-col gap-1 mb-1">
+            <NavItem icon={<Code2 className="h-4 w-4" />} label="New Session" active={activeView === 'code_session'} collapsed={collapsed} onClick={() => onNewSession?.()} />
+            <NavItem icon={<Layers className="h-4 w-4" />} label="Artifacts" active={pathname?.startsWith('/artifacts') ?? false} collapsed={collapsed} onClick={() => router.push('/artifacts')} />
+            <NavItem icon={<Zap className="h-4 w-4" />} label="Routines" active={pathname?.startsWith('/code/routines') ?? false} collapsed={collapsed} onClick={() => router.push('/code/routines')} />
+          </div>
+        )}
         {!collapsed && activeTab === 'code' && (
           <div className="flex flex-col gap-4 mt-1">
             {/* New Session Button */}
