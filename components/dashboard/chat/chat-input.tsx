@@ -14,6 +14,7 @@ import {
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
 import { ArrowUp, ChevronDown, Bot, BrainCircuit, Cpu, Lock, Plus, Paperclip, Globe, X, FileText, Settings, PlusCircle, Square } from 'lucide-react'
+import { MicButton, type MicButtonHandle } from '@/components/dashboard/MicButton'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import type { Project, ChatAttachment } from '@/lib/types'
@@ -100,6 +101,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
   const currentModel = MODELS.find((m) => m.id === selectedModel) ?? MODELS[0]
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const micRef = useRef<MicButtonHandle>(null)
   const [connectedCards, setConnectedCards] = useState<{ id: string; name: string }[]>([])
 
   useEffect(() => {
@@ -122,6 +124,18 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
       textareaRef.current?.setSelectionRange(len, len)
     },
   }))
+
+  useEffect(() => {
+    const handler = () => micRef.current?.toggle()
+    window.addEventListener('xeref_voice_toggle', handler)
+    return () => window.removeEventListener('xeref_voice_toggle', handler)
+  }, [])
+
+  function handleTranscribed(text: string) {
+    const separator = input && !input.endsWith(' ') ? ' ' : ''
+    onInputChange(input + separator + text)
+    textareaRef.current?.focus()
+  }
 
   const activatedProjects = projects.filter((p) => p.prompt)
 
@@ -475,6 +489,7 @@ export const ChatInput = forwardRef<ChatInputHandle, ChatInputProps>(function Ch
                   })}
                 </DropdownMenuContent>
               </DropdownMenu>
+              <MicButton ref={micRef} onTranscribed={handleTranscribed} disabled={isLoading} />
               {isLoading && onStop ? (
                 <Button
                   type="button"

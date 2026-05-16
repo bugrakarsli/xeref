@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import type { Project, Chat, CodeSession, ViewKey, SidebarTab } from '@/lib/types'
 import { XerefLogo } from '@/components/xeref-logo'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -82,6 +83,7 @@ interface SidebarProps {
   userEmail: string
   userName: string
   userPlan?: string
+  avatarUrl?: string | null
   onSignOut: () => void
   onProjectRenamed?: (id: string, name: string) => void
   onProjectDeleted?: (id: string) => void
@@ -140,15 +142,18 @@ function NavItem({ icon, label, active, collapsed, onClick }: NavItemProps) {
   )
 }
 
-function UserAvatar({ name }: { name: string }) {
+function UserAvatar({ name, avatarUrl }: { name: string; avatarUrl?: string | null }) {
   const parts = name.trim().split(/\s+/).filter(Boolean)
   const initials = parts.length >= 2
     ? (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase()
     : name.charAt(0).toUpperCase()
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-semibold">
-      {initials}
-    </div>
+    <Avatar className="h-7 w-7 shrink-0">
+      {avatarUrl && <AvatarImage src={avatarUrl} alt={name} />}
+      <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
+        {initials}
+      </AvatarFallback>
+    </Avatar>
   )
 }
 
@@ -565,6 +570,7 @@ export function Sidebar({
   userEmail,
   userName,
   userPlan = 'free',
+  avatarUrl,
   onSignOut,
   onProjectRenamed,
   onProjectDeleted,
@@ -1360,7 +1366,7 @@ export function Sidebar({
               )}
               aria-label="User menu"
             >
-              <UserAvatar name={displayName} />
+              <UserAvatar name={displayName} avatarUrl={avatarUrl} />
               {!collapsed && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-medium truncate">{displayName}</p>

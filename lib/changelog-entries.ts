@@ -1,8 +1,45 @@
 export const changelogEntries = [
   {
+    version: 'v2.10',
+    date: 'May 17, 2026',
+    badge: 'Latest',
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Keyboard Shortcuts panel — a ⌨ icon button now lives above the v2.10 badge in the right rail. Click it to open a reference dialog listing every real wired shortcut (Ctrl+1/2/3, Ctrl+E/L, Ctrl+Shift+O, F9, F, Ctrl+B) grouped by category. Mod key auto-renders as ⌘ on macOS.',
+          'Profile avatar in sidebar — the bottom-left user avatar now mirrors the photo uploaded in Settings → General instead of always showing initials. Falls back to initials when no photo is set.',
+        ],
+      },
+    ],
+  },
+  {
+    version: 'v2.9',
+    date: 'May 16, 2026',
+    badge: null,
+    sections: [
+      {
+        type: 'New',
+        color: 'text-emerald-400',
+        items: [
+          'Voice to Text — press F9 anywhere in the dashboard to start or stop voice dictation; transcribed text is appended to the chat composer. A microphone button also lives next to the send button for click-to-dictate.',
+          'Whisper-grade transcripts — recordings are transcribed by Groq whisper-large-v3-turbo and lightly polished for grammar and punctuation without paraphrasing.',
+        ],
+      },
+      {
+        type: 'Improved',
+        color: 'text-purple-400',
+        items: [
+          'Chat composer — the existing MicButton infra used in the legacy AgentPanel is now available in the main chat view too, with a shared global toggle event so future hotkey surfaces can hook into the same recording.',
+        ],
+      },
+    ],
+  },
+  {
     version: 'v2.8',
     date: 'May 16, 2026',
-    badge: 'Latest',
+    badge: null,
     sections: [
       {
         type: 'New',

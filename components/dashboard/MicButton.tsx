@@ -1,17 +1,19 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, forwardRef, useImperativeHandle } from 'react'
 import { Mic, Square, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 type RecordState = 'idle' | 'recording' | 'transcribing'
+
+export type MicButtonHandle = { toggle: () => void }
 
 interface MicButtonProps {
   onTranscribed: (text: string) => void
   disabled?: boolean
 }
 
-export function MicButton({ onTranscribed, disabled }: MicButtonProps) {
+export const MicButton = forwardRef<MicButtonHandle, MicButtonProps>(function MicButton({ onTranscribed, disabled }, ref) {
   const [state, setState] = useState<RecordState>('idle')
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const chunksRef = useRef<Blob[]>([])
@@ -78,6 +80,10 @@ export function MicButton({ onTranscribed, disabled }: MicButtonProps) {
     else if (state === 'recording') stopRecording()
   }
 
+  useImperativeHandle(ref, () => ({
+    toggle: handleClick,
+  }))
+
   return (
     <button
       type="button"
@@ -95,4 +101,4 @@ export function MicButton({ onTranscribed, disabled }: MicButtonProps) {
       {state === 'transcribing' && <Loader2 size={16} className="animate-spin" />}
     </button>
   )
-}
+})

@@ -53,6 +53,7 @@ export default async function Home({ searchParams }: HomePageProps) {
       chats={chats}
       userPlan={userPlan}
       onboardingCompleted={profile?.onboarding_completed ?? false}
+      avatarUrl={profile?.avatar_url ?? null}
       initialView={initialView}
     />
   )

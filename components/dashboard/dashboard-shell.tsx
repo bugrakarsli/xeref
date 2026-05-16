@@ -51,13 +51,14 @@ interface DashboardShellProps {
   chats: Chat[]
   userPlan: UserPlan
   onboardingCompleted: boolean
+  avatarUrl?: string | null
   children?: React.ReactNode
   initialTab?: SidebarTab
   initialView?: ViewKey
   forceCollapsed?: boolean
 }
 
-export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted, children, initialTab = 'chat', initialView = 'home', forceCollapsed }: DashboardShellProps) {
+export function DashboardShell({ user, projects: initialProjects, chats: initialChats, userPlan, onboardingCompleted, avatarUrl, children, initialTab = 'chat', initialView = 'home', forceCollapsed }: DashboardShellProps) {
   const router = useRouter()
   const pathname = usePathname()
 
@@ -272,6 +273,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         }
       }
 
+      // F9 to toggle voice-to-text (fires even inside inputs)
+      if (e.key === 'F9' && !e.repeat) {
+        e.preventDefault()
+        window.dispatchEvent(new CustomEvent('xeref_voice_toggle'))
+        return
+      }
+
       // F to open search (unless in an input/textarea or using modifier keys)
       if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey) {
         const tag = (e.target as HTMLElement).tagName
@@ -415,6 +423,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
         userEmail={userEmail}
         userName={userName}
         userPlan={userPlan}
+        avatarUrl={avatarUrl}
         onSignOut={handleSignOut}
         onProjectCreated={handleProjectCreated}
         onProjectRenamed={handleProjectRenamed}
