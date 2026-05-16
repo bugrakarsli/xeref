@@ -77,7 +77,7 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
           ? (pathname.includes('/session') ? 'code_session' : pathname.includes('/routines') ? 'code_routines' : 'code')
           : initialView
 
-  const [collapsed, setCollapsed] = useState(forceCollapsed ?? false)
+  const [collapsed, setCollapsed] = useState(forceCollapsed ?? true)
   const [activeView, setActiveView] = useState<ViewKey>(actualInitialView)
   const [activeTab, setActiveTab] = useState<SidebarTab>(actualInitialTab)
 
