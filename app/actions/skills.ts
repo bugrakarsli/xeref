@@ -17,7 +17,7 @@ export async function getSkills(): Promise<Skill[]> {
     .order('source', { ascending: false })   // built-in first
     .order('name',   { ascending: true })
 
-  if (error) throw new Error(error.message)
+  if (error) return []
   return (data ?? []) as Skill[]
 }
 

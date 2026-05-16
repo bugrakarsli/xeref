@@ -50,7 +50,7 @@ export async function getChatMessages(chatId: string): Promise<Message[]> {
     .eq('chat_id', chatId)
     .order('created_at', { ascending: true })
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as Message[]
 }
 

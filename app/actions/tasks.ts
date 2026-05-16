@@ -48,7 +48,7 @@ export async function getUserTasks(): Promise<Task[]> {
     .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as Task[]
 }
 
@@ -102,9 +102,9 @@ export async function getDailyTarget(): Promise<DailyTarget> {
     .eq('id', user.id)
     .single()
 
-  if (error) throw error
-
   const today = new Date().toISOString().slice(0, 10)
+  if (error) return { goal: 3, completed: 0, resetAt: today }
+
   const resetAt = data?.daily_reset_at ?? today
 
   // Client-side reset: if stored date is before today, reset the counter

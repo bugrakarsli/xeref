@@ -172,7 +172,7 @@ export async function getProjectGoals(projectId: string): Promise<ProjectGoal[]>
     .eq('project_id', projectId)
     .order('created_at')
 
-  if (error) throw error
+  if (error) return []
   return (data ?? []) as ProjectGoal[]
 }
 
