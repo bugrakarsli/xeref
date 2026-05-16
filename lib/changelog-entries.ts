@@ -1,6 +1,6 @@
 export const changelogEntries = [
   {
-    version: 'v2.10',
+    version: 'v3.0',
     date: 'May 17, 2026',
     badge: 'Latest',
     sections: [
@@ -8,7 +8,7 @@ export const changelogEntries = [
         type: 'New',
         color: 'text-emerald-400',
         items: [
-          'Keyboard Shortcuts panel — a ⌨ icon button now lives above the v2.10 badge in the right rail. Click it to open a reference dialog listing every real wired shortcut (Ctrl+1/2/3, Ctrl+E/L, Ctrl+Shift+O, F9, F, Ctrl+B) grouped by category. Mod key auto-renders as ⌘ on macOS.',
+          'Keyboard Shortcuts panel — a ⌨ icon button now lives above the v3.0 badge in the right rail. Click it to open a reference dialog listing every real wired shortcut (Ctrl+1/2/3, Ctrl+E/L, Ctrl+Shift+O, F9, F, Ctrl+B) grouped by category. Mod key auto-renders as ⌘ on macOS.',
           'Profile avatar in sidebar — the bottom-left user avatar now mirrors the photo uploaded in Settings → General instead of always showing initials. Falls back to initials when no photo is set.',
         ],
       },
