@@ -98,7 +98,7 @@ export default function FAQPage() {
             <p className="font-semibold">Still have a question?</p>
             <p className="text-sm text-muted-foreground">
               Reach out at{' '}
-              <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
+              <a href="mailto:support@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
                 support@xeref.ai
               </a>{' '}
               or open an issue on{' '}

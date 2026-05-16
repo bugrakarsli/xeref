@@ -221,7 +221,7 @@ export default function PricingPage() {
                 Check the FAQ
               </Link>{' '}
               or{' '}
-              <a href="mailto:hello@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
+              <a href="mailto:support@xeref.ai" className="underline underline-offset-2 hover:text-foreground">
                 get in touch
               </a>
               .
