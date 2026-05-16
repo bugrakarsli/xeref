@@ -78,6 +78,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
           : initialView
 
   const [collapsed, setCollapsed] = useState(forceCollapsed ?? true)
+
+  useEffect(() => {
+    if (forceCollapsed) return
+    const saved = localStorage.getItem('xeref_sidebar_collapsed')
+    if (saved !== null) setCollapsed(saved === 'true')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   const [activeView, setActiveView] = useState<ViewKey>(actualInitialView)
   const [activeTab, setActiveTab] = useState<SidebarTab>(actualInitialTab)
 
@@ -179,6 +186,13 @@ export function DashboardShell({ user, projects: initialProjects, chats: initial
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
   /* eslint-enable react-hooks/set-state-in-effect */
+
+  useEffect(() => {
+    if (forceCollapsed) return
+    if (window.innerWidth >= 768) {
+      localStorage.setItem('xeref_sidebar_collapsed', String(collapsed))
+    }
+  }, [collapsed, forceCollapsed])
 
   // Redirect to login when the session is invalidated (e.g. expired refresh token)
   useEffect(() => {
